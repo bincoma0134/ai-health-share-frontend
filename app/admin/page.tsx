@@ -37,28 +37,30 @@ export default function AdminDashboard() {
           return;
         }
 
-        // 🚨 CHỐT CHẶN BẢO MẬT: Kiểm tra có đúng là Admin không
-        if (session.user.email !== ADMIN_EMAIL) {
-          toast.error("Truy cập bị từ chối! Bạn không có quyền SuperAdmin.");
+        // 🚨 THAY ĐỔI TẠI ĐÂY: Truy vấn vào bảng public.users để lấy Role thực tế
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+
+        if (userError || userData?.role !== 'SUPER ADMIN') {
+          toast.error("Truy cập bị từ chối! Bạn không phải SuperAdmin.");
           router.push("/partner");
           return;
         }
 
         setUser(session.user);
 
-        // Lấy danh sách yêu cầu rút tiền
+        // Lấy danh sách yêu cầu rút tiền (Giữ nguyên đoạn fetch cũ)
         const res = await fetch("https://ai-health-share-backend.onrender.com/admin/withdrawals", {
-          headers: {
-            "Authorization": `Bearer ${session.access_token}`
-          }
+          headers: { "Authorization": `Bearer ${session.access_token}` }
         });
         
         if (!res.ok) throw new Error("Lỗi tải dữ liệu Quản trị");
-        
         const data = await res.json();
-        if (data.status === "success") {
-          setRequests(data.data || []);
-        }
+        if (data.status === "success") setRequests(data.data || []);
+
       } catch (error: any) {
         toast.error(error.message);
       } finally {
