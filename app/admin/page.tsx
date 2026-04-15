@@ -44,7 +44,7 @@ export default function AdminDashboard() {
           .eq('id', session.user.id)
           .single();
 
-        if (userError || userData?.role !== 'SUPER ADMIN') {
+        if (userError || userData?.role !== 'SUPER_ADMIN') {
           toast.error("Truy cập bị từ chối! Bạn không phải SuperAdmin.");
           router.push("/partner");
           return;
