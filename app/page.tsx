@@ -101,25 +101,23 @@ export default function UserFeed() {
     toast.success("Đã đăng xuất an toàn.");
   };
 
-// --- HÀM XỬ LÝ ĐẶT LỊCH (CÓ BẢO MẬT TOKEN) ---
+// --- HÀM XỬ LÝ ĐẶT LỊCH (ĐÃ TÍCH HỢP PAYOS) ---
 const handleBooking = async (e: React.FormEvent) => {
   e.preventDefault();
   if (!activeService || !user) return;
   
   setIsSubmitting(true);
-  const toastId = toast.loading("Đang xử lý thanh toán & Escrow...");
+  const toastId = toast.loading("Đang khởi tạo cổng thanh toán an toàn...");
 
   try {
-    // 1. Lấy "Thẻ từ" (Access Token) từ hệ thống Supabase
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!");
 
-    // 2. Kẹp Thẻ từ vào Header của gói tin gửi đi
     const bookingRes = await fetch("https://ai-health-share-backend.onrender.com/bookings", {
       method: "POST",
       headers: { 
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${session.access_token}` // Đây là chiếc chìa khóa!
+        "Authorization": `Bearer ${session.access_token}` 
       },
       body: JSON.stringify({
         user_id: user.id,
@@ -134,15 +132,21 @@ const handleBooking = async (e: React.FormEvent) => {
       throw new Error(bookingData.detail || "Lỗi ghi nhận giao dịch");
     }
 
-    toast.success("🎉 Đặt lịch thành công! Hệ thống đã ghi nhận.", { id: toastId });
-    setIsModalOpen(false);
-    setAffiliateCode("");
+    // 🚀 NẾU BACKEND TRẢ VỀ LINK PAYOS -> CHUYỂN HƯỚNG KHÁCH ĐI QUÉT MÃ
+    if (bookingData.checkout_url) {
+      toast.success("Đang chuyển hướng sang Ngân hàng...", { id: toastId });
+      window.location.href = bookingData.checkout_url;
+    } else {
+      // Fallback dự phòng nếu PayOS lỗi
+      toast.success("🎉 Đặt lịch thành công! Hệ thống đã ghi nhận.", { id: toastId });
+      setIsModalOpen(false);
+      setAffiliateCode("");
+    }
 
   } catch (error: any) {
     toast.error(`Lỗi hệ thống: ${error.message}`, { id: toastId });
-  } finally {
-    setIsSubmitting(false);
-  }
+    setIsSubmitting(false); // Chỉ mở lại nút nếu có lỗi
+  } 
 };
 
 
