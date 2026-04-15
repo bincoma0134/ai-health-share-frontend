@@ -132,10 +132,48 @@ export default function PartnerDashboard() {
     }
   };
 
+  // --- UI TỐI ƯU: LOADING SKELETON ---
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-zinc-950 p-4 md:p-8 animate-pulse">
+        {/* Skeleton Header */}
+        <div className="flex justify-between items-center mb-8 bg-zinc-900/30 p-6 rounded-2xl border border-zinc-800/50">
+          <div className="space-y-3">
+            <div className="h-6 w-48 bg-zinc-800 rounded-lg"></div>
+            <div className="h-4 w-32 bg-zinc-800/50 rounded-lg"></div>
+          </div>
+          <div className="h-10 w-28 bg-zinc-800 rounded-xl"></div>
+        </div>
+
+        {/* Skeleton Box Tài chính */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          <div className="bg-zinc-900/30 p-6 rounded-3xl border border-zinc-800/50 h-48 flex flex-col justify-between">
+            <div className="h-5 w-32 bg-zinc-800 rounded-lg"></div>
+            <div className="h-10 w-48 bg-zinc-800 rounded-lg"></div>
+            <div className="h-12 w-full bg-emerald-900/20 rounded-xl"></div>
+          </div>
+          <div className="bg-zinc-900/30 p-6 rounded-3xl border border-zinc-800/50 h-48 flex flex-col justify-center gap-4">
+            <div className="h-5 w-40 bg-zinc-800 rounded-lg"></div>
+            <div className="h-10 w-48 bg-zinc-800 rounded-lg"></div>
+          </div>
+        </div>
+
+        {/* Skeleton Danh sách */}
+        <div className="bg-zinc-900/30 p-6 rounded-3xl border border-zinc-800/50 space-y-4">
+          <div className="h-6 w-40 bg-zinc-800 rounded-lg mb-6"></div>
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex justify-between items-center p-4 bg-zinc-950/50 rounded-xl">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-zinc-800 rounded-full"></div>
+                <div className="space-y-2">
+                  <div className="h-4 w-32 bg-zinc-800 rounded"></div>
+                  <div className="h-3 w-24 bg-zinc-800/50 rounded"></div>
+                </div>
+              </div>
+              <div className="h-5 w-24 bg-zinc-800 rounded"></div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
