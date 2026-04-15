@@ -133,11 +133,17 @@ const handleBooking = async (e: React.FormEvent) => {
     }
 
     // 🚀 NẾU BACKEND TRẢ VỀ LINK PAYOS -> CHUYỂN HƯỚNG KHÁCH ĐI QUÉT MÃ
+    // 🚀 NẾU BACKEND TRẢ VỀ LINK PAYOS -> CHUYỂN HƯỚNG SANG TAB MỚI
     if (bookingData.checkout_url) {
-      toast.success("Đang chuyển hướng sang Ngân hàng...", { id: toastId });
-      window.location.href = bookingData.checkout_url;
+      toast.success("Đang mở cổng thanh toán ở tab mới...", { id: toastId });
+      // Mở PayOS ở một Tab (cửa sổ) mới
+      window.open(bookingData.checkout_url, '_blank'); 
+      
+      // Đóng Modal đặt lịch và reset form ở Tab hiện tại
+      setIsModalOpen(false);
+      setAffiliateCode("");
     } else {
-      // Fallback dự phòng nếu PayOS lỗi
+      // Fallback dự phòng
       toast.success("🎉 Đặt lịch thành công! Hệ thống đã ghi nhận.", { id: toastId });
       setIsModalOpen(false);
       setAffiliateCode("");
