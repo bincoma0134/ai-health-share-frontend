@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { CalendarPlus, X, User as UserIcon, LogOut } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
+import { toast } from "sonner"; // IMPORT THƯ VIỆN TOAST
 
 // --- KHỞI TẠO SUPABASE CLIENT (BẢO MẬT 100%) ---
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-// Kích hoạt lỗi ngay ở local nếu quên cài biến môi trường, tránh lỗi ngầm
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error("Thiếu biến môi trường Supabase! Vui lòng kiểm tra file .env.local");
 }
@@ -42,24 +42,21 @@ export default function UserFeed() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // 1. Kiểm tra trạng thái đăng nhập hiện tại
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user || null);
     });
 
-    // 2. Lắng nghe thay đổi đăng nhập/đăng xuất
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
     });
 
-    // 3. Fetch danh sách dịch vụ
     const fetchServices = async () => {
       try {
         const response = await fetch("https://ai-health-share-backend.onrender.com/services");
         const result = await response.json();
         if (result.status === "success") setServices(result.data);
       } catch (error) {
-        console.error("Lỗi:", error);
+        toast.error("Không thể tải danh sách dịch vụ. Vui lòng thử lại!");
       } finally {
         setIsLoading(false);
       }
@@ -75,21 +72,25 @@ export default function UserFeed() {
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthLoading(true);
+    
+    // Tạo 1 loading toast để người dùng biết hệ thống đang xử lý
+    const toastId = toast.loading("Đang xử lý xác thực..."); 
+    
     try {
       if (isLoginMode) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        alert("Đăng nhập thành công!");
+        toast.success("Đăng nhập thành công!", { id: toastId });
       } else {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        alert("Đăng ký thành công! Bạn đã có thể đặt lịch.");
+        toast.success("Đăng ký thành công! Bạn đã có thể đặt lịch.", { id: toastId });
       }
       setIsAuthModalOpen(false);
       setEmail("");
       setPassword("");
     } catch (error: any) {
-      alert(`Lỗi xác thực: ${error.message}`);
+      toast.error(`Lỗi xác thực: ${error.message}`, { id: toastId });
     } finally {
       setAuthLoading(false);
     }
@@ -97,22 +98,23 @@ export default function UserFeed() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    alert("Đã đăng xuất.");
+    toast.success("Đã đăng xuất an toàn.");
   };
 
-  // --- HÀM XỬ LÝ ĐẶT LỊCH (BẢN MỚI) ---
+  // --- HÀM XỬ LÝ ĐẶT LỊCH ---
   const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeService || !user) return;
     
     setIsSubmitting(true);
+    const toastId = toast.loading("Đang xử lý thanh toán & Escrow...");
+
     try {
-      // Chỉ cần gọi Booking, ID User được lấy trực tiếp từ hệ thống bảo mật Supabase
       const bookingRes = await fetch("https://ai-health-share-backend.onrender.com/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          user_id: user.id, // Truyền ID thực của User đang đăng nhập
+          user_id: user.id,
           service_id: activeService.id,
           affiliate_code: affiliateCode || null,
           total_amount: activeService.price
@@ -124,12 +126,12 @@ export default function UserFeed() {
         throw new Error(bookingData.detail || "Lỗi ghi nhận giao dịch");
       }
 
-      alert("🎉 Đặt lịch thành công! Hệ thống đã ghi nhận.");
+      toast.success("🎉 Đặt lịch thành công! Hệ thống đã ghi nhận.", { id: toastId });
       setIsModalOpen(false);
       setAffiliateCode("");
 
     } catch (error: any) {
-      alert(`Lỗi hệ thống: ${error.message}`);
+      toast.error(`Lỗi hệ thống: ${error.message}`, { id: toastId });
     } finally {
       setIsSubmitting(false);
     }
@@ -146,7 +148,7 @@ export default function UserFeed() {
   return (
     <div className="h-[100dvh] w-full bg-black overflow-y-scroll snap-y snap-mandatory no-scrollbar relative">
       
-      {/* HEADER: GIAO DIỆN NÚT ĐĂNG NHẬP */}
+      {/* HEADER */}
       <div className="absolute top-0 w-full z-50 p-4 flex justify-between items-center bg-gradient-to-b from-black/80 to-transparent">
         <h1 className="text-xl font-bold text-white tracking-wider">HEALTH<span className="text-emerald-400">SHARE</span></h1>
         {user ? (
@@ -188,7 +190,8 @@ export default function UserFeed() {
               <button 
                 onClick={() => {
                   if (!user) {
-                    setIsAuthModalOpen(true); // Yêu cầu đăng nhập nếu chưa có
+                    toast.info("Vui lòng đăng nhập để đặt lịch!");
+                    setIsAuthModalOpen(true);
                     return;
                   }
                   setActiveService(item);
@@ -206,10 +209,10 @@ export default function UserFeed() {
         );
       })}
 
-      {/* --- FORM MODAL AUTH (ĐĂNG NHẬP/ĐĂNG KÝ) --- */}
+      {/* --- FORM MODAL AUTH --- */}
       {isAuthModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="w-full max-w-sm bg-zinc-900 rounded-3xl p-6 border border-zinc-800 animate-fade-in relative">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in">
+          <div className="w-full max-w-sm bg-zinc-900 rounded-3xl p-6 border border-zinc-800 relative">
             <button onClick={() => setIsAuthModalOpen(false)} className="absolute top-4 right-4 p-2 text-zinc-400 hover:text-white">
               <X size={20} />
             </button>
@@ -244,9 +247,8 @@ export default function UserFeed() {
                 <div className="relative flex justify-center text-sm"><span className="px-2 bg-zinc-900 text-zinc-500">Hoặc tiếp tục với</span></div>
               </div>
               
-              {/* NÚT GOOGLE (CHỜ TRIỂN KHAI) */}
               <button 
-                onClick={() => alert("Tính năng đăng nhập Google đang được tích hợp. Vui lòng dùng Email!")}
+                onClick={() => toast.info("Tính năng đăng nhập Google đang được tích hợp. Vui lòng dùng Email!")}
                 className="w-full mt-4 py-3 flex items-center justify-center gap-2 bg-white text-black font-bold rounded-xl hover:bg-gray-100 transition"
               >
                 <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
@@ -264,7 +266,7 @@ export default function UserFeed() {
         </div>
       )}
 
-      {/* --- FORM MODAL ĐẶT LỊCH (ĐÃ ĐƯỢC RÚT GỌN VÌ ĐÃ CÓ USER) --- */}
+      {/* --- FORM MODAL ĐẶT LỊCH --- */}
       {isModalOpen && activeService && user && (
         <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm transition-opacity">
           <div className="w-full max-w-md bg-zinc-900 rounded-t-3xl p-6 border-t border-zinc-800 animate-slide-up">
