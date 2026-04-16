@@ -129,7 +129,7 @@ export default function UserFeed() {
     }
   };
 
-  // --- LOGIC TƯƠNG TÁC: LIKE & SAVE ---
+  // --- LOGIC TƯƠNG TÁC ---
   const handleInteraction = async (serviceId: string, action: 'like' | 'save') => {
     if (!user) {
       toast.info(`Vui lòng đăng nhập để ${action === 'like' ? 'thích' : 'lưu'} video!`);
@@ -196,7 +196,7 @@ export default function UserFeed() {
        });
        const data = await res.json();
        if (data.status === 'success') {
-          setComments([data.data, ...comments]); // Đẩy bình luận mới lên đầu
+          setComments([data.data, ...comments]);
           setNewComment("");
           setServices(prev => prev.map(s => s.id === activeCommentServiceId ? {...s, comments_count: (s.comments_count || 0) + 1} : s));
        }
@@ -289,7 +289,6 @@ export default function UserFeed() {
             <span className="text-sm tracking-wide">Yêu thích</span>
           </button>
 
-          {/* AI Assistant Button */}
           <div className="mt-8 px-2">
             <button onClick={() => toast.info("AI Trợ lý đang được đánh thức...")} className="w-full relative group">
               <div className="absolute inset-0 bg-gradient-to-r from-[#80BF84] to-emerald-300 rounded-2xl blur-lg opacity-40 group-hover:opacity-70 transition-opacity duration-300"></div>
@@ -333,7 +332,7 @@ export default function UserFeed() {
                    <video src={`/video-${videoNumber}.mp4`} className="w-full h-full object-cover opacity-30 blur-[60px] scale-125" loop autoPlay muted playsInline />
                 </div>
                 
-                <div className={`relative w-full h-full md:h-[94vh] md:w-auto ${desktopRatioClass} md:rounded-[2rem] overflow-hidden bg-black md:border md:border-white/10 md:shadow-2xl md:shadow-black/50 transition-all duration-500`}>
+                <div className={`relative w-full h-full md:h-[94vh] md:w-auto ${desktopRatioClass} md:rounded-[2.5rem] overflow-hidden bg-black md:border md:border-white/10 md:shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-all duration-500`}>
                     <video src={`/video-${videoNumber}.mp4`} className="absolute inset-0 w-full h-full object-cover opacity-90" loop autoPlay muted playsInline />
                     <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none"></div>
                     
@@ -355,7 +354,7 @@ export default function UserFeed() {
                         </button>
                     </div>
 
-                    {/* --- THANH TƯƠNG TÁC (TÍCH HỢP DATA THẬT) --- */}
+                    {/* THANH TƯƠNG TÁC */}
                     <div className="absolute bottom-[100px] md:bottom-[40px] right-3 md:right-4 z-20 flex flex-col items-center gap-5 md:gap-6 pointer-events-auto">
                         
                         <div className="relative mb-2 group cursor-pointer active:scale-90 transition-transform" onClick={() => toast.info("Xem hồ sơ chuyên gia")}>
@@ -367,7 +366,6 @@ export default function UserFeed() {
                           </div>
                         </div>
 
-                        {/* NÚT THẢ TIM */}
                         <button onClick={() => handleInteraction(item.id, 'like')} className="flex flex-col items-center gap-1 group">
                           <div className={`p-3 rounded-full backdrop-blur-md transition-all ${item.is_liked ? 'bg-rose-500/20 text-rose-500 border border-rose-500/50' : 'bg-black/40 border border-white/10 text-white group-hover:bg-rose-500/20 group-hover:text-rose-400 group-hover:border-rose-500/50'}`}>
                             <Heart size={24} strokeWidth={2} className={`group-active:scale-75 transition-transform ${item.is_liked ? 'fill-rose-500' : ''}`} />
@@ -375,7 +373,6 @@ export default function UserFeed() {
                           <span className="text-xs font-bold text-white drop-shadow-md">{item.likes_count || 0}</span>
                         </button>
 
-                        {/* NÚT BÌNH LUẬN */}
                         <button onClick={() => handleOpenComments(item.id)} className="flex flex-col items-center gap-1 group">
                           <div className="p-3 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white group-hover:bg-white/20 transition-all">
                             <MessageCircle size={24} strokeWidth={2} className="group-active:scale-75 transition-transform" />
@@ -383,7 +380,6 @@ export default function UserFeed() {
                           <span className="text-xs font-bold text-white drop-shadow-md">{item.comments_count || 0}</span>
                         </button>
 
-                        {/* NÚT LƯU BOOKMARK */}
                         <button onClick={() => handleInteraction(item.id, 'save')} className="flex flex-col items-center gap-1 group">
                           <div className={`p-3 rounded-full backdrop-blur-md transition-all ${item.is_saved ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50' : 'bg-black/40 border border-white/10 text-white group-hover:bg-amber-500/20 group-hover:text-amber-400 group-hover:border-amber-500/50'}`}>
                             <Bookmark size={24} strokeWidth={2} className={`group-active:scale-75 transition-transform ${item.is_saved ? 'fill-amber-400' : ''}`} />
@@ -391,7 +387,6 @@ export default function UserFeed() {
                           <span className="text-xs font-bold text-white drop-shadow-md">{item.saves_count || 0}</span>
                         </button>
 
-                        {/* NÚT CHIA SẺ */}
                         <button onClick={() => handleShare(item.id)} className="flex flex-col items-center gap-1 group">
                           <div className="p-3 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white group-hover:bg-white/20 transition-all">
                             <Share2 size={24} strokeWidth={2} className="group-active:scale-75 transition-transform" />
@@ -406,8 +401,8 @@ export default function UserFeed() {
           })}
         </div>
 
-        {/* 3. MOBILE BOTTOM DOCK TIKTOK (Chỉ < md) */}
-        <div className="md:hidden absolute bottom-6 left-1/2 -translate-x-1/2 z-40 w-max animate-slide-up">
+        {/* 3. MOBILE BOTTOM DOCK */}
+        <div className="md:hidden absolute bottom-6 left-1/2 -translate-x-1/2 z-40 w-max animate-slide-up pointer-events-auto">
           <div className="px-8 py-3.5 rounded-full flex items-center justify-center gap-8 sm:gap-10 shadow-2xl border border-white/10 bg-black/60 backdrop-blur-2xl">
             <button className="text-[#80BF84] hover:text-white transition-colors group"><Home size={26} strokeWidth={2.5} /></button>
             <button onClick={() => toast.info("Đang phát triển")} className="text-zinc-500 hover:text-white transition-colors group"><Compass size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
@@ -423,49 +418,73 @@ export default function UserFeed() {
 
       </div>
 
-      {/* --- GIAO DIỆN HIỂN THỊ BÌNH LUẬN (COMMENT MODAL/BOTTOM SHEET) --- */}
+      {/* --- GIAO DIỆN BÌNH LUẬN (ETHREAL GLASS) --- */}
       {isCommentModalOpen && (
-        <div className="fixed inset-0 z-[90] flex justify-end items-end md:items-stretch pointer-events-auto animate-fade-in">
-          <div className="absolute inset-0 bg-black/20 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none" onClick={() => setIsCommentModalOpen(false)}></div>
+        <div className="fixed inset-0 z-[100] flex justify-center items-end md:items-center md:justify-end md:p-6 pointer-events-auto">
+          {/* Backdrop tối mềm */}
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-500" onClick={() => setIsCommentModalOpen(false)}></div>
           
-          <div className="relative w-full md:w-[400px] h-[70vh] md:h-full bg-zinc-900 md:bg-black/80 md:backdrop-blur-3xl rounded-t-[2rem] md:rounded-none border-t md:border-t-0 md:border-l border-white/10 flex flex-col animate-slide-up shadow-2xl">
-             <div className="p-5 border-b border-white/10 flex justify-between items-center">
-               <h3 className="text-lg font-bold text-white">Bình luận ({comments.length})</h3>
-               <button onClick={() => setIsCommentModalOpen(false)} className="p-2 text-zinc-400 hover:text-white bg-white/5 rounded-full transition-colors"><X size={20}/></button>
+          {/* Modal Panel */}
+          <div className="relative w-full md:w-[420px] h-[75vh] md:h-[calc(100vh-48px)] bg-black/50 backdrop-blur-3xl rounded-t-[2.5rem] md:rounded-[2.5rem] border border-white/10 flex flex-col animate-slide-up shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden">
+             
+             {/* Kéo vuốt (Mobile) */}
+             <div className="md:hidden flex justify-center pt-3 pb-1 w-full absolute top-0 z-20">
+               <div className="w-12 h-1.5 bg-white/20 rounded-full"></div>
              </div>
              
-             <div className="flex-1 overflow-y-auto p-5 space-y-5 no-scrollbar">
+             {/* Header */}
+             <div className="pt-8 md:pt-6 pb-4 px-6 border-b border-white/10 flex justify-between items-center bg-gradient-to-b from-black/40 to-transparent z-10">
+               <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                 Bình luận <span className="text-xs bg-white/10 px-2.5 py-0.5 rounded-full">{comments.length}</span>
+               </h3>
+               <button onClick={() => setIsCommentModalOpen(false)} className="p-2 text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-all active:scale-90">
+                 <X size={18} strokeWidth={2.5}/>
+               </button>
+             </div>
+             
+             {/* Danh sách Comments */}
+             <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
                {isLoadingComments ? (
-                 <div className="text-center text-zinc-500 text-sm mt-10">Đang tải bình luận...</div>
+                 <div className="text-center text-zinc-500 text-sm mt-10 animate-pulse">Đang tải bình luận...</div>
                ) : comments.length === 0 ? (
                  <div className="text-center text-zinc-500 text-sm mt-10">Chưa có bình luận nào. Hãy là người đầu tiên!</div>
                ) : (
                  comments.map(c => (
-                   <div key={c.id} className="flex gap-3">
-                     <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center flex-shrink-0">
-                        <UserIcon size={14} className="text-zinc-400"/>
+                   <div key={c.id} className="flex gap-3 group">
+                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-800 flex items-center justify-center flex-shrink-0 border border-white/5 shadow-inner">
+                        <UserIcon size={16} className="text-zinc-400"/>
                      </div>
                      <div className="flex-1">
-                       <p className="text-xs text-zinc-400 font-bold mb-1">{c.users?.email?.split('@')[0] || "Người dùng"} <span className="font-normal opacity-50 ml-1 text-[10px]">{new Date(c.created_at).toLocaleDateString('vi-VN')}</span></p>
-                       <p className="text-sm text-zinc-200 leading-relaxed">{c.content}</p>
+                       <p className="text-xs text-zinc-400 font-medium mb-0.5">{c.users?.email?.split('@')[0] || "Người dùng"}</p>
+                       <p className="text-sm text-zinc-100 leading-relaxed break-words">{c.content}</p>
+                       <div className="flex items-center gap-4 mt-2">
+                         <span className="text-[10px] text-zinc-600 font-medium">{new Date(c.created_at).toLocaleDateString('vi-VN')}</span>
+                         <button className="text-[10px] text-zinc-500 font-semibold hover:text-zinc-300 transition-colors">Trả lời</button>
+                       </div>
+                     </div>
+                     <div className="flex flex-col items-center justify-start pt-1 px-1">
+                        <button className="text-zinc-600 hover:text-rose-500 transition-colors active:scale-75"><Heart size={14}/></button>
                      </div>
                    </div>
                  ))
                )}
              </div>
              
-             <div className="p-4 border-t border-white/10 bg-zinc-950 md:bg-transparent pb-8 md:pb-4">
-               <form onSubmit={handlePostComment} className="flex gap-3">
-                 <input 
-                   type="text" 
-                   placeholder="Thêm bình luận..." 
-                   className="flex-1 bg-white/5 border border-white/10 rounded-full px-5 py-3 text-sm text-white focus:outline-none focus:border-[#80BF84] transition-colors"
-                   value={newComment}
-                   onChange={e => setNewComment(e.target.value)}
-                 />
-                 <button type="submit" disabled={!newComment.trim()} className="w-12 h-12 rounded-full bg-[#80BF84] text-black flex items-center justify-center disabled:opacity-50 hover:bg-emerald-400 transition-all active:scale-95">
-                   <Send size={18} strokeWidth={2.5}/>
-                 </button>
+             {/* Khung Soạn thảo (Pill Style) */}
+             <div className="p-4 md:p-5 border-t border-white/10 bg-black/40 backdrop-blur-xl pb-8 md:pb-5">
+               <form onSubmit={handlePostComment} className="flex items-end gap-3">
+                 <div className="flex-1 bg-white/5 border border-white/10 rounded-[1.5rem] p-1 flex items-center shadow-inner focus-within:border-emerald-500/50 focus-within:bg-white/10 transition-all">
+                   <input 
+                     type="text" 
+                     placeholder="Thêm bình luận tuyệt vời của bạn..." 
+                     className="w-full bg-transparent border-none px-4 py-2.5 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-0"
+                     value={newComment}
+                     onChange={e => setNewComment(e.target.value)}
+                   />
+                   <button type="submit" disabled={!newComment.trim()} className="w-10 h-10 shrink-0 rounded-full bg-gradient-to-tr from-[#80BF84] to-emerald-400 text-zinc-950 flex items-center justify-center disabled:opacity-30 disabled:grayscale hover:scale-105 active:scale-95 transition-all mr-1 shadow-lg shadow-emerald-500/20">
+                     <Send size={16} strokeWidth={2.5} className="ml-[-2px]"/>
+                   </button>
+                 </div>
                </form>
              </div>
           </div>
