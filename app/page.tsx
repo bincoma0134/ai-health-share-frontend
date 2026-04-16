@@ -127,13 +127,13 @@ export default function UserFeed() {
     toast.success("Đã đăng xuất an toàn.");
   };
 
+  // Tìm hàm handleProfileClick cũ và thay bằng:
   const handleProfileClick = () => {
     if (!user) {
       setIsAuthModalOpen(true);
     } else {
-      if (window.confirm("Trang Hồ sơ đang được cập nhật. Bạn có muốn Đăng xuất không?")) {
-        handleLogout();
-      }
+      // Chuyển hướng sang trang profile
+      window.location.href = "/profile"; 
     }
   };
 
