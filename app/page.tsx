@@ -113,13 +113,17 @@ export default function UserFeed() {
       });
       const bookingData = await bookingRes.json();
 
-      if (!bookingRes.ok || bookingData.status !== "success") throw new Error(bookingData.detail || "Lỗi ghi nhận giao dịch");
+      if (!bookingRes.ok) throw new Error(bookingData.detail || bookingData.message || "Lỗi ghi nhận giao dịch");
 
-      if (bookingData.checkout_url) {
-        toast.success("Đang mở cổng thanh toán PayOS...", { id: toastId });
-        window.open(bookingData.checkout_url, '_blank'); 
-        setIsModalOpen(false);
-        setAffiliateCode("");
+      // 🚨 FIX LỖI PAYOS: Quét mọi trường hợp trả về link (Kể cả camelCase từ Python)
+      const checkoutUrl = bookingData.checkout_url || bookingData.data?.checkout_url || bookingData.checkoutUrl || bookingData.data?.checkoutUrl;
+
+      if (checkoutUrl) {
+        toast.success("Đang chuyển hướng an toàn đến PayOS...", { id: toastId });
+        // Chuyển hướng trực tiếp tab hiện tại để vượt qua Popup Blocker
+        window.location.href = checkoutUrl; 
+      } else {
+        toast.error("Hệ thống chưa tạo được link thanh toán. Vui lòng thử lại!", { id: toastId });
       }
     } catch (error: any) {
       toast.error(`Lỗi hệ thống: ${error.message}`, { id: toastId });
@@ -145,7 +149,7 @@ export default function UserFeed() {
   return (
     <div className="h-[100dvh] w-full bg-black overflow-y-scroll snap-y snap-mandatory no-scrollbar relative">
       
-      {/* HEADER (Light Glassmorphism) */}
+      {/* HEADER */}
       <div className="absolute top-0 w-full z-50 p-4 md:p-8 flex justify-between items-center pointer-events-none transition-all">
         <h1 className="text-2xl font-black text-white tracking-tighter drop-shadow-md pointer-events-auto flex items-center gap-1">
           AI<span className="text-[#80BF84]">HEALTH</span>
@@ -154,7 +158,7 @@ export default function UserFeed() {
           <div className="flex items-center gap-3 pointer-events-auto animate-fade-in">
             <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md border border-white/20 px-4 py-2.5 rounded-full">
               <UserIcon size={16} className="text-[#80BF84]" />
-              <span className="text-sm font-semibold text-white truncate max-w-[120px]">{user.email.split("@")[0]}</span>
+              <span className="text-sm font-semibold text-white truncate max-w-[120px]">{user.email?.split("@")[0]}</span>
             </div>
             <button onClick={handleLogout} className="p-3 bg-black/40 backdrop-blur-md border border-white/10 text-white rounded-full hover:bg-red-500/80 active:scale-90 transition-all shadow-sm">
               <LogOut size={18} />
@@ -176,13 +180,11 @@ export default function UserFeed() {
         return (
           <div key={item.id} className="relative h-[100dvh] w-full snap-start snap-always bg-black overflow-hidden">
              
-             {/* Nền Video hiển thị Toàn Màn Hình */}
              <video src={`/video-${videoNumber}.mp4`} className="absolute inset-0 w-full h-full object-cover opacity-90" loop autoPlay muted playsInline />
              
-             {/* Gradient chân trang (Đen mờ) để làm nổi bật chữ trắng */}
              <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none"></div>
              
-             {/* 1. THÔNG TIN DỊCH VỤ (Góc Trái - Không viền khối) */}
+             {/* THÔNG TIN DỊCH VỤ */}
              <div className="absolute bottom-8 left-4 md:bottom-12 md:left-10 z-10 max-w-[65%] md:max-w-[50%] pointer-events-none animate-slide-up">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-black/30 backdrop-blur-md border border-white/20 rounded-full text-[10px] font-bold text-white mb-3 uppercase tracking-wider shadow-sm">
                   <ShieldCheck size={12} className="text-[#80BF84]" /> Xác thực
@@ -200,7 +202,7 @@ export default function UserFeed() {
                 </div>
              </div>
 
-             {/* 2. NÚT ĐẶT LỊCH (Góc Phải - Dạng "Island Pill" Nổi Bật) */}
+             {/* NÚT ĐẶT LỊCH */}
              <button 
                 onClick={() => {
                   if (!user) { toast.info("Vui lòng đăng nhập!"); setIsAuthModalOpen(true); return; }
@@ -213,13 +215,10 @@ export default function UserFeed() {
                 </div>
                 <span className="font-bold text-sm md:text-base tracking-wide whitespace-nowrap drop-shadow-sm">Đặt lịch</span>
               </button>
-
           </div>
         );
       })}
 
-      {/* --- CÁC MODAL OVERYLAY (GIỮ NGUYÊN) --- */}
-      
       {/* Modal Auth */}
       {isAuthModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in">
