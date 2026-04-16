@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-// Đã bổ sung thêm Plus, MessageCircle, Bookmark, Share2 cho thanh Sidebar
-import { CalendarPlus, X, User as UserIcon, ShieldCheck, Sparkles, Home, Compass, CalendarDays, MessageCircleHeart, Heart, MessageCircle, Bookmark, Share2, Plus } from "lucide-react";
+import { CalendarPlus, X, User as UserIcon, ShieldCheck, Sparkles, Home, Compass, CalendarDays, Heart, MessageCircle, Bookmark, Share2, Plus } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
 
@@ -91,6 +90,16 @@ export default function UserFeed() {
     toast.success("Đã đăng xuất an toàn.");
   };
 
+  const handleProfileClick = () => {
+    if (!user) {
+      setIsAuthModalOpen(true);
+    } else {
+      if (window.confirm("Trang Hồ sơ đang được cập nhật. Bạn có muốn Đăng xuất không?")) {
+        handleLogout();
+      }
+    }
+  };
+
   const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeService || !user) return;
@@ -133,174 +142,227 @@ export default function UserFeed() {
 
   if (isLoading) {
     return (
-      <div className="h-[100dvh] w-full bg-slate-50 flex flex-col items-center justify-center gap-6">
+      <div className="h-[100dvh] w-full bg-zinc-950 flex flex-col items-center justify-center gap-6">
         <div className="relative w-16 h-16">
           <div className="absolute inset-0 bg-emerald-200 rounded-full animate-ping opacity-70"></div>
           <div className="absolute inset-2 bg-emerald-400 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30">
             <Sparkles className="text-white w-6 h-6 animate-pulse" />
           </div>
         </div>
-        <p className="text-slate-500 text-sm font-medium tracking-widest uppercase animate-pulse">Khơi nguồn sức sống...</p>
+        <p className="text-zinc-500 text-sm font-medium tracking-widest uppercase animate-pulse">Khơi nguồn sức sống...</p>
       </div>
     );
   }
 
   return (
-    <div className="h-[100dvh] w-full bg-black overflow-hidden relative">
+    // Bố cục Flex mới: Chia 2 cột trên Desktop, 1 cột trên Mobile
+    <div className="h-[100dvh] w-full bg-black overflow-hidden flex relative">
       
-      {/* HEADER TỐI GIẢN */}
-      <div className="absolute top-0 w-full z-40 p-6 md:p-8 flex justify-between items-center pointer-events-none transition-all">
-        <h1 className="text-2xl font-black text-white tracking-tighter drop-shadow-lg flex items-center gap-1">
-          AI<span className="text-[#80BF84]">HEALTH</span>
-        </h1>
-      </div>
+      {/* ========================================================= */}
+      {/* 1. LEFT SIDEBAR (CHỈ HIỂN THỊ TRÊN DESKTOP >= md)         */}
+      {/* ========================================================= */}
+      <div className="hidden md:flex flex-col w-[260px] h-full bg-black/40 backdrop-blur-3xl border-r border-white/10 z-50 pt-8 pb-6 px-4 shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.5)]">
+        
+        {/* Logo */}
+        <div className="px-4 mb-10">
+          <h1 className="text-3xl font-black text-white tracking-tighter drop-shadow-lg flex items-center gap-1 cursor-pointer">
+            AI<span className="text-[#80BF84]">HEALTH</span>
+          </h1>
+        </div>
 
-      {/* FEED DỊCH VỤ - BỐ CỤC CHUẨN TIKTOK/REELS KẾT HỢP WEBSITE */}
-      <div className="h-[100dvh] w-full overflow-y-scroll snap-y snap-mandatory no-scrollbar relative">
-        {services.map((item, index) => {
-          const videoNumber = (index % 3) + 1;
-          
-          // 💡 ĐIỀU KIỆN TỈ LỆ HIỂN THỊ (Aspect Ratio):
-          // - Video dọc (TikTok): "md:aspect-[9/16]"
-          // - Video ngang (Youtube/Web): "md:aspect-[4/3]" hoặc "md:aspect-video"
-          const desktopRatioClass = "md:aspect-[9/16]"; 
+        {/* Cụm Navigation */}
+        <div className="flex flex-col gap-2 flex-1">
+          <button className="flex items-center gap-4 px-4 py-3 rounded-2xl bg-white/10 text-white font-bold transition-all">
+            <Home size={24} strokeWidth={2.5} className="text-[#80BF84]" />
+            <span className="text-sm tracking-wide">Trang chủ</span>
+          </button>
 
-          return (
-            <div key={item.id} className="relative h-[100dvh] w-full snap-start snap-always bg-black overflow-hidden flex items-center justify-center">
-              
-              {/* 1. NỀN MỜ (BLUR BACKGROUND) CHO DESKTOP - Lấy chính video làm nền tạo chiều sâu */}
-              <div className="hidden md:block absolute inset-0 w-full h-full">
-                 <video src={`/video-${videoNumber}.mp4`} className="w-full h-full object-cover opacity-30 blur-3xl scale-125" loop autoPlay muted playsInline />
+          <button onClick={() => toast.info("Tính năng Khám phá đang phát triển")} className="flex items-center gap-4 px-4 py-3 rounded-2xl text-zinc-400 hover:bg-white/5 hover:text-white font-bold transition-all group">
+            <Compass size={24} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
+            <span className="text-sm tracking-wide">Khám phá</span>
+          </button>
+
+          <button onClick={() => toast.info("Quản lý lịch hẹn đang phát triển")} className="flex items-center gap-4 px-4 py-3 rounded-2xl text-zinc-400 hover:bg-white/5 hover:text-white font-bold transition-all group">
+            <CalendarDays size={24} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
+            <span className="text-sm tracking-wide">Lịch hẹn</span>
+          </button>
+
+          <button onClick={() => toast.info("Tính năng Lưu trữ đang phát triển")} className="flex items-center gap-4 px-4 py-3 rounded-2xl text-zinc-400 hover:bg-white/5 hover:text-white font-bold transition-all group">
+            <Heart size={24} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
+            <span className="text-sm tracking-wide">Yêu thích</span>
+          </button>
+
+          {/* AI Assistant Button (Điểm nhấn Sidebar) */}
+          <div className="mt-8 px-2">
+            <button onClick={() => toast.info("AI Trợ lý đang được đánh thức...")} className="w-full relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-[#80BF84] to-emerald-300 rounded-2xl blur-lg opacity-40 group-hover:opacity-70 transition-opacity duration-300"></div>
+              <div className="relative flex items-center justify-center gap-3 px-4 py-4 rounded-2xl bg-gradient-to-tr from-[#80BF84] to-emerald-500 text-zinc-950 shadow-xl group-hover:scale-[1.02] transition-all">
+                 <Sparkles size={20} strokeWidth={3} />
+                 <span className="font-black text-sm tracking-wide">AI Trợ lý</span>
               </div>
-              
-              {/* 2. CONTAINER VIDEO CHÍNH (Được thu nhỏ trên Desktop theo tỉ lệ, Mobile giữ full màn) */}
-              <div className={`relative w-full h-full md:h-[90vh] md:w-auto ${desktopRatioClass} md:rounded-[2rem] overflow-hidden shadow-2xl bg-black md:border md:border-white/10 transition-all duration-500`}>
-                  
-                  <video src={`/video-${videoNumber}.mp4`} className="absolute inset-0 w-full h-full object-cover opacity-90" loop autoPlay muted playsInline />
-                  
-                  {/* Gradient Đáy - Tạo độ tương phản cho text */}
-                  <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none"></div>
-                  
-                  {/* 3. KHỐI THÔNG TIN VÀ NÚT ĐẶT LỊCH (Góc Trái) */}
-                  <div className="absolute bottom-[90px] md:bottom-[30px] left-4 md:left-6 z-10 max-w-[70%] md:max-w-[75%] pointer-events-auto animate-slide-up">
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-[10px] font-bold text-[#80BF84] mb-3 uppercase tracking-wider shadow-sm">
-                        <ShieldCheck size={12} /> Dịch vụ xác thực
-                      </div>
-                      
-                      <h3 className="text-2xl md:text-3xl font-black text-white leading-tight drop-shadow-xl mb-1.5 text-balance">
-                        {item.service_name}
-                      </h3>
-                      
-                      <p className="text-slate-200 text-xs md:text-sm line-clamp-2 drop-shadow-md font-medium mb-4 pr-4">
-                        {item.description || "Liệu pháp phục hồi năng lượng, cân bằng thân tâm với công nghệ chăm sóc độc quyền."}
-                      </p>
+            </button>
+          </div>
+        </div>
 
-                      {/* Nút Đặt Gói Này */}
-                      <button 
-                        onClick={() => {
-                          if (!user) { toast.info("Vui lòng đăng nhập!"); setIsAuthModalOpen(true); return; }
-                          setActiveService(item); setIsModalOpen(true);
-                        }}
-                        className="group flex items-center gap-3 pl-2 pr-5 py-2 bg-white/10 backdrop-blur-xl border border-white/20 text-white rounded-[2rem] hover:bg-white/20 active:scale-95 transition-all shadow-xl shadow-black/20"
-                      >
-                        <div className="w-10 h-10 bg-[#80BF84] rounded-full flex items-center justify-center text-white shadow-sm group-hover:scale-110 transition-transform">
-                          <CalendarPlus size={20} strokeWidth={2.5} />
-                        </div>
-                        <div className="flex flex-col text-left">
-                          <span className="font-bold text-sm tracking-wide drop-shadow-sm leading-tight">Đặt gói này</span>
-                          <span className="text-[10px] font-semibold text-[#80BF84] leading-tight">{item.price.toLocaleString()} VND</span>
-                        </div>
-                      </button>
-                  </div>
-
-                  {/* 4. THANH TƯƠNG TÁC (RIGHT SIDEBAR - Đồng bộ Dark Glassmorphism) */}
-                  <div className="absolute bottom-[90px] md:bottom-[30px] right-3 md:right-4 z-20 flex flex-col items-center gap-5 md:gap-6 pointer-events-auto">
-                      
-                      {/* Nút Profile Creator */}
-                      <div className="relative mb-2 group cursor-pointer active:scale-90 transition-transform" onClick={() => toast.info("Xem hồ sơ chuyên gia")}>
-                        <div className="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-zinc-800 flex items-center justify-center shadow-lg">
-                           <UserIcon size={24} className="text-white opacity-80" />
-                        </div>
-                        {/* Dấu cộng viền đen chuẩn TikTok */}
-                        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center border-2 border-zinc-900 group-hover:scale-110 transition-transform">
-                           <Plus size={12} className="text-white" strokeWidth={3} />
-                        </div>
-                      </div>
-
-                      {/* Nút Thả Tim */}
-                      <button onClick={() => toast.success("Đã thích!")} className="flex flex-col items-center gap-1 group">
-                        <div className="p-3 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white group-hover:bg-rose-500/20 group-hover:text-rose-400 group-hover:border-rose-500/50 transition-all">
-                          <Heart size={24} strokeWidth={2} className="group-active:scale-75 transition-transform" />
-                        </div>
-                        <span className="text-xs font-bold text-white drop-shadow-md">{(Math.random() * 10).toFixed(1)}k</span>
-                      </button>
-
-                      {/* Nút Bình luận */}
-                      <button onClick={() => toast.info("Tính năng bình luận đang mở")} className="flex flex-col items-center gap-1 group">
-                        <div className="p-3 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white group-hover:bg-white/20 transition-all">
-                          <MessageCircle size={24} strokeWidth={2} className="group-active:scale-75 transition-transform" />
-                        </div>
-                        <span className="text-xs font-bold text-white drop-shadow-md">{Math.floor(Math.random() * 500) + 50}</span>
-                      </button>
-
-                      {/* Nút Lưu (Save) */}
-                      <button onClick={() => toast.success("Đã lưu vào danh sách")} className="flex flex-col items-center gap-1 group">
-                        <div className="p-3 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white group-hover:bg-amber-500/20 group-hover:text-amber-400 group-hover:border-amber-500/50 transition-all">
-                          <Bookmark size={24} strokeWidth={2} className="group-active:scale-75 transition-transform" />
-                        </div>
-                        <span className="text-xs font-bold text-white drop-shadow-md">Lưu</span>
-                      </button>
-
-                      {/* Nút Chia sẻ */}
-                      <button onClick={() => toast.info("Đã sao chép liên kết!")} className="flex flex-col items-center gap-1 group">
-                        <div className="p-3 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white group-hover:bg-white/20 transition-all">
-                          <Share2 size={24} strokeWidth={2} className="group-active:scale-75 transition-transform" />
-                        </div>
-                        <span className="text-xs font-bold text-white drop-shadow-md">Chia sẻ</span>
-                      </button>
-
-                  </div>
-              </div>
+        {/* Hồ sơ phía đáy Sidebar */}
+        <div className="mt-auto px-2">
+          <button onClick={handleProfileClick} className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-zinc-400 hover:bg-white/5 hover:text-white font-bold transition-all group border border-transparent hover:border-white/10">
+            <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center border border-zinc-700 group-hover:border-[#80BF84] transition-colors">
+              <UserIcon size={16} />
             </div>
-          );
-        })}
-      </div>
-
-      {/* --- FLOATING BOTTOM DOCK (Giữ nguyên phiên bản cuối của bạn) --- */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 w-max max-w-[95%] animate-slide-up pointer-events-auto">
-        <div className="glass-panel px-6 py-3 rounded-[2.5rem] flex items-end justify-center gap-6 sm:gap-8 shadow-2xl border-white/10 bg-white/5 backdrop-blur-2xl">
-          
-          <button className="flex flex-col items-center gap-1.5 p-1 text-[#80BF84] transition-colors group">
-            <Home size={22} strokeWidth={2.5} />
-            <span className="text-[9px] font-bold tracking-wider">Trang chủ</span>
-          </button>
-          
-          <button onClick={() => toast.info("Tính năng Khám phá đang phát triển")} className="flex flex-col items-center gap-1.5 p-1 text-slate-400 hover:text-white transition-colors group">
-            <Compass size={22} className="group-hover:-translate-y-1 transition-transform" />
-            <span className="text-[9px] font-bold tracking-wider">Khám phá</span>
-          </button>
-
-          <button onClick={() => toast.info("AI Trợ lý đang được đánh thức...")} className="flex flex-col items-center gap-1.5 relative -mt-6 group">
-            <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#80BF84] to-[#99BFF2] p-[2px] shadow-xl shadow-[#80BF84]/30 group-hover:scale-105 transition-transform">
-              <div className="w-full h-full bg-slate-900 rounded-full flex items-center justify-center">
-                 <MessageCircleHeart size={26} className="text-[#80BF84]" strokeWidth={2.5} />
-              </div>
-            </div>
-            <span className="text-[9px] font-bold text-white tracking-wider">AI Trợ lý</span>
-          </button>
-
-          <button onClick={() => toast.info("Quản lý lịch hẹn đang phát triển")} className="flex flex-col items-center gap-1.5 p-1 text-slate-400 hover:text-white transition-colors group">
-            <CalendarDays size={22} className="group-hover:-translate-y-1 transition-transform" />
-            <span className="text-[9px] font-bold tracking-wider">Lịch hẹn</span>
-          </button>
-
-          <button onClick={() => {
-            if (!user) { setIsAuthModalOpen(true); } else { toast.info("Trang Hồ sơ đang cập nhật!"); }
-          }} className="flex flex-col items-center gap-1.5 p-1 text-slate-400 hover:text-white transition-colors group">
-            <UserIcon size={22} className="group-hover:-translate-y-1 transition-transform" />
-            <span className="text-[9px] font-bold tracking-wider">Hồ sơ</span>
+            <span className="text-sm tracking-wide truncate max-w-[120px] text-left">
+              {user ? user.email.split('@')[0] : "Đăng nhập"}
+            </span>
           </button>
         </div>
+      </div>
+
+      {/* ========================================================= */}
+      {/* 2. MAIN FEED AREA (KHU VỰC VIDEO CHÍNH)                   */}
+      {/* ========================================================= */}
+      <div className="flex-1 relative h-[100dvh]">
+        
+        {/* Header Tối giản (Chỉ hiện trên Mobile, vì Desktop đã có Logo ở Sidebar) */}
+        <div className="md:hidden absolute top-0 w-full z-40 p-6 flex justify-between items-center pointer-events-none transition-all">
+          <h1 className="text-2xl font-black text-white tracking-tighter drop-shadow-lg flex items-center gap-1">
+            AI<span className="text-[#80BF84]">HEALTH</span>
+          </h1>
+        </div>
+
+        {/* FEED DỊCH VỤ - Scroll snap dọc */}
+        <div className="h-full w-full overflow-y-scroll snap-y snap-mandatory no-scrollbar relative">
+          {services.map((item, index) => {
+            const videoNumber = (index % 3) + 1;
+            
+            // TỈ LỆ KHUNG HÌNH (9:16 chuẩn Mobile/TikTok)
+            const desktopRatioClass = "md:aspect-[9/16]"; 
+
+            return (
+              <div key={item.id} className="relative h-[100dvh] w-full snap-start snap-always bg-black overflow-hidden flex items-center justify-center">
+                
+                {/* NỀN MỜ CHO DESKTOP (Blur Background) */}
+                <div className="hidden md:block absolute inset-0 w-full h-full">
+                   <video src={`/video-${videoNumber}.mp4`} className="w-full h-full object-cover opacity-30 blur-[60px] scale-125" loop autoPlay muted playsInline />
+                </div>
+                
+                {/* CONTAINER VIDEO CHÍNH */}
+                <div className={`relative w-full h-full md:h-[94vh] md:w-auto ${desktopRatioClass} md:rounded-[2rem] overflow-hidden bg-black md:border md:border-white/10 md:shadow-2xl md:shadow-black/50 transition-all duration-500`}>
+                    
+                    <video src={`/video-${videoNumber}.mp4`} className="absolute inset-0 w-full h-full object-cover opacity-90" loop autoPlay muted playsInline />
+                    
+                    {/* Gradient Đáy */}
+                    <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none"></div>
+                    
+                    {/* KHỐI THÔNG TIN VÀ NÚT ĐẶT LỊCH (Góc Trái) */}
+                    <div className="absolute bottom-[100px] md:bottom-[40px] left-4 md:left-6 z-10 max-w-[75%] pointer-events-auto animate-slide-up">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-[10px] font-bold text-[#80BF84] mb-3 uppercase tracking-wider shadow-sm">
+                          <ShieldCheck size={12} /> Dịch vụ xác thực
+                        </div>
+                        
+                        <h3 className="text-2xl md:text-3xl font-black text-white leading-tight drop-shadow-xl mb-1.5 text-balance">
+                          {item.service_name}
+                        </h3>
+                        
+                        <p className="text-zinc-300 text-xs md:text-sm line-clamp-2 drop-shadow-md font-medium mb-4 pr-4">
+                          {item.description || "Liệu pháp phục hồi năng lượng, cân bằng thân tâm với công nghệ chăm sóc độc quyền."}
+                        </p>
+
+                        <button 
+                          onClick={() => {
+                            if (!user) { toast.info("Vui lòng đăng nhập!"); setIsAuthModalOpen(true); return; }
+                            setActiveService(item); setIsModalOpen(true);
+                          }}
+                          className="group flex items-center gap-3 pl-2 pr-5 py-2 bg-white/10 backdrop-blur-xl border border-white/20 text-white rounded-[2rem] hover:bg-white/20 active:scale-95 transition-all shadow-xl shadow-black/20"
+                        >
+                          <div className="w-10 h-10 bg-[#80BF84] rounded-full flex items-center justify-center text-zinc-950 shadow-sm group-hover:scale-110 transition-transform">
+                            <CalendarPlus size={20} strokeWidth={2.5} />
+                          </div>
+                          <div className="flex flex-col text-left">
+                            <span className="font-bold text-sm tracking-wide drop-shadow-sm leading-tight">Đặt gói này</span>
+                            <span className="text-[10px] font-semibold text-[#80BF84] leading-tight">{item.price.toLocaleString()} VND</span>
+                          </div>
+                        </button>
+                    </div>
+
+                    {/* THANH TƯƠNG TÁC (RIGHT SIDEBAR) */}
+                    <div className="absolute bottom-[100px] md:bottom-[40px] right-3 md:right-4 z-20 flex flex-col items-center gap-5 md:gap-6 pointer-events-auto">
+                        
+                        {/* Profile Creator */}
+                        <div className="relative mb-2 group cursor-pointer active:scale-90 transition-transform" onClick={() => toast.info("Xem hồ sơ chuyên gia")}>
+                          <div className="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-zinc-800 flex items-center justify-center shadow-lg">
+                             <UserIcon size={24} className="text-zinc-400" />
+                          </div>
+                          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-5 h-5 bg-rose-500 rounded-full flex items-center justify-center border-2 border-zinc-900 group-hover:scale-110 transition-transform">
+                             <Plus size={12} className="text-white" strokeWidth={3} />
+                          </div>
+                        </div>
+
+                        {/* Thả Tim */}
+                        <button onClick={() => toast.success("Đã thích!")} className="flex flex-col items-center gap-1 group">
+                          <div className="p-3 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white group-hover:bg-rose-500/20 group-hover:text-rose-400 group-hover:border-rose-500/50 transition-all">
+                            <Heart size={24} strokeWidth={2} className="group-active:scale-75 transition-transform" />
+                          </div>
+                          <span className="text-xs font-bold text-white drop-shadow-md">{(Math.random() * 10).toFixed(1)}k</span>
+                        </button>
+
+                        {/* Bình luận */}
+                        <button onClick={() => toast.info("Tính năng bình luận đang mở")} className="flex flex-col items-center gap-1 group">
+                          <div className="p-3 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white group-hover:bg-white/20 transition-all">
+                            <MessageCircle size={24} strokeWidth={2} className="group-active:scale-75 transition-transform" />
+                          </div>
+                          <span className="text-xs font-bold text-white drop-shadow-md">{Math.floor(Math.random() * 500) + 50}</span>
+                        </button>
+
+                        {/* Lưu */}
+                        <button onClick={() => toast.success("Đã lưu vào danh sách")} className="flex flex-col items-center gap-1 group">
+                          <div className="p-3 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white group-hover:bg-amber-500/20 group-hover:text-amber-400 group-hover:border-amber-500/50 transition-all">
+                            <Bookmark size={24} strokeWidth={2} className="group-active:scale-75 transition-transform" />
+                          </div>
+                          <span className="text-xs font-bold text-white drop-shadow-md">Lưu</span>
+                        </button>
+
+                        {/* Chia sẻ */}
+                        <button onClick={() => toast.info("Đã sao chép liên kết!")} className="flex flex-col items-center gap-1 group">
+                          <div className="p-3 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white group-hover:bg-white/20 transition-all">
+                            <Share2 size={24} strokeWidth={2} className="group-active:scale-75 transition-transform" />
+                          </div>
+                          <span className="text-xs font-bold text-white drop-shadow-md">Chia sẻ</span>
+                        </button>
+
+                    </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ========================================================= */}
+        {/* 3. MOBILE BOTTOM DOCK (CHỈ HIỂN THỊ TRÊN ĐIỆN THOẠI < md) */}
+        {/* ========================================================= */}
+        <div className="md:hidden absolute bottom-6 left-1/2 -translate-x-1/2 z-40 w-max animate-slide-up">
+          <div className="px-6 py-3.5 rounded-full flex items-center justify-center gap-8 shadow-2xl border border-white/10 bg-black/60 backdrop-blur-2xl">
+            <button className="text-[#80BF84] hover:text-white transition-colors group">
+              <Home size={26} strokeWidth={2.5} />
+            </button>
+            <button onClick={() => toast.info("Đang phát triển")} className="text-zinc-500 hover:text-white transition-colors group">
+              <Compass size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
+            </button>
+            <button onClick={() => toast.info("AI Trợ lý...")} className="relative -mt-10 group">
+              <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#80BF84] to-emerald-300 p-[2px] shadow-[0_0_20px_rgba(128,191,132,0.3)] group-hover:scale-105 transition-all">
+                <div className="w-full h-full bg-zinc-950 rounded-full flex items-center justify-center">
+                   <Sparkles size={26} className="text-[#80BF84]" strokeWidth={2.5} />
+                </div>
+              </div>
+            </button>
+            <button onClick={() => toast.info("Đang phát triển")} className="text-zinc-500 hover:text-white transition-colors group">
+              <Heart size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
+            </button>
+            <button onClick={handleProfileClick} className="text-zinc-500 hover:text-white transition-colors group">
+              <UserIcon size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
+            </button>
+          </div>
+        </div>
+
       </div>
 
       {/* --- MODAL AUTH --- */}
@@ -313,7 +375,7 @@ export default function UserFeed() {
             </button>
             <div className="mb-8 mt-2 text-center">
               <div className="w-16 h-16 bg-gradient-to-br from-[#80BF84] to-[#99BFF2] rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg shadow-[#80BF84]/30 rotate-12">
-                <Sparkles className="text-white w-8 h-8 -rotate-12" />
+                <Sparkles className="text-zinc-950 w-8 h-8 -rotate-12" />
               </div>
               <h3 className="text-2xl font-black text-slate-800 tracking-tight mb-2">
                 {isLoginMode ? "Chào mừng trở lại" : "Khởi tạo tài khoản"}
