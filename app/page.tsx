@@ -62,6 +62,14 @@ export default function UserFeed() {
   const [newComment, setNewComment] = useState("");
   const [isLoadingComments, setIsLoadingComments] = useState(false);
 
+  // --- STATE AI CHAT ASSISTANT ---
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatInput, setChatInput] = useState("");
+  const [isChatTyping, setIsChatTyping] = useState(false);
+  const [chatMessages, setChatMessages] = useState<{role: 'user' | 'bot', content: string}[]>([
+    { role: 'bot', content: 'Xin chào! Tôi là trợ lý AI Health của bạn. Tôi có thể lắng nghe những căng thẳng của bạn hoặc tư vấn dịch vụ trị liệu phù hợp. Bạn đang cảm thấy thế nào hôm nay?' }
+  ]);
+
   useEffect(() => {
     const initialize = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -211,28 +219,42 @@ export default function UserFeed() {
     toast.success("Đã sao chép liên kết vào khay nhớ tạm!");
   };
 
+  // --- LOGIC CHAT AI (FRONTEND MOCK) ---
+  const handleSendChatMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatInput.trim() || isChatTyping) return;
+
+    const userMessage = chatInput.trim();
+    setChatMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+    setChatInput("");
+    setIsChatTyping(true);
+
+    // Giả lập AI Đang gõ và phản hồi (Sẽ nối Backend ở Prompt sau)
+    setTimeout(() => {
+      setChatMessages(prev => [...prev, { 
+        role: 'bot', 
+        content: 'Tuyệt vời. Hiện tại bộ não AI Python của tôi đang được cấu hình ở Backend. Rất nhanh thôi, tôi sẽ có thể phân tích triệu chứng và đưa ra phác đồ trị liệu chuẩn xác nhất cho bạn!' 
+      }]);
+      setIsChatTyping(false);
+    }, 1500);
+  };
+
   const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeService || !user) return;
-    
     setIsSubmitting(true);
     const toastId = toast.loading("Đang thiết lập cổng bảo chứng Escrow...");
-
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!");
-
       const bookingRes = await fetch("https://ai-health-share-backend.onrender.com/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
         body: JSON.stringify({ user_id: user.id, service_id: activeService.id, affiliate_code: affiliateCode || null, total_amount: activeService.price })
       });
       const bookingData = await bookingRes.json();
-
       if (!bookingRes.ok) throw new Error(bookingData.detail || bookingData.message || "Lỗi ghi nhận giao dịch");
-
       const checkoutUrl = bookingData.checkout_url || bookingData.data?.checkout_url || bookingData.checkoutUrl || bookingData.data?.checkoutUrl;
-
       if (checkoutUrl) {
         toast.success("Đang chuyển hướng an toàn đến PayOS...", { id: toastId });
         window.location.href = checkoutUrl; 
@@ -289,8 +311,9 @@ export default function UserFeed() {
             <span className="text-sm tracking-wide">Yêu thích</span>
           </button>
 
+          {/* AI Assistant Button (DESKTOP) */}
           <div className="mt-8 px-2">
-            <button onClick={() => toast.info("AI Trợ lý đang được đánh thức...")} className="w-full relative group">
+            <button onClick={() => setIsChatOpen(true)} className="w-full relative group">
               <div className="absolute inset-0 bg-gradient-to-r from-[#80BF84] to-emerald-300 rounded-2xl blur-lg opacity-40 group-hover:opacity-70 transition-opacity duration-300"></div>
               <div className="relative flex items-center justify-center gap-3 px-4 py-4 rounded-2xl bg-gradient-to-tr from-[#80BF84] to-emerald-500 text-zinc-950 shadow-xl group-hover:scale-[1.02] transition-all">
                  <Sparkles size={20} strokeWidth={3} />
@@ -356,7 +379,6 @@ export default function UserFeed() {
 
                     {/* THANH TƯƠNG TÁC */}
                     <div className="absolute bottom-[100px] md:bottom-[40px] right-3 md:right-4 z-20 flex flex-col items-center gap-5 md:gap-6 pointer-events-auto">
-                        
                         <div className="relative mb-2 group cursor-pointer active:scale-90 transition-transform" onClick={() => toast.info("Xem hồ sơ chuyên gia")}>
                           <div className="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-zinc-800 flex items-center justify-center shadow-lg">
                              <UserIcon size={24} className="text-zinc-400" />
@@ -393,7 +415,6 @@ export default function UserFeed() {
                           </div>
                           <span className="text-xs font-bold text-white drop-shadow-md">Chia sẻ</span>
                         </button>
-
                     </div>
                 </div>
               </div>
@@ -406,11 +427,14 @@ export default function UserFeed() {
           <div className="px-8 py-3.5 rounded-full flex items-center justify-center gap-8 sm:gap-10 shadow-2xl border border-white/10 bg-black/60 backdrop-blur-2xl">
             <button className="text-[#80BF84] hover:text-white transition-colors group"><Home size={26} strokeWidth={2.5} /></button>
             <button onClick={() => toast.info("Đang phát triển")} className="text-zinc-500 hover:text-white transition-colors group"><Compass size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
-            <button onClick={() => toast.info("AI Trợ lý đang được đánh thức...")} className="relative -mt-10 group">
-              <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#80BF84] to-emerald-300 p-[2px] shadow-[0_0_20px_rgba(128,191,132,0.3)] group-hover:scale-105 transition-all">
+            
+            {/* AI Assistant Button (MOBILE) */}
+            <button onClick={() => setIsChatOpen(true)} className="relative -mt-10 group">
+              <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#80BF84] to-emerald-300 p-[2px] shadow-[0_0_20px_rgba(128,191,132,0.3)] group-hover:scale-105 group-hover:shadow-[0_0_25px_rgba(128,191,132,0.5)] transition-all duration-300">
                 <div className="w-full h-full bg-zinc-950 rounded-full flex items-center justify-center"><Sparkles size={26} className="text-[#80BF84]" strokeWidth={2.5} /></div>
               </div>
             </button>
+
             <button onClick={() => toast.info("Đang phát triển")} className="text-zinc-500 hover:text-white transition-colors group"><Heart size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
             <button onClick={handleProfileClick} className="text-zinc-500 hover:text-white transition-colors group"><UserIcon size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
           </div>
@@ -418,14 +442,12 @@ export default function UserFeed() {
 
       </div>
 
-      {/* --- GIAO DIỆN BÌNH LUẬN (ETHREAL GLASS) --- */}
-      {isCommentModalOpen && (
-        <div className="fixed inset-0 z-[100] flex justify-center items-end md:items-center md:justify-end md:p-6 pointer-events-auto">
-          {/* Backdrop tối mềm */}
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-500" onClick={() => setIsCommentModalOpen(false)}></div>
+      {/* --- AI CHAT ASSISTANT MODAL (ETHREAL GLASS) --- */}
+      {isChatOpen && (
+        <div className="fixed inset-0 z-[110] flex justify-center items-end md:items-center md:justify-end md:p-6 pointer-events-auto">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-500" onClick={() => setIsChatOpen(false)}></div>
           
-          {/* Modal Panel */}
-          <div className="relative w-full md:w-[420px] h-[75vh] md:h-[calc(100vh-48px)] bg-black/50 backdrop-blur-3xl rounded-t-[2.5rem] md:rounded-[2.5rem] border border-white/10 flex flex-col animate-slide-up shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden">
+          <div className="relative w-full md:w-[420px] h-[85vh] md:h-[calc(100vh-48px)] bg-black/50 backdrop-blur-3xl rounded-t-[2.5rem] md:rounded-[2.5rem] border border-white/10 flex flex-col animate-slide-up shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden">
              
              {/* Kéo vuốt (Mobile) */}
              <div className="md:hidden flex justify-center pt-3 pb-1 w-full absolute top-0 z-20">
@@ -433,6 +455,85 @@ export default function UserFeed() {
              </div>
              
              {/* Header */}
+             <div className="pt-8 md:pt-6 pb-4 px-6 border-b border-white/10 flex justify-between items-center bg-gradient-to-b from-black/40 to-transparent z-10 shadow-sm">
+               <div className="flex items-center gap-3">
+                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#80BF84] to-emerald-400 p-[1px] shadow-lg shadow-emerald-500/20">
+                    <div className="w-full h-full bg-zinc-950 rounded-full flex items-center justify-center">
+                      <Sparkles size={18} className="text-[#80BF84]"/>
+                    </div>
+                 </div>
+                 <div>
+                   <h3 className="text-base font-bold text-white leading-tight">AI Trợ Lý</h3>
+                   <p className="text-[10px] text-emerald-400 font-medium tracking-widest uppercase mt-0.5">Sẵn sàng lắng nghe</p>
+                 </div>
+               </div>
+               <button onClick={() => setIsChatOpen(false)} className="p-2 text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-all active:scale-90">
+                 <X size={18} strokeWidth={2.5}/>
+               </button>
+             </div>
+             
+             {/* Danh sách Chat */}
+             <div className="flex-1 overflow-y-auto p-5 space-y-5 no-scrollbar flex flex-col bg-gradient-to-b from-black/20 to-transparent">
+                {chatMessages.map((msg, idx) => (
+                  <div key={idx} className={`flex max-w-[85%] ${msg.role === 'user' ? 'self-end justify-end' : 'self-start justify-start'} animate-fade-in`}>
+                    {msg.role === 'bot' && (
+                      <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center shrink-0 mr-2 mt-auto shadow-inner border border-white/5">
+                        <Sparkles size={12} className="text-[#80BF84]"/>
+                      </div>
+                    )}
+                    <div className={`p-4 text-sm leading-relaxed ${msg.role === 'user' ? 'bg-gradient-to-tr from-[#80BF84] to-emerald-500 text-zinc-950 rounded-[1.5rem] rounded-tr-sm shadow-lg shadow-emerald-500/20 font-medium' : 'bg-white/10 text-zinc-100 rounded-[1.5rem] rounded-tl-sm border border-white/10 backdrop-blur-md'}`}>
+                      {msg.content}
+                    </div>
+                  </div>
+                ))}
+                
+                {/* Typing Indicator */}
+                {isChatTyping && (
+                  <div className="flex max-w-[85%] self-start justify-start animate-fade-in">
+                    <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center shrink-0 mr-2 mt-auto border border-white/5">
+                      <Sparkles size={12} className="text-[#80BF84] animate-pulse"/>
+                    </div>
+                    <div className="px-4 py-4 bg-white/5 rounded-[1.5rem] rounded-tl-sm border border-white/10 backdrop-blur-md flex items-center gap-1.5 h-[52px]">
+                      <div className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce"></div>
+                      <div className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce" style={{animationDelay: '0.15s'}}></div>
+                      <div className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce" style={{animationDelay: '0.3s'}}></div>
+                    </div>
+                  </div>
+                )}
+             </div>
+             
+             {/* Khung Soạn thảo */}
+             <div className="p-4 md:p-5 border-t border-white/10 bg-black/40 backdrop-blur-xl pb-8 md:pb-5">
+               <form onSubmit={handleSendChatMessage} className="flex items-end gap-3">
+                 <div className="flex-1 bg-white/5 border border-white/10 rounded-[1.5rem] p-1 flex items-center shadow-inner focus-within:border-emerald-500/50 focus-within:bg-white/10 transition-all">
+                   <input 
+                     type="text" 
+                     placeholder="Nhắn tin cho AI..." 
+                     className="w-full bg-transparent border-none px-4 py-2.5 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-0"
+                     value={chatInput}
+                     onChange={e => setChatInput(e.target.value)}
+                   />
+                   <button type="submit" disabled={!chatInput.trim() || isChatTyping} className="w-10 h-10 shrink-0 rounded-full bg-gradient-to-tr from-[#80BF84] to-emerald-400 text-zinc-950 flex items-center justify-center disabled:opacity-30 disabled:grayscale hover:scale-105 active:scale-95 transition-all mr-1 shadow-lg shadow-emerald-500/20">
+                     <Send size={16} strokeWidth={2.5} className="ml-[-2px]"/>
+                   </button>
+                 </div>
+               </form>
+             </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- GIAO DIỆN BÌNH LUẬN (ETHREAL GLASS) --- */}
+      {isCommentModalOpen && (
+        <div className="fixed inset-0 z-[100] flex justify-center items-end md:items-center md:justify-end md:p-6 pointer-events-auto">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-500" onClick={() => setIsCommentModalOpen(false)}></div>
+          
+          <div className="relative w-full md:w-[420px] h-[75vh] md:h-[calc(100vh-48px)] bg-black/50 backdrop-blur-3xl rounded-t-[2.5rem] md:rounded-[2.5rem] border border-white/10 flex flex-col animate-slide-up shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden">
+             
+             <div className="md:hidden flex justify-center pt-3 pb-1 w-full absolute top-0 z-20">
+               <div className="w-12 h-1.5 bg-white/20 rounded-full"></div>
+             </div>
+             
              <div className="pt-8 md:pt-6 pb-4 px-6 border-b border-white/10 flex justify-between items-center bg-gradient-to-b from-black/40 to-transparent z-10">
                <h3 className="text-lg font-bold text-white flex items-center gap-2">
                  Bình luận <span className="text-xs bg-white/10 px-2.5 py-0.5 rounded-full">{comments.length}</span>
@@ -442,7 +543,6 @@ export default function UserFeed() {
                </button>
              </div>
              
-             {/* Danh sách Comments */}
              <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
                {isLoadingComments ? (
                  <div className="text-center text-zinc-500 text-sm mt-10 animate-pulse">Đang tải bình luận...</div>
@@ -470,7 +570,6 @@ export default function UserFeed() {
                )}
              </div>
              
-             {/* Khung Soạn thảo (Pill Style) */}
              <div className="p-4 md:p-5 border-t border-white/10 bg-black/40 backdrop-blur-xl pb-8 md:pb-5">
                <form onSubmit={handlePostComment} className="flex items-end gap-3">
                  <div className="flex-1 bg-white/5 border border-white/10 rounded-[1.5rem] p-1 flex items-center shadow-inner focus-within:border-emerald-500/50 focus-within:bg-white/10 transition-all">
@@ -491,6 +590,7 @@ export default function UserFeed() {
         </div>
       )}
 
+      {/* --- MODAL AUTH & BOOKING GIỮ NGUYÊN DƯỚI ĐÂY --- */}
       {/* --- MODAL AUTH --- */}
       {isAuthModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in pointer-events-auto">
