@@ -143,89 +143,87 @@ export default function UserFeed() {
   }
 
   return (
-    <div className="h-[100dvh] w-full bg-[#F0F1F2] overflow-y-scroll snap-y snap-mandatory no-scrollbar relative">
+    <div className="h-[100dvh] w-full bg-black overflow-y-scroll snap-y snap-mandatory no-scrollbar relative">
       
       {/* HEADER (Light Glassmorphism) */}
       <div className="absolute top-0 w-full z-50 p-4 md:p-8 flex justify-between items-center pointer-events-none transition-all">
-        <h1 className="text-2xl font-black text-slate-800 tracking-tighter drop-shadow-sm pointer-events-auto flex items-center gap-1">
+        <h1 className="text-2xl font-black text-white tracking-tighter drop-shadow-md pointer-events-auto flex items-center gap-1">
           AI<span className="text-[#80BF84]">HEALTH</span>
         </h1>
         {user ? (
           <div className="flex items-center gap-3 pointer-events-auto animate-fade-in">
-            <div className="flex items-center gap-2 glass-panel px-4 py-2.5 rounded-full border-white/80">
+            <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md border border-white/20 px-4 py-2.5 rounded-full">
               <UserIcon size={16} className="text-[#80BF84]" />
-              <span className="text-sm font-semibold text-slate-700 truncate max-w-[120px]">{user.email.split("@")[0]}</span>
+              <span className="text-sm font-semibold text-white truncate max-w-[120px]">{user.email.split("@")[0]}</span>
             </div>
-            <button onClick={handleLogout} className="p-3 glass-panel text-[#734432] rounded-full hover:bg-white active:scale-90 transition-all shadow-sm">
+            <button onClick={handleLogout} className="p-3 bg-black/40 backdrop-blur-md border border-white/10 text-white rounded-full hover:bg-red-500/80 active:scale-90 transition-all shadow-sm">
               <LogOut size={18} />
             </button>
           </div>
         ) : (
           <button 
             onClick={() => setIsAuthModalOpen(true)}
-            className="pointer-events-auto px-6 py-3 glass-panel text-slate-800 font-bold rounded-full hover:bg-white/80 active:scale-95 transition-all shadow-sm flex items-center gap-2"
+            className="pointer-events-auto px-6 py-3 bg-white/20 backdrop-blur-md border border-white/30 text-white font-bold rounded-full hover:bg-white/30 active:scale-95 transition-all shadow-lg flex items-center gap-2"
           >
             Đăng nhập <ChevronRight size={16} className="text-[#80BF84]"/>
           </button>
         )}
       </div>
 
-      {/* FEED DỊCH VỤ - SỬA LẠI LAYOUT HIỂN THỊ VIDEO */}
+      {/* FEED DỊCH VỤ - BỐ CỤC CHUẨN TIKTOK/REELS */}
       {services.map((item, index) => {
         const videoNumber = (index % 3) + 1;
         return (
-          <div key={item.id} className="relative h-[100dvh] w-full snap-start snap-always bg-slate-100 overflow-hidden">
+          <div key={item.id} className="relative h-[100dvh] w-full snap-start snap-always bg-black overflow-hidden">
              
-             {/* 1. Nền Video hiển thị Full Screen */}
-             <video src={`/video-${videoNumber}.mp4`} className="absolute inset-0 w-full h-full object-cover mix-blend-multiply opacity-80" loop autoPlay muted playsInline />
+             {/* Nền Video hiển thị Toàn Màn Hình */}
+             <video src={`/video-${videoNumber}.mp4`} className="absolute inset-0 w-full h-full object-cover opacity-90" loop autoPlay muted playsInline />
              
-             {/* 2. Gradient chân trang để làm nổi bật Floating Dock */}
-             <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-slate-300/60 via-slate-200/10 to-transparent pointer-events-none backdrop-blur-[1px]"></div>
+             {/* Gradient chân trang (Đen mờ) để làm nổi bật chữ trắng */}
+             <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none"></div>
              
-             {/* 3. Floating Dock (Gọn gàng ở đáy màn hình) */}
-             <div className="absolute bottom-6 left-4 right-4 md:bottom-10 md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-3xl z-10 animate-slide-up">
-                <div className="glass-panel p-4 md:p-5 rounded-[2rem] flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-xl shadow-slate-900/5 hover:bg-white/50 transition-colors duration-500">
-                  
-                  {/* Thông tin dịch vụ */}
-                  <div className="flex-1">
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/60 border border-white/80 rounded-full text-[10px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">
-                      <ShieldCheck size={12} className="text-[#80BF84]" /> Xác thực
-                    </div>
-                    <h3 className="text-xl md:text-2xl font-black text-slate-800 leading-tight">
-                      {item.service_name}
-                    </h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-lg font-black text-[#80BF84]">{item.price.toLocaleString()} VND</span>
-                      <span className="text-slate-500 text-xs md:text-sm line-clamp-1 border-l border-slate-300/50 pl-2">
-                        {item.description || "Phục hồi năng lượng, cân bằng thân tâm."}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Nút Call-to-action */}
-                  <button 
-                    onClick={() => {
-                      if (!user) { toast.info("Vui lòng đăng nhập!"); setIsAuthModalOpen(true); return; }
-                      setActiveService(item); setIsModalOpen(true);
-                    }}
-                    className="w-full md:w-auto flex-shrink-0 group flex items-center justify-center gap-2 px-6 py-3.5 bg-[#26110F] text-white rounded-[1.5rem] hover:bg-[#80BF84] active:scale-95 transition-all shadow-md"
-                  >
-                    <span className="font-bold text-sm">Đặt lịch ngay</span>
-                    <CalendarPlus size={18} className="group-hover:rotate-12 transition-transform" />
-                  </button>
-
+             {/* 1. THÔNG TIN DỊCH VỤ (Góc Trái - Không viền khối) */}
+             <div className="absolute bottom-8 left-4 md:bottom-12 md:left-10 z-10 max-w-[65%] md:max-w-[50%] pointer-events-none animate-slide-up">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-black/30 backdrop-blur-md border border-white/20 rounded-full text-[10px] font-bold text-white mb-3 uppercase tracking-wider shadow-sm">
+                  <ShieldCheck size={12} className="text-[#80BF84]" /> Xác thực
+                </div>
+                <h3 className="text-2xl md:text-4xl font-black text-white leading-tight drop-shadow-lg mb-1 text-balance">
+                  {item.service_name}
+                </h3>
+                <div className="flex flex-col gap-1.5 mt-2">
+                  <span className="text-xl md:text-2xl font-black text-[#80BF84] drop-shadow-md tracking-tight">
+                    {item.price.toLocaleString()} VND
+                  </span>
+                  <span className="text-slate-200 text-xs md:text-sm line-clamp-2 drop-shadow-md font-medium">
+                    {item.description || "Phục hồi năng lượng, cân bằng thân tâm với công nghệ chăm sóc độc quyền."}
+                  </span>
                 </div>
              </div>
+
+             {/* 2. NÚT ĐẶT LỊCH (Góc Phải - Dạng "Island Pill" Nổi Bật) */}
+             <button 
+                onClick={() => {
+                  if (!user) { toast.info("Vui lòng đăng nhập!"); setIsAuthModalOpen(true); return; }
+                  setActiveService(item); setIsModalOpen(true);
+                }}
+                className="absolute bottom-8 right-4 md:bottom-12 md:right-10 z-20 group flex items-center gap-3 pl-2.5 pr-5 py-2.5 bg-[#80BF84]/90 backdrop-blur-xl border border-[#80BF84]/50 text-white rounded-[2rem] hover:bg-[#80BF84] active:scale-95 transition-all shadow-xl shadow-[#80BF84]/20 animate-fade-in"
+              >
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center text-[#80BF84] shadow-sm group-hover:rotate-12 group-hover:scale-105 transition-all">
+                  <CalendarPlus size={20} strokeWidth={2.5} />
+                </div>
+                <span className="font-bold text-sm md:text-base tracking-wide whitespace-nowrap drop-shadow-sm">Đặt lịch</span>
+              </button>
+
           </div>
         );
       })}
 
-      {/* --- CÁC MODAL ĐĂNG NHẬP VÀ ĐẶT LỊCH (GIỮ NGUYÊN VÌ NÓ LÀ POPUP OVERYLAY) --- */}
+      {/* --- CÁC MODAL OVERYLAY (GIỮ NGUYÊN) --- */}
       
       {/* Modal Auth */}
       {isAuthModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in">
-          <div className="absolute inset-0 bg-slate-200/40 backdrop-blur-md" onClick={() => setIsAuthModalOpen(false)}></div>
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xl" onClick={() => setIsAuthModalOpen(false)}></div>
           <div className="w-full max-w-sm glass-panel rounded-[3rem] p-8 relative z-10 shadow-2xl">
             <button onClick={() => setIsAuthModalOpen(false)} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-700 bg-white/50 rounded-full transition-all active:scale-90">
               <X size={20} strokeWidth={3} />
@@ -272,7 +270,7 @@ export default function UserFeed() {
       {/* Modal Đặt lịch */}
       {isModalOpen && activeService && user && (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in">
-          <div className="absolute inset-0 bg-slate-300/30 backdrop-blur-md" onClick={() => setIsModalOpen(false)}></div>
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xl" onClick={() => setIsModalOpen(false)}></div>
           <div className="w-full sm:max-w-md glass-panel sm:rounded-[3rem] rounded-t-[2.5rem] rounded-b-none p-6 md:p-8 relative z-10 shadow-2xl flex flex-col max-h-[90dvh]">
             <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mb-6 sm:hidden"></div>
             <div className="flex justify-between items-start mb-8">
