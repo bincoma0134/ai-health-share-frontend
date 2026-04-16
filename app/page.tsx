@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarPlus, X, User as UserIcon, ShieldCheck, Sparkles, Home, Compass, CalendarDays, MessageCircleHeart, Heart, MessageCircle, Bookmark, Share2, Plus } from "lucide-react";
+import { CalendarPlus, X, User as UserIcon, ShieldCheck, Sparkles, Home, Compass, CalendarDays, Heart, MessageCircle, Bookmark, Share2, Plus, Send } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
 
@@ -23,8 +23,18 @@ interface Service {
   price: number;
   likes_count?: number;
   saves_count?: number;
+  comments_count?: number;
   is_liked?: boolean;
   is_saved?: boolean;
+}
+
+interface Comment {
+  id: string;
+  user_id: string;
+  service_id: string;
+  content: string;
+  created_at: string;
+  users?: { email: string };
 }
 
 export default function UserFeed() {
@@ -45,8 +55,14 @@ export default function UserFeed() {
   const [affiliateCode, setAffiliateCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // --- STATE COMMENT ---
+  const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
+  const [activeCommentServiceId, setActiveCommentServiceId] = useState<string | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [newComment, setNewComment] = useState("");
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
+
   useEffect(() => {
-    // 1. Khởi tạo phiên làm việc và lấy dữ liệu
     const initialize = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user || null);
@@ -121,7 +137,6 @@ export default function UserFeed() {
       return;
     }
 
-    // 1. Optimistic Update (Cập nhật UI ngay lập tức để tạo độ mượt)
     setServices(prev => prev.map(s => {
       if (s.id === serviceId) {
         if (action === 'like') {
@@ -133,26 +148,63 @@ export default function UserFeed() {
       return s;
     }));
 
-    // 2. Gửi API chạy ngầm
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch(`https://ai-health-share-backend.onrender.com/interactions/${action}`, {
+      await fetch(`https://ai-health-share-backend.onrender.com/interactions/${action}`, {
         method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session?.access_token}`
-        },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` },
         body: JSON.stringify({ service_id: serviceId })
       });
-      const data = await res.json();
-      if (data.status !== "success") throw new Error("Ghi nhận thất bại");
     } catch (error) {
       toast.error(`Lỗi hệ thống khi thực hiện hành động.`);
-      fetchServices(user.id); // Revert lại dữ liệu cũ nếu lỗi
+      fetchServices(user.id); 
     }
   };
 
-  // --- LOGIC CHIA SẺ ---
+  // --- LOGIC BÌNH LUẬN ---
+  const handleOpenComments = async (serviceId: string) => {
+    setActiveCommentServiceId(serviceId);
+    setIsCommentModalOpen(true);
+    setIsLoadingComments(true);
+    try {
+       const res = await fetch(`https://ai-health-share-backend.onrender.com/comments/${serviceId}`);
+       const data = await res.json();
+       if (data.status === 'success') setComments(data.data);
+    } catch (e) {
+       toast.error("Không thể tải bình luận.");
+    } finally {
+       setIsLoadingComments(false);
+    }
+  };
+
+  const handlePostComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) {
+       toast.info("Vui lòng đăng nhập để bình luận!");
+       setIsCommentModalOpen(false);
+       setIsAuthModalOpen(true);
+       return;
+    }
+    if (!newComment.trim() || !activeCommentServiceId) return;
+
+    try {
+       const { data: { session } } = await supabase.auth.getSession();
+       const res = await fetch(`https://ai-health-share-backend.onrender.com/comments`, {
+         method: "POST",
+         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` },
+         body: JSON.stringify({ service_id: activeCommentServiceId, content: newComment.trim() })
+       });
+       const data = await res.json();
+       if (data.status === 'success') {
+          setComments([data.data, ...comments]); // Đẩy bình luận mới lên đầu
+          setNewComment("");
+          setServices(prev => prev.map(s => s.id === activeCommentServiceId ? {...s, comments_count: (s.comments_count || 0) + 1} : s));
+       }
+    } catch (e) {
+       toast.error("Lỗi khi gửi bình luận.");
+    }
+  };
+
   const handleShare = (serviceId: string) => {
     const link = `${window.location.origin}/?service=${serviceId}`;
     navigator.clipboard.writeText(link);
@@ -160,30 +212,35 @@ export default function UserFeed() {
   };
 
   const handleBooking = async (e: React.FormEvent) => {
-    // Logic booking giữ nguyên... (Để trống ở đây cho gọn, cậu tự thay bằng code booking chuẩn nhé, hoặc tôi sẽ gửi bản full nếu cần).
     e.preventDefault();
     if (!activeService || !user) return;
+    
     setIsSubmitting(true);
     const toastId = toast.loading("Đang thiết lập cổng bảo chứng Escrow...");
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Phiên đăng nhập đã hết hạn!");
+      if (!session) throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!");
+
       const bookingRes = await fetch("https://ai-health-share-backend.onrender.com/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
         body: JSON.stringify({ user_id: user.id, service_id: activeService.id, affiliate_code: affiliateCode || null, total_amount: activeService.price })
       });
       const bookingData = await bookingRes.json();
-      if (!bookingRes.ok) throw new Error(bookingData.detail || "Lỗi ghi nhận giao dịch");
+
+      if (!bookingRes.ok) throw new Error(bookingData.detail || bookingData.message || "Lỗi ghi nhận giao dịch");
+
       const checkoutUrl = bookingData.checkout_url || bookingData.data?.checkout_url || bookingData.checkoutUrl || bookingData.data?.checkoutUrl;
+
       if (checkoutUrl) {
-        toast.success("Đang chuyển hướng đến PayOS...", { id: toastId });
+        toast.success("Đang chuyển hướng an toàn đến PayOS...", { id: toastId });
         window.location.href = checkoutUrl; 
       } else {
-        toast.error("Hệ thống chưa tạo được link thanh toán.", { id: toastId });
+        toast.error("Hệ thống chưa tạo được link thanh toán. Vui lòng thử lại!", { id: toastId });
       }
     } catch (error: any) {
-      toast.error(error.message, { id: toastId });
+      toast.error(`Lỗi hệ thống: ${error.message}`, { id: toastId });
     } finally {
       setIsSubmitting(false);
     } 
@@ -310,7 +367,7 @@ export default function UserFeed() {
                           </div>
                         </div>
 
-                        {/* NÚT THẢ TIM (Tương tác thật) */}
+                        {/* NÚT THẢ TIM */}
                         <button onClick={() => handleInteraction(item.id, 'like')} className="flex flex-col items-center gap-1 group">
                           <div className={`p-3 rounded-full backdrop-blur-md transition-all ${item.is_liked ? 'bg-rose-500/20 text-rose-500 border border-rose-500/50' : 'bg-black/40 border border-white/10 text-white group-hover:bg-rose-500/20 group-hover:text-rose-400 group-hover:border-rose-500/50'}`}>
                             <Heart size={24} strokeWidth={2} className={`group-active:scale-75 transition-transform ${item.is_liked ? 'fill-rose-500' : ''}`} />
@@ -318,14 +375,15 @@ export default function UserFeed() {
                           <span className="text-xs font-bold text-white drop-shadow-md">{item.likes_count || 0}</span>
                         </button>
 
-                        <button onClick={() => toast.info("Tính năng bình luận đang mở")} className="flex flex-col items-center gap-1 group">
+                        {/* NÚT BÌNH LUẬN */}
+                        <button onClick={() => handleOpenComments(item.id)} className="flex flex-col items-center gap-1 group">
                           <div className="p-3 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white group-hover:bg-white/20 transition-all">
                             <MessageCircle size={24} strokeWidth={2} className="group-active:scale-75 transition-transform" />
                           </div>
-                          <span className="text-xs font-bold text-white drop-shadow-md">{Math.floor(Math.random() * 50) + 12}</span>
+                          <span className="text-xs font-bold text-white drop-shadow-md">{item.comments_count || 0}</span>
                         </button>
 
-                        {/* NÚT LƯU BOOKMARK (Tương tác thật) */}
+                        {/* NÚT LƯU BOOKMARK */}
                         <button onClick={() => handleInteraction(item.id, 'save')} className="flex flex-col items-center gap-1 group">
                           <div className={`p-3 rounded-full backdrop-blur-md transition-all ${item.is_saved ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50' : 'bg-black/40 border border-white/10 text-white group-hover:bg-amber-500/20 group-hover:text-amber-400 group-hover:border-amber-500/50'}`}>
                             <Bookmark size={24} strokeWidth={2} className={`group-active:scale-75 transition-transform ${item.is_saved ? 'fill-amber-400' : ''}`} />
@@ -333,7 +391,7 @@ export default function UserFeed() {
                           <span className="text-xs font-bold text-white drop-shadow-md">{item.saves_count || 0}</span>
                         </button>
 
-                        {/* NÚT CHIA SẺ (Tương tác thật) */}
+                        {/* NÚT CHIA SẺ */}
                         <button onClick={() => handleShare(item.id)} className="flex flex-col items-center gap-1 group">
                           <div className="p-3 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white group-hover:bg-white/20 transition-all">
                             <Share2 size={24} strokeWidth={2} className="group-active:scale-75 transition-transform" />
@@ -351,38 +409,75 @@ export default function UserFeed() {
         {/* 3. MOBILE BOTTOM DOCK TIKTOK (Chỉ < md) */}
         <div className="md:hidden absolute bottom-6 left-1/2 -translate-x-1/2 z-40 w-max animate-slide-up">
           <div className="px-8 py-3.5 rounded-full flex items-center justify-center gap-8 sm:gap-10 shadow-2xl border border-white/10 bg-black/60 backdrop-blur-2xl">
-            <button className="text-[#80BF84] hover:text-white transition-colors group">
-              <Home size={26} strokeWidth={2.5} />
-            </button>
-            <button onClick={() => toast.info("Đang phát triển")} className="text-zinc-500 hover:text-white transition-colors group">
-              <Compass size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
-            </button>
+            <button className="text-[#80BF84] hover:text-white transition-colors group"><Home size={26} strokeWidth={2.5} /></button>
+            <button onClick={() => toast.info("Đang phát triển")} className="text-zinc-500 hover:text-white transition-colors group"><Compass size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
             <button onClick={() => toast.info("AI Trợ lý đang được đánh thức...")} className="relative -mt-10 group">
-              <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#80BF84] to-emerald-300 p-[2px] shadow-[0_0_20px_rgba(128,191,132,0.3)] group-hover:scale-105 group-hover:shadow-[0_0_25px_rgba(128,191,132,0.5)] transition-all duration-300">
-                <div className="w-full h-full bg-zinc-950 rounded-full flex items-center justify-center">
-                   <Sparkles size={26} className="text-[#80BF84]" strokeWidth={2.5} />
-                </div>
+              <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#80BF84] to-emerald-300 p-[2px] shadow-[0_0_20px_rgba(128,191,132,0.3)] group-hover:scale-105 transition-all">
+                <div className="w-full h-full bg-zinc-950 rounded-full flex items-center justify-center"><Sparkles size={26} className="text-[#80BF84]" strokeWidth={2.5} /></div>
               </div>
             </button>
-            <button onClick={() => toast.info("Đang phát triển")} className="text-zinc-500 hover:text-white transition-colors group">
-              <Heart size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
-            </button>
-            <button onClick={handleProfileClick} className="text-zinc-500 hover:text-white transition-colors group">
-              <UserIcon size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
-            </button>
+            <button onClick={() => toast.info("Đang phát triển")} className="text-zinc-500 hover:text-white transition-colors group"><Heart size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
+            <button onClick={handleProfileClick} className="text-zinc-500 hover:text-white transition-colors group"><UserIcon size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
           </div>
         </div>
 
       </div>
+
+      {/* --- GIAO DIỆN HIỂN THỊ BÌNH LUẬN (COMMENT MODAL/BOTTOM SHEET) --- */}
+      {isCommentModalOpen && (
+        <div className="fixed inset-0 z-[90] flex justify-end items-end md:items-stretch pointer-events-auto animate-fade-in">
+          <div className="absolute inset-0 bg-black/20 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none" onClick={() => setIsCommentModalOpen(false)}></div>
+          
+          <div className="relative w-full md:w-[400px] h-[70vh] md:h-full bg-zinc-900 md:bg-black/80 md:backdrop-blur-3xl rounded-t-[2rem] md:rounded-none border-t md:border-t-0 md:border-l border-white/10 flex flex-col animate-slide-up shadow-2xl">
+             <div className="p-5 border-b border-white/10 flex justify-between items-center">
+               <h3 className="text-lg font-bold text-white">Bình luận ({comments.length})</h3>
+               <button onClick={() => setIsCommentModalOpen(false)} className="p-2 text-zinc-400 hover:text-white bg-white/5 rounded-full transition-colors"><X size={20}/></button>
+             </div>
+             
+             <div className="flex-1 overflow-y-auto p-5 space-y-5 no-scrollbar">
+               {isLoadingComments ? (
+                 <div className="text-center text-zinc-500 text-sm mt-10">Đang tải bình luận...</div>
+               ) : comments.length === 0 ? (
+                 <div className="text-center text-zinc-500 text-sm mt-10">Chưa có bình luận nào. Hãy là người đầu tiên!</div>
+               ) : (
+                 comments.map(c => (
+                   <div key={c.id} className="flex gap-3">
+                     <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center flex-shrink-0">
+                        <UserIcon size={14} className="text-zinc-400"/>
+                     </div>
+                     <div className="flex-1">
+                       <p className="text-xs text-zinc-400 font-bold mb-1">{c.users?.email?.split('@')[0] || "Người dùng"} <span className="font-normal opacity-50 ml-1 text-[10px]">{new Date(c.created_at).toLocaleDateString('vi-VN')}</span></p>
+                       <p className="text-sm text-zinc-200 leading-relaxed">{c.content}</p>
+                     </div>
+                   </div>
+                 ))
+               )}
+             </div>
+             
+             <div className="p-4 border-t border-white/10 bg-zinc-950 md:bg-transparent pb-8 md:pb-4">
+               <form onSubmit={handlePostComment} className="flex gap-3">
+                 <input 
+                   type="text" 
+                   placeholder="Thêm bình luận..." 
+                   className="flex-1 bg-white/5 border border-white/10 rounded-full px-5 py-3 text-sm text-white focus:outline-none focus:border-[#80BF84] transition-colors"
+                   value={newComment}
+                   onChange={e => setNewComment(e.target.value)}
+                 />
+                 <button type="submit" disabled={!newComment.trim()} className="w-12 h-12 rounded-full bg-[#80BF84] text-black flex items-center justify-center disabled:opacity-50 hover:bg-emerald-400 transition-all active:scale-95">
+                   <Send size={18} strokeWidth={2.5}/>
+                 </button>
+               </form>
+             </div>
+          </div>
+        </div>
+      )}
 
       {/* --- MODAL AUTH --- */}
       {isAuthModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in pointer-events-auto">
           <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-xl" onClick={() => setIsAuthModalOpen(false)}></div>
           <div className="w-full max-w-sm glass-panel rounded-[3rem] p-8 relative z-10 shadow-2xl">
-            <button onClick={() => setIsAuthModalOpen(false)} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-700 bg-white/50 rounded-full transition-all active:scale-90">
-              <X size={20} strokeWidth={3} />
-            </button>
+            <button onClick={() => setIsAuthModalOpen(false)} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-700 bg-white/50 rounded-full transition-all active:scale-90"><X size={20} strokeWidth={3} /></button>
             <div className="mb-8 mt-2 text-center">
               <div className="w-16 h-16 bg-gradient-to-br from-[#80BF84] to-[#99BFF2] rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg shadow-[#80BF84]/30 rotate-12">
                 <Sparkles className="text-zinc-950 w-8 h-8 -rotate-12" />
@@ -405,7 +500,7 @@ export default function UserFeed() {
         </div>
       )}
 
-      {/* --- MODAL ĐẶT LỊCH CHUẨN XÁC --- */}
+      {/* --- MODAL ĐẶT LỊCH --- */}
       {isModalOpen && activeService && user && (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in pointer-events-auto">
           <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-xl" onClick={() => setIsModalOpen(false)}></div>
@@ -414,13 +509,9 @@ export default function UserFeed() {
             <div className="flex justify-between items-start mb-8">
               <div>
                 <h3 className="text-2xl font-black text-slate-800 tracking-tight">Xác nhận lịch hẹn</h3>
-                <div className="flex items-center gap-1 mt-1.5 text-xs font-bold text-[#80BF84] bg-white/60 border border-white/80 w-fit px-2 py-1 rounded-md">
-                   <ShieldCheck size={14}/> Thanh toán bảo chứng Escrow
-                </div>
+                <div className="flex items-center gap-1 mt-1.5 text-xs font-bold text-[#80BF84] bg-white/60 border border-white/80 w-fit px-2 py-1 rounded-md"><ShieldCheck size={14}/> Thanh toán bảo chứng Escrow</div>
               </div>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 bg-slate-100 text-slate-500 rounded-full hover:bg-slate-200 active:scale-90 transition-all">
-                <X size={20} strokeWidth={3} />
-              </button>
+              <button onClick={() => setIsModalOpen(false)} className="p-2 bg-slate-100 text-slate-500 rounded-full hover:bg-slate-200 active:scale-90 transition-all"><X size={20} strokeWidth={3} /></button>
             </div>
             
             <div className="mb-8 p-6 bg-white/60 border border-white rounded-[2rem] shadow-sm relative overflow-hidden flex-shrink-0">
@@ -429,9 +520,7 @@ export default function UserFeed() {
               <p className="text-xl text-slate-800 font-black leading-tight mb-6 relative z-10">{activeService.service_name}</p>
               <div className="flex justify-between items-end border-t border-slate-200/50 pt-4 relative z-10">
                 <p className="text-sm font-semibold text-slate-500">Tổng thanh toán</p>
-                <p className="text-2xl text-[#80BF84] font-black tracking-tighter">
-                  {activeService.price.toLocaleString()} <span className="text-sm text-slate-400 font-bold tracking-widest uppercase">VND</span>
-                </p>
+                <p className="text-2xl text-[#80BF84] font-black tracking-tighter">{activeService.price.toLocaleString()} <span className="text-sm text-slate-400 font-bold tracking-widest uppercase">VND</span></p>
               </div>
             </div>
 
@@ -439,11 +528,7 @@ export default function UserFeed() {
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2 ml-2">Mã chuyên gia / Ưu đãi (Tùy chọn)</label>
                 <div className="relative">
-                  <input 
-                    type="text" placeholder="Nhập mã giới thiệu..."
-                    className="w-full px-5 py-4 glass-input font-medium uppercase"
-                    value={affiliateCode} onChange={(e) => setAffiliateCode(e.target.value)}
-                  />
+                  <input type="text" placeholder="Nhập mã giới thiệu..." className="w-full px-5 py-4 glass-input font-medium uppercase" value={affiliateCode} onChange={(e) => setAffiliateCode(e.target.value)} />
                   {affiliateCode && <ShieldCheck className="absolute right-4 top-1/2 -translate-y-1/2 text-[#80BF84]" size={20} />}
                 </div>
               </div>
