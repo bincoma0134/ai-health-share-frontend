@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarPlus, X, User as UserIcon, LogOut } from "lucide-react";
+import { CalendarPlus, X, User as UserIcon, LogOut, ChevronRight, ShieldCheck } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
-import { toast } from "sonner"; // IMPORT THƯ VIỆN TOAST
+import { toast } from "sonner";
 
-// --- KHỞI TẠO SUPABASE CLIENT (BẢO MẬT 100%) ---
+// --- KHỞI TẠO SUPABASE CLIENT ---
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -27,7 +27,7 @@ export default function UserFeed() {
   const [services, setServices] = useState<Service[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  // --- STATE AUTH (ĐĂNG NHẬP) ---
+  // --- STATE AUTH ---
   const [user, setUser] = useState<any>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isLoginMode, setIsLoginMode] = useState(true);
@@ -42,9 +42,7 @@ export default function UserFeed() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user || null);
-    });
+    supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user || null));
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
@@ -63,19 +61,14 @@ export default function UserFeed() {
     };
     fetchServices();
 
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
+    return () => authListener.subscription.unsubscribe();
   }, []);
 
-  // --- HÀM XỬ LÝ AUTH ---
+  // --- XỬ LÝ AUTH ---
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthLoading(true);
-    
-    // Tạo 1 loading toast để người dùng biết hệ thống đang xử lý
     const toastId = toast.loading("Đang xử lý xác thực..."); 
-    
     try {
       if (isLoginMode) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -101,65 +94,54 @@ export default function UserFeed() {
     toast.success("Đã đăng xuất an toàn.");
   };
 
-// --- HÀM XỬ LÝ ĐẶT LỊCH (ĐÃ TÍCH HỢP PAYOS) ---
-const handleBooking = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!activeService || !user) return;
-  
-  setIsSubmitting(true);
-  const toastId = toast.loading("Đang khởi tạo cổng thanh toán an toàn...");
+  // --- XỬ LÝ ĐẶT LỊCH ---
+  const handleBooking = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeService || !user) return;
+    
+    setIsSubmitting(true);
+    const toastId = toast.loading("Đang khởi tạo cổng thanh toán an toàn...");
 
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!");
 
-    const bookingRes = await fetch("https://ai-health-share-backend.onrender.com/bookings", {
-      method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${session.access_token}` 
-      },
-      body: JSON.stringify({
-        user_id: user.id,
-        service_id: activeService.id,
-        affiliate_code: affiliateCode || null,
-        total_amount: activeService.price
-      })
-    });
-    const bookingData = await bookingRes.json();
+      const bookingRes = await fetch("https://ai-health-share-backend.onrender.com/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
+        body: JSON.stringify({
+          user_id: user.id,
+          service_id: activeService.id,
+          affiliate_code: affiliateCode || null,
+          total_amount: activeService.price
+        })
+      });
+      const bookingData = await bookingRes.json();
 
-    if (!bookingRes.ok || bookingData.status !== "success") {
-      throw new Error(bookingData.detail || "Lỗi ghi nhận giao dịch");
-    }
+      if (!bookingRes.ok || bookingData.status !== "success") throw new Error(bookingData.detail || "Lỗi ghi nhận giao dịch");
 
-    // 🚀 NẾU BACKEND TRẢ VỀ LINK PAYOS -> CHUYỂN HƯỚNG KHÁCH ĐI QUÉT MÃ
-    // 🚀 NẾU BACKEND TRẢ VỀ LINK PAYOS -> CHUYỂN HƯỚNG SANG TAB MỚI
-    if (bookingData.checkout_url) {
-      toast.success("Đang mở cổng thanh toán ở tab mới...", { id: toastId });
-      // Mở PayOS ở một Tab (cửa sổ) mới
-      window.open(bookingData.checkout_url, '_blank'); 
-      
-      // Đóng Modal đặt lịch và reset form ở Tab hiện tại
-      setIsModalOpen(false);
-      setAffiliateCode("");
-    } else {
-      // Fallback dự phòng
-      toast.success("🎉 Đặt lịch thành công! Hệ thống đã ghi nhận.", { id: toastId });
-      setIsModalOpen(false);
-      setAffiliateCode("");
-    }
-
-  } catch (error: any) {
-    toast.error(`Lỗi hệ thống: ${error.message}`, { id: toastId });
-    setIsSubmitting(false); // Chỉ mở lại nút nếu có lỗi
-  } 
-};
-
+      if (bookingData.checkout_url) {
+        toast.success("Đang mở cổng thanh toán ở tab mới...", { id: toastId });
+        window.open(bookingData.checkout_url, '_blank'); 
+        setIsModalOpen(false);
+        setAffiliateCode("");
+      } else {
+        toast.success("🎉 Đặt lịch thành công! Hệ thống đã ghi nhận.", { id: toastId });
+        setIsModalOpen(false);
+        setAffiliateCode("");
+      }
+    } catch (error: any) {
+      toast.error(`Lỗi hệ thống: ${error.message}`, { id: toastId });
+    } finally {
+      setIsSubmitting(false);
+    } 
+  };
 
   if (isLoading) {
     return (
-      <div className="h-[100dvh] w-full bg-black flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+      <div className="h-[100dvh] w-full bg-zinc-950 flex flex-col items-center justify-center gap-4">
+        <div className="w-10 h-10 border-4 border-zinc-800 border-t-emerald-500 rounded-full animate-spin"></div>
+        <p className="text-zinc-500 text-sm animate-pulse">Đang tải không gian sống khỏe...</p>
       </div>
     );
   }
@@ -167,23 +149,25 @@ const handleBooking = async (e: React.FormEvent) => {
   return (
     <div className="h-[100dvh] w-full bg-black overflow-y-scroll snap-y snap-mandatory no-scrollbar relative">
       
-      {/* HEADER */}
-      <div className="absolute top-0 w-full z-50 p-4 flex justify-between items-center bg-gradient-to-b from-black/80 to-transparent">
-        <h1 className="text-xl font-bold text-white tracking-wider">HEALTH<span className="text-emerald-400">SHARE</span></h1>
+      {/* HEADER (Floating Glassmorphism) */}
+      <div className="absolute top-0 w-full z-50 p-4 md:p-6 flex justify-between items-center bg-gradient-to-b from-black/80 via-black/40 to-transparent pointer-events-none">
+        <h1 className="text-2xl font-bold text-white tracking-widest drop-shadow-md pointer-events-auto">
+          AI<span className="text-emerald-400">HEALTH</span>
+        </h1>
         {user ? (
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-zinc-900/80 px-3 py-1.5 rounded-full border border-zinc-700 backdrop-blur-sm">
+          <div className="flex items-center gap-3 pointer-events-auto">
+            <div className="flex items-center gap-2 glass-panel px-4 py-2 rounded-full">
               <UserIcon size={16} className="text-emerald-400" />
-              <span className="text-xs font-medium text-white truncate max-w-[100px]">{user.email.split("@")[0]}</span>
+              <span className="text-sm font-medium text-white truncate max-w-[120px]">{user.email.split("@")[0]}</span>
             </div>
-            <button onClick={handleLogout} className="p-2 bg-red-500/20 text-red-400 rounded-full hover:bg-red-500/40 transition">
-              <LogOut size={16} />
+            <button onClick={handleLogout} className="p-2.5 glass-panel text-red-400 rounded-full hover:bg-red-500/20 active:scale-95 transition-all">
+              <LogOut size={18} />
             </button>
           </div>
         ) : (
           <button 
             onClick={() => setIsAuthModalOpen(true)}
-            className="px-4 py-2 bg-emerald-500 text-white text-sm font-bold rounded-full shadow-lg shadow-emerald-500/30 hover:bg-emerald-400 transition"
+            className="pointer-events-auto px-6 py-2.5 bg-white text-black text-sm font-bold rounded-full shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:scale-105 active:scale-95 transition-all"
           >
             Đăng nhập
           </button>
@@ -194,18 +178,26 @@ const handleBooking = async (e: React.FormEvent) => {
       {services.map((item, index) => {
         const videoNumber = (index % 3) + 1;
         return (
-          <div key={item.id} className="relative h-[100dvh] w-full snap-start snap-always">
-             <video src={`/video-${videoNumber}.mp4`} className="w-full h-full object-cover" loop autoPlay muted playsInline />
-             <div className="absolute bottom-0 w-full h-2/3 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none" />
+          <div key={item.id} className="relative h-[100dvh] w-full snap-start snap-always bg-zinc-900 overflow-hidden">
+             {/* Fallback màu nền & Video */}
+             <video src={`/video-${videoNumber}.mp4`} className="absolute inset-0 w-full h-full object-cover opacity-90 mix-blend-lighten" loop autoPlay muted playsInline />
              
-             <div className="absolute bottom-6 left-4 right-16 text-white">
-                <h3 className="text-xl font-bold mb-2">{item.service_name}</h3>
-                <div className="inline-flex px-3 py-1.5 bg-white text-black text-sm font-bold rounded-lg">
+             {/* Smooth Gradients tạo chiều sâu */}
+             <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/90 pointer-events-none" />
+             
+             {/* Nội dung dịch vụ */}
+             <div className="absolute bottom-8 left-4 right-20 md:left-8 text-white z-10 drop-shadow-xl">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-xs font-medium text-zinc-200 mb-3 border border-white/10">
+                  <ShieldCheck size={14} className="text-emerald-400"/> Dịch vụ được xác thực
+                </div>
+                <h3 className="text-3xl font-bold mb-3 leading-tight text-balance">{item.service_name}</h3>
+                <div className="inline-flex items-center px-4 py-2 bg-emerald-500/20 backdrop-blur-md border border-emerald-500/30 text-emerald-300 text-lg font-bold rounded-2xl">
                   {item.price.toLocaleString()} VND
                 </div>
              </div>
 
-            <div className="absolute bottom-6 right-4 flex flex-col gap-6 items-center text-white">
+            {/* Nút Call-to-Action (CTA) */}
+            <div className="absolute bottom-8 right-4 md:right-8 flex flex-col gap-6 items-center text-white z-10">
               <button 
                 onClick={() => {
                   if (!user) {
@@ -216,107 +208,110 @@ const handleBooking = async (e: React.FormEvent) => {
                   setActiveService(item);
                   setIsModalOpen(true);
                 }}
-                className="flex flex-col items-center gap-1 mt-4 group cursor-pointer animate-bounce"
+                className="group flex flex-col items-center gap-2 cursor-pointer transition-all hover:scale-110 active:scale-95"
               >
-                <div className="p-3.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 shadow-lg shadow-emerald-500/30">
+                <div className="p-4 rounded-full bg-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.4)] group-hover:shadow-[0_0_40px_rgba(16,185,129,0.6)] transition-all">
                   <CalendarPlus size={28} className="text-white" />
                 </div>
-                <span className="text-xs font-bold text-emerald-400">Đặt lịch</span>
+                <span className="text-sm font-bold text-white drop-shadow-md">Đặt lịch</span>
               </button>
             </div>
           </div>
         );
       })}
 
-      {/* --- FORM MODAL AUTH --- */}
+      {/* --- FORM MODAL AUTH (Refined) --- */}
       {isAuthModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in">
-          <div className="w-full max-w-sm bg-zinc-900 rounded-3xl p-6 border border-zinc-800 relative">
-            <button onClick={() => setIsAuthModalOpen(false)} className="absolute top-4 right-4 p-2 text-zinc-400 hover:text-white">
-              <X size={20} />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-lg p-4 animate-fade-in">
+          <div className="w-full max-w-sm glass-panel rounded-[2rem] p-8 relative">
+            <button onClick={() => setIsAuthModalOpen(false)} className="absolute top-4 right-4 p-2 text-zinc-400 hover:text-white hover:rotate-90 transition-all">
+              <X size={24} />
             </button>
             
-            <h3 className="text-2xl font-bold text-white text-center mb-6">
-              {isLoginMode ? "Đăng Nhập" : "Tạo Tài Khoản"}
-            </h3>
+            <div className="mb-8 text-center">
+              <h3 className="text-3xl font-bold text-white tracking-tight mb-2">
+                {isLoginMode ? "Mừng trở lại" : "Tạo Tài Khoản"}
+              </h3>
+              <p className="text-zinc-400 text-sm">Hành trình sống khỏe bắt đầu từ đây.</p>
+            </div>
 
             <form onSubmit={handleAuth} className="space-y-4">
               <input 
                 type="email" required placeholder="Email của bạn"
-                className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:border-emerald-500 focus:outline-none"
+                className="w-full px-5 py-4 bg-black/50 border border-zinc-800 rounded-2xl text-white placeholder:text-zinc-500 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all outline-none"
                 value={email} onChange={(e) => setEmail(e.target.value)}
               />
               <input 
                 type="password" required placeholder="Mật khẩu (tối thiểu 6 ký tự)" minLength={6}
-                className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:border-emerald-500 focus:outline-none"
+                className="w-full px-5 py-4 bg-black/50 border border-zinc-800 rounded-2xl text-white placeholder:text-zinc-500 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all outline-none"
                 value={password} onChange={(e) => setPassword(e.target.value)}
               />
               
               <button 
                 type="submit" disabled={authLoading}
-                className="w-full py-3 bg-emerald-500 text-white font-bold rounded-xl transition disabled:opacity-50"
+                className="w-full py-4 mt-2 bg-white text-black font-bold text-lg rounded-2xl hover:bg-zinc-200 active:scale-95 transition-all disabled:opacity-50"
               >
-                {authLoading ? "Đang xử lý..." : (isLoginMode ? "Vào ứng dụng" : "Đăng ký ngay")}
+                {authLoading ? "Đang xử lý..." : (isLoginMode ? "Đăng nhập" : "Đăng ký")}
               </button>
             </form>
 
-            <div className="mt-6">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-zinc-800"></div></div>
-                <div className="relative flex justify-center text-sm"><span className="px-2 bg-zinc-900 text-zinc-500">Hoặc tiếp tục với</span></div>
-              </div>
-              
-              <button 
-                onClick={() => toast.info("Tính năng đăng nhập Google đang được tích hợp. Vui lòng dùng Email!")}
-                className="w-full mt-4 py-3 flex items-center justify-center gap-2 bg-white text-black font-bold rounded-xl hover:bg-gray-100 transition"
-              >
-                <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
-                Google (Sắp ra mắt)
-              </button>
-            </div>
-
-            <p className="mt-6 text-center text-sm text-zinc-400">
+            <p className="mt-8 text-center text-sm text-zinc-400">
               {isLoginMode ? "Chưa có tài khoản? " : "Đã có tài khoản? "}
-              <button type="button" onClick={() => setIsLoginMode(!isLoginMode)} className="text-emerald-400 font-bold hover:underline">
-                {isLoginMode ? "Đăng ký" : "Đăng nhập"}
+              <button type="button" onClick={() => setIsLoginMode(!isLoginMode)} className="text-white font-bold hover:underline">
+                {isLoginMode ? "Đăng ký ngay" : "Đăng nhập"}
               </button>
             </p>
           </div>
         </div>
       )}
 
-      {/* --- FORM MODAL ĐẶT LỊCH --- */}
+      {/* --- FORM MODAL ĐẶT LỊCH (Premium Step-by-Step Feel) --- */}
       {isModalOpen && activeService && user && (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm transition-opacity">
-          <div className="w-full max-w-md bg-zinc-900 rounded-t-3xl p-6 border-t border-zinc-800 animate-slide-up">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-white">Xác nhận Đặt lịch</h3>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 bg-zinc-800 rounded-full text-gray-400 hover:text-white">
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-lg sm:p-4 transition-opacity">
+          <div className="w-full sm:max-w-md bg-zinc-950 sm:rounded-[2.5rem] rounded-t-[2.5rem] p-6 sm:p-8 border border-zinc-800/50 shadow-2xl animate-slide-up">
+            
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h3 className="text-2xl font-bold text-white">Xác nhận đặt lịch</h3>
+                <p className="text-sm text-zinc-400 mt-1">Hoàn tất thủ tục bảo chứng an toàn</p>
+              </div>
+              <button onClick={() => setIsModalOpen(false)} className="p-2 bg-zinc-900 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all">
                 <X size={20} />
               </button>
             </div>
             
-            <div className="mb-6 p-4 bg-zinc-800 rounded-xl">
-              <p className="text-sm text-gray-400">Dịch vụ đang chọn:</p>
-              <p className="text-white font-semibold">{activeService.service_name}</p>
-              <p className="text-emerald-400 font-bold mt-1">{activeService.price.toLocaleString()} VND</p>
+            {/* Thẻ hiển thị Dịch vụ giống Apple Pay */}
+            <div className="mb-6 p-5 glass-panel rounded-3xl relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
+              <p className="text-xs text-zinc-400 uppercase tracking-wider mb-1 font-semibold">Gói Dịch Vụ</p>
+              <p className="text-lg text-white font-bold leading-tight mb-4 pr-8">{activeService.service_name}</p>
+              
+              <div className="flex justify-between items-end">
+                <p className="text-xs text-zinc-500">Thanh toán qua Escrow</p>
+                <p className="text-2xl text-emerald-400 font-black">{activeService.price.toLocaleString()} <span className="text-sm">VND</span></p>
+              </div>
             </div>
 
-            <form onSubmit={handleBooking} className="flex flex-col gap-4">
+            <form onSubmit={handleBooking} className="flex flex-col gap-5">
               <div>
-                <label className="block text-sm text-zinc-400 mb-1">Mã giảm giá / Giới thiệu (Nếu có)</label>
-                <input 
-                  type="text" placeholder="Nhập mã KOL..."
-                  className="w-full px-4 py-3 bg-zinc-950 border border-zinc-700 rounded-xl text-white uppercase focus:outline-none focus:border-emerald-500"
-                  value={affiliateCode} onChange={(e) => setAffiliateCode(e.target.value)}
-                />
+                <label className="block text-sm font-medium text-zinc-300 mb-2">Mã chuyên gia / KOL (Nếu có)</label>
+                <div className="relative">
+                  <input 
+                    type="text" placeholder="Nhập mã giới thiệu..."
+                    className="w-full px-5 py-4 bg-zinc-900 border border-zinc-800 rounded-2xl text-white uppercase placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500 focus:bg-zinc-900/50 transition-all"
+                    value={affiliateCode} onChange={(e) => setAffiliateCode(e.target.value)}
+                  />
+                  {affiliateCode && <ShieldCheck className="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-500" size={20} />}
+                </div>
               </div>
               
               <button 
                 type="submit" disabled={isSubmitting}
-                className="w-full py-4 mt-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 disabled:opacity-50"
+                className="w-full py-4 mt-4 flex justify-center items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-lg rounded-2xl active:scale-95 transition-all disabled:opacity-50"
               >
-                {isSubmitting ? "Đang xử lý..." : "Xác nhận & Giữ chỗ"}
+                {isSubmitting ? "Đang kết nối..." : (
+                  <>Thanh toán PayOS <ChevronRight size={20}/></>
+                )}
               </button>
             </form>
           </div>
