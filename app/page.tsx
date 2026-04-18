@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { 
   CalendarPlus, X, User as UserIcon, ShieldCheck, Sparkles, Home, Compass, 
-  CalendarDays, Heart, MessageCircle, Bookmark, Share2, Plus, Send,
-  Sun, Moon, Bell, LogOut // <-- Bổ sung icon LogOut
+  CalendarDays, Heart, MessageCircle, Bookmark, Share2, Plus,
+  Sun, Moon, Bell, LogOut, Send
 } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
@@ -26,7 +26,7 @@ interface Service {
   service_name: string;
   description: string;
   price: number;
-  video_url?: string; // <-- THÊM DÒNG NÀY (Nhận link video thật)
+  video_url?: string;
   likes_count?: number;
   saves_count?: number;
   comments_count?: number;
@@ -58,7 +58,7 @@ export default function UserFeed() {
   const [password, setPassword] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
 
-  // --- 🚀 NEW: STATE MENU PROFILE ---
+  // --- STATE MENU PROFILE ---
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   // --- STATE BOOKING & COMMENT ---
@@ -71,14 +71,6 @@ export default function UserFeed() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [isLoadingComments, setIsLoadingComments] = useState(false);
-
-  // --- STATE AI CHAT ASSISTANT ---
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [chatInput, setChatInput] = useState("");
-  const [isChatTyping, setIsChatTyping] = useState(false);
-  const [chatMessages, setChatMessages] = useState<{role: 'user' | 'bot', content: string}[]>([
-    { role: 'bot', content: 'Xin chào! Tôi là trợ lý AI Health của bạn. Tôi có thể lắng nghe những căng thẳng của bạn hoặc tư vấn dịch vụ trị liệu phù hợp. Bạn đang cảm thấy thế nào hôm nay?' }
-  ]);
 
   // --- STATE THEME & HYDRATION ---
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -184,7 +176,6 @@ export default function UserFeed() {
     }
   };
 
-  // --- 🚀 NEW LOGIC: XỬ LÝ MENU VÀ ĐĂNG XUẤT ---
   const handleUserAvatarClick = () => {
     if (!user) {
       setIsAuthModalOpen(true);
@@ -290,18 +281,6 @@ export default function UserFeed() {
     toast.success("Đã sao chép liên kết vào khay nhớ tạm!");
   };
 
-  const handleSendChatMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatInput.trim() || isChatTyping) return;
-    setChatMessages(prev => [...prev, { role: 'user', content: chatInput.trim() }]);
-    setChatInput("");
-    setIsChatTyping(true);
-    setTimeout(() => {
-      setChatMessages(prev => [...prev, { role: 'bot', content: 'Tôi sẽ phân tích triệu chứng này ở Backend sắp tới!' }]);
-      setIsChatTyping(false);
-    }, 1500);
-  };
-
   const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeService || !user) return;
@@ -355,11 +334,6 @@ export default function UserFeed() {
     }
   };
 
-  const handleNotificationClick = () => {
-    setHasNotification(false);
-    toast.info("Tất cả thông báo đã được đọc.");
-  };
-
   if (isLoading) {
     return (
       <div className="h-[100dvh] w-full bg-slate-50 dark:bg-zinc-950 flex flex-col items-center justify-center gap-6 transition-colors duration-500">
@@ -376,12 +350,12 @@ export default function UserFeed() {
       <div className="hidden md:flex flex-col w-[260px] h-full bg-white/40 dark:bg-black/40 backdrop-blur-3xl border-r border-slate-200 dark:border-white/10 z-50 pt-8 pb-6 px-4 shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.05)] dark:shadow-[4px_0_24px_rgba(0,0,0,0.5)] transition-colors duration-500">
         <div className="px-4 mb-10"><h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-lg flex items-center gap-1 cursor-pointer transition-colors duration-500">AI<span className="text-[#80BF84]">HEALTH</span></h1></div>
         <div className="flex flex-col gap-2 flex-1">
-          <button className="flex items-center gap-4 px-4 py-3 rounded-2xl bg-slate-200/50 dark:bg-white/10 text-slate-900 dark:text-white font-bold transition-all"><Home size={24} strokeWidth={2.5} className="text-[#80BF84]" /><span className="text-sm tracking-wide">Trang chủ</span></button>
-          <button onClick={() => toast.info("Đang phát triển")} className="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-bold transition-all group"><Compass size={24} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /><span className="text-sm tracking-wide">Khám phá</span></button>
-          <button onClick={() => toast.info("Đang phát triển")} className="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-bold transition-all group"><CalendarDays size={24} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /><span className="text-sm tracking-wide">Lịch hẹn</span></button>
-          <button onClick={() => toast.info("Đang phát triển")} className="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-bold transition-all group"><Heart size={24} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /><span className="text-sm tracking-wide">Yêu thích</span></button>
+          <button onClick={() => router.push('/')} className="flex items-center gap-4 px-4 py-3 rounded-2xl bg-slate-200/50 dark:bg-white/10 text-slate-900 dark:text-white font-bold transition-all"><Home size={24} strokeWidth={2.5} className="text-[#80BF84]" /><span className="text-sm tracking-wide">Trang chủ</span></button>
+          <button onClick={() => router.push('/features/explore')} className="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-bold transition-all group"><Compass size={24} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /><span className="text-sm tracking-wide">Khám phá</span></button>
+          <button onClick={() => router.push('/features/calendar')} className="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-bold transition-all group"><CalendarDays size={24} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /><span className="text-sm tracking-wide">Lịch hẹn</span></button>
+          <button onClick={() => router.push('/features/favorite')} className="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-bold transition-all group"><Heart size={24} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /><span className="text-sm tracking-wide">Yêu thích</span></button>
           <div className="mt-8 px-2">
-            <button onClick={() => setIsChatOpen(true)} className="w-full relative group">
+            <button onClick={() => router.push('/features/AI')} className="w-full relative group">
               <div className="absolute inset-0 bg-gradient-to-r from-[#80BF84] to-emerald-300 rounded-2xl blur-lg opacity-40 group-hover:opacity-70 transition-opacity duration-300"></div>
               <div className="relative flex items-center justify-center gap-3 px-4 py-4 rounded-2xl bg-gradient-to-tr from-[#80BF84] to-emerald-500 text-zinc-950 shadow-xl group-hover:scale-[1.02] transition-all"><Sparkles size={20} strokeWidth={3} /><span className="font-black text-sm tracking-wide">AI Trợ lý</span></div>
             </button>
@@ -390,11 +364,8 @@ export default function UserFeed() {
         
         {/* NÚT AVATAR VÀ MENU DESKTOP */}
         <div className="mt-auto px-2 relative">
-          
-          {/* Menu Kính mờ (Bật lên khi click) */}
           {isUserMenuOpen && user && (
             <>
-              {/* Lớp phủ tàng hình để click ra ngoài thì đóng menu */}
               <div className="fixed inset-0 z-40" onClick={() => setIsUserMenuOpen(false)}></div>
               <div className="absolute bottom-full mb-3 left-2 right-2 p-2 flex flex-col gap-1 z-50 animate-fade-in bg-white/90 dark:bg-black/80 backdrop-blur-3xl shadow-2xl border border-slate-200 dark:border-white/10 rounded-2xl">
                   <button onClick={handleGoToProfile} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white font-bold transition-all text-sm w-full text-left">
@@ -429,7 +400,7 @@ export default function UserFeed() {
             {!isMounted ? <div className="w-5 h-5"></div> : isDarkMode ? <Sun size={20} className="group-hover:text-amber-300 transition-colors"/> : <Moon size={20} className="group-hover:text-blue-500 transition-colors"/>}
           </button>
           <button 
-            onClick={handleNotificationClick} 
+            onClick={() => router.push('/features/notification')} 
             className="relative w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:bg-white/80 dark:hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg group"
           >
             <Bell size={20} className="group-hover:text-[#80BF84] transition-colors"/>
@@ -508,12 +479,12 @@ export default function UserFeed() {
         {/* 3. MOBILE BOTTOM DOCK CÓ MENU */}
         <div className="md:hidden absolute bottom-6 left-1/2 -translate-x-1/2 z-40 w-max animate-slide-up pointer-events-auto">
           <div className="px-8 py-3.5 rounded-full flex items-center justify-center gap-8 sm:gap-10 shadow-2xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/60 backdrop-blur-2xl transition-colors duration-500">
-            <button className="text-[#80BF84] hover:text-emerald-600 dark:hover:text-white transition-colors group"><Home size={26} strokeWidth={2.5} /></button>
-            <button onClick={() => toast.info("Đang phát triển")} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Compass size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
-            <button onClick={() => setIsChatOpen(true)} className="relative -mt-10 group">
+            <button onClick={() => router.push('/')} className="text-[#80BF84] hover:text-emerald-600 dark:hover:text-white transition-colors group"><Home size={26} strokeWidth={2.5} /></button>
+            <button onClick={() => router.push('/features/explore')} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Compass size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
+            <button onClick={() => router.push('/features/AI')} className="relative -mt-10 group">
               <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#80BF84] to-emerald-300 p-[2px] shadow-[0_0_20px_rgba(128,191,132,0.3)] group-hover:scale-105 transition-all duration-300"><div className="w-full h-full bg-white dark:bg-zinc-950 rounded-full flex items-center justify-center transition-colors duration-500"><Sparkles size={26} className="text-[#80BF84]" strokeWidth={2.5} /></div></div>
             </button>
-            <button onClick={() => toast.info("Đang phát triển")} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Heart size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
+            <button onClick={() => router.push('/features/favorite')} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Heart size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
             
             {/* KHU VỰC AVATAR MOBILE CÓ MENU */}
             <div className="relative">
@@ -538,27 +509,6 @@ export default function UserFeed() {
           </div>
         </div>
       </div>
-
-      {/* --- MODAL CHAT --- */}
-      {isChatOpen && (
-        <div className="fixed inset-0 z-[110] flex justify-center items-end md:items-center md:justify-end md:p-6 pointer-events-auto">
-          <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm transition-colors duration-500" onClick={() => setIsChatOpen(false)}></div>
-          <div className="relative w-full md:w-[420px] h-[85vh] md:h-[calc(100vh-48px)] bg-white/70 dark:bg-black/50 backdrop-blur-3xl rounded-t-[2.5rem] md:rounded-[2.5rem] border border-slate-200 dark:border-white/10 flex flex-col shadow-2xl transition-colors duration-500">
-             <div className="pt-8 pb-4 px-6 border-b border-slate-200 dark:border-white/10 flex justify-between items-center transition-colors duration-500"><h3 className="text-base font-bold text-slate-900 dark:text-white transition-colors duration-500">AI Trợ Lý</h3><button onClick={() => setIsChatOpen(false)} className="text-slate-500 dark:text-white hover:text-slate-900 transition-colors"><X size={18}/></button></div>
-             <div className="flex-1 overflow-y-auto p-5 space-y-5 no-scrollbar flex flex-col">
-                {chatMessages.map((msg, idx) => (
-                  <div key={idx} className={`flex max-w-[85%] ${msg.role === 'user' ? 'self-end' : 'self-start'}`}>
-                    <div className={`p-4 text-sm ${msg.role === 'user' ? 'bg-[#80BF84] text-zinc-950 rounded-[1.5rem] rounded-tr-sm' : 'bg-slate-200/50 dark:bg-white/10 text-slate-900 dark:text-white rounded-[1.5rem] rounded-tl-sm transition-colors duration-500'}`}>{msg.content}</div>
-                  </div>
-                ))}
-             </div>
-             <form onSubmit={handleSendChatMessage} className="p-4 border-t border-slate-200 dark:border-white/10 flex gap-3 transition-colors duration-500">
-               <input type="text" className="flex-1 bg-slate-200/50 dark:bg-white/5 rounded-full px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none transition-colors duration-500" value={chatInput} onChange={e => setChatInput(e.target.value)} />
-               <button type="submit" className="w-10 h-10 rounded-full bg-[#80BF84] text-zinc-950 flex items-center justify-center"><Send size={16}/></button>
-             </form>
-          </div>
-        </div>
-      )}
 
       {/* --- MODAL BÌNH LUẬN --- */}
       {isCommentModalOpen && (
