@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarPlus, X, User as UserIcon, ShieldCheck, Sparkles, Home, Compass, CalendarDays, Heart, MessageCircle, Bookmark, Share2, Plus, Send } from "lucide-react";
+import { 
+  CalendarPlus, X, User as UserIcon, ShieldCheck, Sparkles, Home, Compass, 
+  CalendarDays, Heart, MessageCircle, Bookmark, Share2, Plus, Send,
+  Sun, Moon, Bell // <-- Thêm các icon mới
+} from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -46,7 +50,7 @@ export default function UserFeed() {
   
   // --- STATE AUTH & ROLE ---
   const [user, setUser] = useState<any>(null);
-  const [userRole, setUserRole] = useState<string>("USER"); // State mới lưu trữ Role
+  const [userRole, setUserRole] = useState<string>("USER");
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [email, setEmail] = useState("");
@@ -74,11 +78,14 @@ export default function UserFeed() {
     { role: 'bot', content: 'Xin chào! Tôi là trợ lý AI Health của bạn. Tôi có thể lắng nghe những căng thẳng của bạn hoặc tư vấn dịch vụ trị liệu phù hợp. Bạn đang cảm thấy thế nào hôm nay?' }
   ]);
 
+  // --- 🚀 NEW: STATE THEME & NOTIFICATIONS ---
+  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [hasNotification, setHasNotification] = useState(true);
+
   useEffect(() => {
     const initialize = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
-      // Khởi tạo trạng thái và lấy Role từ DB
       if (session?.user) {
         setUser(session.user);
         fetchServices(session.user.id);
@@ -88,7 +95,6 @@ export default function UserFeed() {
         fetchServices();
       }
 
-      // Lắng nghe thay đổi phiên đăng nhập
       supabase.auth.onAuthStateChange(async (_event, curSession) => {
         if (curSession?.user) {
           setUser(curSession.user);
@@ -142,14 +148,11 @@ export default function UserFeed() {
     }
   };
 
-  // --- LOGIC ĐIỀU HƯỚNG THÔNG MINH THEO ROLE ---
   const handleProfileClick = () => {
     if (!user) {
       setIsAuthModalOpen(true);
       return;
     }
-    
-    // Nếu là Doanh nghiệp (PARTNER) hoặc ADMIN, đẩy về Dashboard. Ngược lại đẩy về Profile thường.
     if (userRole === "PARTNER_ADMIN" || userRole === "SUPER_ADMIN") {
       router.push("/partner/dashboard");
     } else {
@@ -266,6 +269,20 @@ export default function UserFeed() {
     } 
   };
 
+  // --- LOGIC GIAO DIỆN MỚI TẠO ---
+  const handleThemeToggle = () => {
+    setIsDarkMode(!isDarkMode);
+    // Logic đổi theme sâu vào classlist sẽ được tối ưu sau để bảo vệ UI hiện tại
+    document.documentElement.classList.toggle('dark');
+    toast.success(isDarkMode ? "Đã chuyển sang chế độ Sáng" : "Đã chuyển sang chế độ Tối");
+  };
+
+  const handleNotificationClick = () => {
+    setHasNotification(false);
+    toast.info("Tất cả thông báo đã được đọc.");
+    // Mở Modal hoặc Slide-over thông báo ở các Phase sau
+  };
+
   if (isLoading) {
     return (
       <div className="h-[100dvh] w-full bg-zinc-950 flex flex-col items-center justify-center gap-6">
@@ -303,7 +320,33 @@ export default function UserFeed() {
 
       {/* 2. MAIN FEED AREA */}
       <div className="flex-1 relative h-[100dvh]">
+        
+        {/* MOBILE HEADER (Logo) */}
         <div className="md:hidden absolute top-0 w-full z-40 p-6 flex justify-between items-center pointer-events-none transition-all"><h1 className="text-2xl font-black text-white tracking-tighter drop-shadow-lg flex items-center gap-1">AI<span className="text-[#80BF84]">HEALTH</span></h1></div>
+
+        {/* 🚀 NEW: THEME & NOTIFICATION CONTROLS Ở GÓC TRÊN BÊN PHẢI */}
+        <div className="absolute top-6 right-6 md:top-8 md:right-8 z-[60] flex items-center gap-3 pointer-events-auto">
+          {/* Nút Đổi Sáng Tối */}
+          <button 
+            onClick={handleThemeToggle} 
+            className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-black/40 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg group"
+          >
+            {isDarkMode ? <Sun size={20} className="group-hover:text-amber-300 transition-colors"/> : <Moon size={20} className="group-hover:text-blue-300 transition-colors"/>}
+          </button>
+
+          {/* Nút Thông Báo */}
+          <button 
+            onClick={handleNotificationClick} 
+            className="relative w-10 h-10 md:w-11 md:h-11 rounded-full bg-black/40 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg group"
+          >
+            <Bell size={20} className="group-hover:text-[#80BF84] transition-colors"/>
+            {/* Chấm đỏ nhấp nháy báo hiệu có thông báo mới */}
+            {hasNotification && (
+              <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-zinc-950 animate-pulse shadow-[0_0_10px_rgba(225,29,72,0.8)]"></span>
+            )}
+          </button>
+        </div>
+
         <div className="h-full w-full overflow-y-scroll snap-y snap-mandatory no-scrollbar relative">
           {services.map((item, index) => {
             const videoNumber = (index % 3) + 1;
