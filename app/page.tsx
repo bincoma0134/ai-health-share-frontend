@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { 
   CalendarPlus, X, User as UserIcon, ShieldCheck, Sparkles, Home, Compass, 
   CalendarDays, Heart, MessageCircle, Bookmark, Share2, Plus, Send,
-  Sun, Moon, Bell
+  Sun, Moon, Bell, LogOut // <-- Bổ sung icon LogOut
 } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
@@ -57,6 +57,9 @@ export default function UserFeed() {
   const [password, setPassword] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
 
+  // --- 🚀 NEW: STATE MENU PROFILE ---
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
   // --- STATE BOOKING & COMMENT ---
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeService, setActiveService] = useState<Service | null>(null);
@@ -76,15 +79,14 @@ export default function UserFeed() {
     { role: 'bot', content: 'Xin chào! Tôi là trợ lý AI Health của bạn. Tôi có thể lắng nghe những căng thẳng của bạn hoặc tư vấn dịch vụ trị liệu phù hợp. Bạn đang cảm thấy thế nào hôm nay?' }
   ]);
 
-  // --- 🚀 FIX: STATE THEME & HYDRATION ---
+  // --- STATE THEME & HYDRATION ---
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [hasNotification, setHasNotification] = useState(true);
-  const [isMounted, setIsMounted] = useState(false); // Cờ chặn lỗi Hydration Next.js
+  const [isMounted, setIsMounted] = useState(false); 
 
   useEffect(() => {
-    setIsMounted(true); // Kích hoạt cờ sau khi Client đã tải xong
+    setIsMounted(true); 
     
-    // KHỞI TẠO THEME TỪ TRÌNH DUYỆT
     const storedTheme = localStorage.getItem('theme');
     if (storedTheme === 'light') {
       setIsDarkMode(false);
@@ -101,7 +103,6 @@ export default function UserFeed() {
         setUser(session.user);
         fetchServices(session.user.id);
         
-        // Kéo cấu hình từ DB về để ghi đè
         const { data } = await supabase.from("users").select("role, theme_preference").eq("id", session.user.id).single();
         if (data) {
            setUserRole(data.role);
@@ -167,6 +168,7 @@ export default function UserFeed() {
       setAuthLoading(false);
     }
   };
+
   const handleGoogleLogin = async () => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -181,19 +183,36 @@ export default function UserFeed() {
     }
   };
 
-  const handleProfileClick = () => {
+  // --- 🚀 NEW LOGIC: XỬ LÝ MENU VÀ ĐĂNG XUẤT ---
+  const handleUserAvatarClick = () => {
     if (!user) {
       setIsAuthModalOpen(true);
-      return;
-    }
-    
-    // --- LUỒNG ĐIỀU HƯỚNG THÔNG MINH (SMART ROUTING) ---
-    if (userRole === "MODERATOR" || userRole === "SUPER_ADMIN") {
-      router.push("/moderator/profile"); // Cán bộ kiểm duyệt
-    } else if (userRole === "PARTNER_ADMIN") {
-      router.push("/partner/profile"); // Hậu trường doanh nghiệp
     } else {
-      router.push("/profile"); // User bình thường
+      setIsUserMenuOpen(prev => !prev);
+    }
+  };
+
+  const handleGoToProfile = () => {
+    setIsUserMenuOpen(false);
+    if (userRole === "MODERATOR" || userRole === "SUPER_ADMIN") {
+      router.push("/moderator/profile");
+    } else if (userRole === "PARTNER_ADMIN") {
+      router.push("/partner/profile");
+    } else {
+      router.push("/profile");
+    }
+  };
+
+  const handleLogout = async () => {
+    setIsUserMenuOpen(false);
+    const toastId = toast.loading("Đang đăng xuất...");
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setUserRole("USER");
+      toast.success("Đã đăng xuất thành công!", { id: toastId });
+    } catch (error: any) {
+      toast.error("Lỗi đăng xuất!", { id: toastId });
     }
   };
 
@@ -306,13 +325,11 @@ export default function UserFeed() {
     } 
   };
 
-  // --- LOGIC GIAO DIỆN SÁNG TỐI ĐỒNG BỘ BACKEND ---
   const handleThemeToggle = async () => {
     const newMode = !isDarkMode;
     setIsDarkMode(newMode);
     const themeStr = newMode ? 'dark' : 'light';
     
-    // 1. Đổi giao diện tức thì
     if (newMode) {
       document.documentElement.classList.add('dark');
     } else {
@@ -320,7 +337,6 @@ export default function UserFeed() {
     }
     localStorage.setItem('theme', themeStr);
 
-    // 2. Đồng bộ ngầm lên Backend nếu đã đăng nhập
     if (user) {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -370,8 +386,27 @@ export default function UserFeed() {
             </button>
           </div>
         </div>
-        <div className="mt-auto px-2">
-          <button onClick={handleProfileClick} className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-bold transition-all group border border-transparent hover:border-slate-300 dark:hover:border-white/10">
+        
+        {/* NÚT AVATAR VÀ MENU DESKTOP */}
+        <div className="mt-auto px-2 relative">
+          
+          {/* Menu Kính mờ (Bật lên khi click) */}
+          {isUserMenuOpen && user && (
+            <>
+              {/* Lớp phủ tàng hình để click ra ngoài thì đóng menu */}
+              <div className="fixed inset-0 z-40" onClick={() => setIsUserMenuOpen(false)}></div>
+              <div className="absolute bottom-full mb-3 left-2 right-2 p-2 flex flex-col gap-1 z-50 animate-fade-in bg-white/90 dark:bg-black/80 backdrop-blur-3xl shadow-2xl border border-slate-200 dark:border-white/10 rounded-2xl">
+                  <button onClick={handleGoToProfile} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white font-bold transition-all text-sm w-full text-left">
+                    <UserIcon size={16} /> Trang cá nhân
+                  </button>
+                  <button onClick={handleLogout} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-rose-500/10 text-rose-500 font-bold transition-all text-sm w-full text-left">
+                    <LogOut size={16} /> Đăng xuất
+                  </button>
+              </div>
+            </>
+          )}
+
+          <button onClick={handleUserAvatarClick} className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-bold transition-all group border border-transparent hover:border-slate-300 dark:hover:border-white/10">
             <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-zinc-800 flex items-center justify-center border border-slate-300 dark:border-zinc-700 group-hover:border-[#80BF84] transition-colors"><UserIcon size={16} /></div>
             <span className="text-sm tracking-wide truncate max-w-[120px] text-left">{user ? user.email.split('@')[0] : "Đăng nhập"}</span>
           </button>
@@ -384,13 +419,12 @@ export default function UserFeed() {
         {/* MOBILE HEADER (Logo) */}
         <div className="md:hidden absolute top-0 w-full z-40 p-6 flex justify-between items-center pointer-events-none transition-all"><h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-lg flex items-center gap-1 transition-colors duration-500">AI<span className="text-[#80BF84]">HEALTH</span></h1></div>
 
-        {/* 🚀 THEME & NOTIFICATION CONTROLS */}
+        {/* THEME & NOTIFICATION CONTROLS */}
         <div className="absolute top-6 right-6 md:top-8 md:right-8 z-[60] flex items-center gap-3 pointer-events-auto">
           <button 
             onClick={handleThemeToggle} 
             className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:bg-white/80 dark:hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg group"
           >
-            {/* 🚀 FIX BỌC isMounted ĐỂ CHẶN HYDRATION MISMATCH */}
             {!isMounted ? <div className="w-5 h-5"></div> : isDarkMode ? <Sun size={20} className="group-hover:text-amber-300 transition-colors"/> : <Moon size={20} className="group-hover:text-blue-500 transition-colors"/>}
           </button>
           <button 
@@ -414,11 +448,9 @@ export default function UserFeed() {
                 <div className="hidden md:block absolute inset-0 w-full h-full"><video src={`/video-${videoNumber}.mp4`} className="w-full h-full object-cover opacity-10 dark:opacity-30 blur-[60px] scale-125 transition-opacity duration-500" loop autoPlay muted playsInline /></div>
                 <div className={`relative w-full h-full md:h-[94vh] md:w-auto ${desktopRatioClass} md:rounded-[2.5rem] overflow-hidden bg-black md:border border-slate-200 dark:border-white/10 md:shadow-[0_0_50px_rgba(0,0,0,0.1)] dark:md:shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-all duration-500`}>
                     
-                    {/* VIDEO PLAYER - Giữ tối để Video nổi bật */}
                     <video src={`/video-${videoNumber}.mp4`} className="absolute inset-0 w-full h-full object-cover opacity-90" loop autoPlay muted playsInline />
                     <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none"></div>
                     
-                    {/* THÔNG TIN DỊCH VỤ - LUÔN GIỮ TEXT TRẮNG ĐỂ ĐỌC TRÊN VIDEO */}
                     <div className="absolute bottom-[100px] md:bottom-[40px] left-4 md:left-6 z-10 max-w-[75%] pointer-events-auto animate-slide-up">
                         <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/20 dark:bg-white/10 backdrop-blur-md border border-white/30 dark:border-white/20 rounded-full text-[10px] font-bold text-[#80BF84] mb-3 uppercase tracking-wider shadow-sm"><ShieldCheck size={12} /> Dịch vụ xác thực</div>
                         <h3 className="text-2xl md:text-3xl font-black text-white leading-tight drop-shadow-xl mb-1.5 text-balance">{item.service_name}</h3>
@@ -429,7 +461,6 @@ export default function UserFeed() {
                         </button>
                     </div>
 
-                    {/* SIDEBAR TƯƠNG TÁC */}
                     <div className="absolute bottom-[100px] md:bottom-[40px] right-3 md:right-4 z-20 flex flex-col items-center gap-5 md:gap-6 pointer-events-auto">
                         <div className="relative mb-2 group cursor-pointer active:scale-90 transition-transform" onClick={() => {
                            if (item.partner_id) {
@@ -471,7 +502,7 @@ export default function UserFeed() {
           })}
         </div>
 
-        {/* 3. MOBILE BOTTOM DOCK */}
+        {/* 3. MOBILE BOTTOM DOCK CÓ MENU */}
         <div className="md:hidden absolute bottom-6 left-1/2 -translate-x-1/2 z-40 w-max animate-slide-up pointer-events-auto">
           <div className="px-8 py-3.5 rounded-full flex items-center justify-center gap-8 sm:gap-10 shadow-2xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/60 backdrop-blur-2xl transition-colors duration-500">
             <button className="text-[#80BF84] hover:text-emerald-600 dark:hover:text-white transition-colors group"><Home size={26} strokeWidth={2.5} /></button>
@@ -480,7 +511,27 @@ export default function UserFeed() {
               <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#80BF84] to-emerald-300 p-[2px] shadow-[0_0_20px_rgba(128,191,132,0.3)] group-hover:scale-105 transition-all duration-300"><div className="w-full h-full bg-white dark:bg-zinc-950 rounded-full flex items-center justify-center transition-colors duration-500"><Sparkles size={26} className="text-[#80BF84]" strokeWidth={2.5} /></div></div>
             </button>
             <button onClick={() => toast.info("Đang phát triển")} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Heart size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
-            <button onClick={handleProfileClick} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><UserIcon size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
+            
+            {/* KHU VỰC AVATAR MOBILE CÓ MENU */}
+            <div className="relative">
+              {isUserMenuOpen && user && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsUserMenuOpen(false)}></div>
+                  <div className="absolute bottom-full mb-6 right-0 w-48 p-2 flex flex-col gap-1 z-50 animate-fade-in bg-white/90 dark:bg-black/80 backdrop-blur-3xl shadow-2xl border border-slate-200 dark:border-white/10 rounded-2xl">
+                      <button onClick={handleGoToProfile} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white font-bold transition-all text-sm w-full text-left">
+                        <UserIcon size={16} /> Trang cá nhân
+                      </button>
+                      <button onClick={handleLogout} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-rose-500/10 text-rose-500 font-bold transition-all text-sm w-full text-left">
+                        <LogOut size={16} /> Đăng xuất
+                      </button>
+                  </div>
+                </>
+              )}
+              <button onClick={handleUserAvatarClick} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group">
+                <UserIcon size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
+              </button>
+            </div>
+
           </div>
         </div>
       </div>
@@ -564,7 +615,7 @@ export default function UserFeed() {
             <div className="mt-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200 dark:border-white/10"></div></div>
-                <div className="relative flex justify-center text-sm"><span className="px-2 bg-white dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 transition-colors duration-500">Hoặc tiếp tục với</span></div>
+                <div className="relative flex justify-center text-sm"><span className="px-2 bg-white/90 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 transition-colors duration-500">Hoặc tiếp tục với</span></div>
               </div>
               
               <button onClick={handleGoogleLogin} type="button" className="mt-4 w-full flex items-center justify-center gap-3 py-3.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl hover:bg-slate-50 dark:hover:bg-white/10 transition-all font-bold text-slate-700 dark:text-white group">
