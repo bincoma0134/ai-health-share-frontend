@@ -186,10 +186,14 @@ export default function UserFeed() {
       setIsAuthModalOpen(true);
       return;
     }
-    if (userRole === "PARTNER_ADMIN" || userRole === "SUPER_ADMIN") {
-      router.push("/partner/dashboard");
+    
+    // --- LUỒNG ĐIỀU HƯỚNG THÔNG MINH (SMART ROUTING) ---
+    if (userRole === "MODERATOR" || userRole === "SUPER_ADMIN") {
+      router.push("/moderator/profile"); // Cán bộ kiểm duyệt
+    } else if (userRole === "PARTNER_ADMIN") {
+      router.push("/partner/profile"); // Hậu trường doanh nghiệp
     } else {
-      router.push("/profile");
+      router.push("/profile"); // User bình thường
     }
   };
 
