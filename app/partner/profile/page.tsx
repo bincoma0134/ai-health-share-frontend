@@ -89,7 +89,7 @@ export default function PartnerBackstage() {
             setProfileData({
                 full_name: p.full_name || "",
                 bio: p.bio || "",
-                social_links: p.social_links || "", // Đã dự kiến trong Database
+                social_links: p.social_links || "", 
                 avatar_url: p.avatar_url || "",
                 cover_url: p.cover_url || ""
             });
@@ -114,7 +114,6 @@ export default function PartnerBackstage() {
     if (newMode) document.documentElement.classList.add('dark');
     else document.documentElement.classList.remove('dark');
     localStorage.setItem('theme', newMode ? 'dark' : 'light');
-    // Bỏ qua bước đồng bộ backend ở đây để code gọn nhẹ
   };
 
   // --- LOGIC XỬ LÝ VIDEO KÉO THẢ ---
@@ -152,23 +151,58 @@ export default function PartnerBackstage() {
     }
   };
 
+  // 🚀 LOGIC UPLOAD CỐT LÕI (CÁCH 1)
   const handleUploadVideo = async () => {
     if (!videoFile || !videoData.service_name || !videoData.price) {
         toast.error("Vui lòng điền đủ Tên dịch vụ, Giá và chọn Video!");
         return;
     }
     setIsUploadingVideo(true);
-    const toastId = toast.loading("Đang tải video lên máy chủ (Bucket: video_partner)...");
+    const toastId = toast.loading("Đang tải video lên máy chủ, vui lòng không tắt trang...");
     
     try {
-        // MÔ PHỎNG UPLOAD (Sẽ code thật ở Backend sau)
-        await new Promise(resolve => setTimeout(resolve, 2000)); 
-        toast.success("Đăng video dịch vụ thành công! Khách hàng đã có thể nhìn thấy bạn.", { id: toastId });
+        // 1. Upload Video lên Supabase Bucket
+        const fileExt = videoFile.name.split('.').pop();
+        const fileName = `${user?.id}-${Date.now()}.${fileExt}`;
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('video_partner')
+            .upload(fileName, videoFile, { cacheControl: '3600', upsert: false });
+
+        if (uploadError) throw new Error("Lỗi Upload Supabase: " + uploadError.message);
+
+        // 2. Lấy đường link Public URL
+        const { data: { publicUrl } } = supabase.storage
+            .from('video_partner')
+            .getPublicUrl(fileName);
+
+        // 3. Đẩy dữ liệu (Text + URL) về Backend để lưu Database
+        const { data: { session } } = await supabase.auth.getSession();
+        const response = await fetch("https://ai-health-share-backend.onrender.com/services", {
+            method: "POST",
+            headers: { 
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${session?.access_token}`
+            },
+            body: JSON.stringify({
+                service_name: videoData.service_name,
+                description: videoData.description,
+                price: parseFloat(videoData.price),
+                video_url: publicUrl
+            })
+        });
+
+        const result = await response.json();
+        if (result.status !== "success") throw new Error(result.detail || "Không thể lưu dữ liệu dịch vụ");
+
+        toast.success("Đăng video thành công! Video đang chờ Moderator duyệt.", { id: toastId });
+        
+        // Reset form
         setVideoFile(null);
         setVideoPreview(null);
         setVideoData({ service_name: "", description: "", price: "" });
-    } catch (e) {
-        toast.error("Lỗi tải video!", { id: toastId });
+    } catch (e: any) {
+        toast.error(e.message || "Lỗi tải video!", { id: toastId });
     } finally {
         setIsUploadingVideo(false);
     }
@@ -179,7 +213,7 @@ export default function PartnerBackstage() {
   return (
     <div className="h-[100dvh] w-full bg-slate-50 dark:bg-black overflow-hidden flex relative transition-colors duration-500">
       
-      {/* 1. LEFT SIDEBAR (Dùng chung kiến trúc trang chủ) */}
+      {/* 1. LEFT SIDEBAR */}
       <div className="hidden md:flex flex-col w-[260px] h-full bg-white/40 dark:bg-black/40 backdrop-blur-3xl border-r border-slate-200 dark:border-white/10 z-50 pt-8 pb-6 px-4 shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.05)] dark:shadow-[4px_0_24px_rgba(0,0,0,0.5)]">
         <div className="px-4 mb-10" onClick={() => router.push('/')}><h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-lg flex items-center gap-1 cursor-pointer">AI<span className="text-[#80BF84]">HEALTH</span></h1></div>
         <div className="flex flex-col gap-2 flex-1">
@@ -221,7 +255,6 @@ export default function PartnerBackstage() {
                 {activeTab === 'profile' && (
                     <div className="glass-panel p-6 md:p-10 rounded-[2.5rem] bg-white/70 dark:bg-black/50 border-slate-200 dark:border-white/10 flex flex-col gap-8 shadow-2xl">
                         
-                        {/* Ảnh bìa & Avatar */}
                         <div className="relative w-full h-48 md:h-64 rounded-3xl bg-slate-200 dark:bg-zinc-900 border-2 border-dashed border-slate-300 dark:border-white/20 flex flex-col items-center justify-center group overflow-hidden cursor-pointer transition-colors">
                             {profileData.cover_url ? (
                                 <img src={profileData.cover_url} className="w-full h-full object-cover" />
@@ -240,7 +273,6 @@ export default function PartnerBackstage() {
                             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><Camera className="text-white"/></div>
                         </div>
 
-                        {/* Form Nhập liệu */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                             <div className="flex flex-col gap-2">
                                 <label className="text-sm font-bold text-slate-700 dark:text-zinc-300 ml-1">Tên Hiển Thị / Thương Hiệu</label>
@@ -269,7 +301,7 @@ export default function PartnerBackstage() {
                     <div className="glass-panel p-6 md:p-10 rounded-[2.5rem] bg-white/70 dark:bg-black/50 border-slate-200 dark:border-white/10 shadow-2xl">
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                             
-                            {/* CỘT TRÁI: PREVIEW ĐIỆN THOẠI 9:16 (TikTok Studio Style) */}
+                            {/* CỘT TRÁI: PREVIEW ĐIỆN THOẠI */}
                             <div className="lg:col-span-5 flex justify-center">
                                 <div className="w-full max-w-[320px] aspect-[9/16] bg-slate-900 rounded-[3rem] border-[8px] border-slate-800 shadow-2xl relative overflow-hidden flex flex-col items-center justify-center group">
                                     {videoPreview ? (
@@ -330,7 +362,7 @@ export default function PartnerBackstage() {
             </div>
         </div>
 
-        {/* 3. MOBILE BOTTOM DOCK (Kiến trúc dùng chung) */}
+        {/* 3. MOBILE BOTTOM DOCK */}
         <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-max pointer-events-auto">
           <div className="px-8 py-3.5 rounded-full flex items-center justify-center gap-8 sm:gap-10 shadow-2xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/60 backdrop-blur-2xl">
             <button onClick={() => router.push('/')} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Home size={26} strokeWidth={2.5} /></button>
@@ -343,5 +375,4 @@ export default function PartnerBackstage() {
   );
 }
 
-// Icon phụ trợ mượn tạm từ Lucide
 const Camera = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
