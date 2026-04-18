@@ -46,6 +46,8 @@ interface Comment {
 
 export default function UserFeed() {
   const router = useRouter();
+  
+  // --- STATE DỮ LIỆU CHÍNH ---
   const [services, setServices] = useState<Service[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -72,7 +74,7 @@ export default function UserFeed() {
   const [newComment, setNewComment] = useState("");
   const [isLoadingComments, setIsLoadingComments] = useState(false);
 
-  // --- STATE NOTIFICATION (Tích hợp trực tiếp) ---
+  // --- STATE NOTIFICATION ---
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [activeNotifTab, setActiveNotifTab] = useState<'all' | 'unread'>('all');
   const [notifications, setNotifications] = useState([
@@ -95,9 +97,27 @@ export default function UserFeed() {
   const [hasNotification, setHasNotification] = useState(true);
   const [isMounted, setIsMounted] = useState(false); 
 
+  // --- 🚀 HÀM FETCH DỮ LIỆU ĐƯỢC TỐI ƯU ---
+  const fetchServices = async (currentUserId?: string) => {
+    try {
+      let url = "https://ai-health-share-backend.onrender.com/services";
+      if (currentUserId) url += `?user_id=${currentUserId}`;
+      const response = await fetch(url);
+      const result = await response.json();
+      if (result.status === "success") setServices(result.data);
+    } catch (error) {
+      console.error("Fetch error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // --- 🚀 ENGINE KHỞI TẠO SIÊU MƯỢT (FIXED MEMORY LEAK) ---
   useEffect(() => {
     setIsMounted(true); 
+    let isSubscribed = true; // Cờ theo dõi Component còn sống không
     
+    // Xử lý Theme
     const storedTheme = localStorage.getItem('theme');
     if (storedTheme === 'light') {
       setIsDarkMode(false);
@@ -107,15 +127,17 @@ export default function UserFeed() {
       document.documentElement.classList.add('dark');
     }
 
-    const initialize = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session?.user) {
-        setUser(session.user);
-        fetchServices(session.user.id);
-        
-        const { data } = await supabase.from("users").select("role, theme_preference").eq("id", session.user.id).single();
-        if (data) {
+    // Đăng ký LUỒNG DUY NHẤT lắng nghe Auth State
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, curSession) => {
+      if (!isSubscribed) return; // Nếu đã chuyển trang, ngắt ngay lập tức
+
+      if (curSession?.user) {
+        setUser(curSession.user);
+        fetchServices(curSession.user.id); // Tải Video cho User
+
+        // Lấy Role & Theme
+        const { data } = await supabase.from("users").select("role, theme_preference").eq("id", curSession.user.id).single();
+        if (data && isSubscribed) {
            setUserRole(data.role);
            if (data.theme_preference === 'light') {
               setIsDarkMode(false);
@@ -124,38 +146,18 @@ export default function UserFeed() {
            }
         }
       } else {
-        fetchServices();
+        setUser(null);
+        setUserRole("USER");
+        fetchServices(); // Tải Video cho Guest
       }
+    });
 
-      supabase.auth.onAuthStateChange(async (_event, curSession) => {
-        if (curSession?.user) {
-          setUser(curSession.user);
-          fetchServices(curSession.user.id);
-          const { data } = await supabase.from("users").select("role").eq("id", curSession.user.id).single();
-          if (data) setUserRole(data.role);
-        } else {
-          setUser(null);
-          setUserRole("USER");
-          fetchServices();
-        }
-      });
+    // 🚀 CLEANUP: Hủy lắng nghe khi Component Unmount (Nút Back/Chuyển trang)
+    return () => {
+      isSubscribed = false;
+      authListener.subscription.unsubscribe();
     };
-    initialize();
   }, []);
-
-  const fetchServices = async (currentUserId?: string) => {
-    try {
-      let url = "https://ai-health-share-backend.onrender.com/services";
-      if (currentUserId) url += `?user_id=${currentUserId}`;
-      const response = await fetch(url);
-      const result = await response.json();
-      if (result.status === "success") setServices(result.data);
-    } catch (error) {
-      toast.error("Không thể tải danh sách dịch vụ.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -184,9 +186,7 @@ export default function UserFeed() {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}`
-        }
+        options: { redirectTo: `${window.location.origin}` }
       });
       if (error) throw error;
     } catch (error: any) {
@@ -195,22 +195,16 @@ export default function UserFeed() {
   };
 
   const handleUserAvatarClick = () => {
-    if (!user) {
-      setIsAuthModalOpen(true);
-    } else {
-      setIsUserMenuOpen(prev => !prev);
-    }
+    if (!user) setIsAuthModalOpen(true);
+    else setIsUserMenuOpen(prev => !prev);
   };
 
   const handleGoToProfile = () => {
     setIsUserMenuOpen(false);
-    if (userRole === "MODERATOR" || userRole === "SUPER_ADMIN") {
-      router.push("/moderator/profile");
-    } else if (userRole === "PARTNER_ADMIN") {
-      router.push("/partner/profile");
-    } else {
-      router.push("/profile");
-    }
+    if (userRole === "SUPER_ADMIN") router.push("/admin/profile");
+    else if (userRole === "MODERATOR") router.push("/moderator/profile");
+    else if (userRole === "PARTNER_ADMIN") router.push("/partner/profile");
+    else router.push("/profile");
   };
 
   const handleLogout = async () => {
@@ -340,11 +334,8 @@ export default function UserFeed() {
     setIsDarkMode(newMode);
     const themeStr = newMode ? 'dark' : 'light';
     
-    if (newMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    if (newMode) document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
     localStorage.setItem('theme', themeStr);
 
     if (user) {
@@ -352,10 +343,7 @@ export default function UserFeed() {
         const { data: { session } } = await supabase.auth.getSession();
         await fetch("https://ai-health-share-backend.onrender.com/user/profile", {
           method: "PATCH",
-          headers: { 
-            "Content-Type": "application/json", 
-            "Authorization": `Bearer ${session?.access_token}` 
-          },
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` },
           body: JSON.stringify({ theme_preference: themeStr })
         });
       } catch (error) {
@@ -364,7 +352,6 @@ export default function UserFeed() {
     }
   };
 
-  // --- LOGIC THÔNG BÁO ---
   const markAllAsRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
     setHasNotification(false);
@@ -375,7 +362,7 @@ export default function UserFeed() {
 
   const handleOpenNotification = () => {
     setIsNotificationOpen(true);
-    setHasNotification(false); // Xóa chấm đỏ khi mở
+    setHasNotification(false);
   }
 
   if (isLoading) {
@@ -432,40 +419,26 @@ export default function UserFeed() {
       {/* 2. MAIN FEED AREA */}
       <div className="flex-1 relative h-[100dvh]">
         
-        {/* MOBILE HEADER (Logo) */}
         <div className="md:hidden absolute top-0 w-full z-40 p-6 flex justify-between items-center pointer-events-none transition-all"><h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-lg flex items-center gap-1 transition-colors duration-500">AI<span className="text-[#80BF84]">HEALTH</span></h1></div>
 
         {/* THEME & NOTIFICATION CONTROLS */}
         <div className="absolute top-6 right-6 md:top-8 md:right-8 z-[60] flex items-center gap-3 pointer-events-auto">
-          <button 
-            onClick={handleThemeToggle} 
-            className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:bg-white/80 dark:hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg group"
-          >
+          <button onClick={handleThemeToggle} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:bg-white/80 dark:hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg group">
             {!isMounted ? <div className="w-5 h-5"></div> : isDarkMode ? <Sun size={20} className="group-hover:text-amber-300 transition-colors"/> : <Moon size={20} className="group-hover:text-blue-500 transition-colors"/>}
           </button>
-          <button 
-            onClick={handleOpenNotification} 
-            className="relative w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:bg-white/80 dark:hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg group"
-          >
+          <button onClick={handleOpenNotification} className="relative w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:bg-white/80 dark:hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg group">
             <Bell size={20} className="group-hover:text-[#80BF84] transition-colors"/>
-            {hasNotification && (
-              <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white dark:border-zinc-950 animate-pulse shadow-[0_0_10px_rgba(225,29,72,0.8)]"></span>
-            )}
+            {hasNotification && <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white dark:border-zinc-950 animate-pulse shadow-[0_0_10px_rgba(225,29,72,0.8)]"></span>}
           </button>
         </div>
 
         <div className="h-full w-full overflow-y-scroll snap-y snap-mandatory no-scrollbar relative">
           {services.map((item, index) => {
             const videoNumber = (index % 3) + 1;
-            const desktopRatioClass = "md:aspect-[9/16]"; 
-
             return (
               <div key={item.id} className="relative h-[100dvh] w-full snap-start snap-always bg-slate-100 dark:bg-black overflow-hidden flex items-center justify-center transition-colors duration-500">
-                {/* Nền mờ Desktop dùng video thật */}
                 <div className="hidden md:block absolute inset-0 w-full h-full"><video src={item.video_url || `/video-${videoNumber}.mp4`} className="w-full h-full object-cover opacity-10 dark:opacity-30 blur-[60px] scale-125 transition-opacity duration-500" loop autoPlay muted playsInline /></div>
-                <div className={`relative w-full h-full md:h-[94vh] md:w-auto ${desktopRatioClass} md:rounded-[2.5rem] overflow-hidden bg-black md:border border-slate-200 dark:border-white/10 md:shadow-[0_0_50px_rgba(0,0,0,0.1)] dark:md:shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-all duration-500`}>
-                    
-                    {/* Video Player chính dùng video thật */}
+                <div className="relative w-full h-full md:h-[94vh] md:w-auto md:aspect-[9/16] md:rounded-[2.5rem] overflow-hidden bg-black md:border border-slate-200 dark:border-white/10 md:shadow-[0_0_50px_rgba(0,0,0,0.1)] dark:md:shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-all duration-500">
                     <video src={item.video_url || `/video-${videoNumber}.mp4`} className="absolute inset-0 w-full h-full object-cover opacity-90" loop autoPlay muted playsInline />
                     <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none"></div>
                     
@@ -481,18 +454,11 @@ export default function UserFeed() {
 
                     <div className="absolute bottom-[100px] md:bottom-[40px] right-3 md:right-4 z-20 flex flex-col items-center gap-5 md:gap-6 pointer-events-auto">
                         <div className="relative mb-2 group cursor-pointer active:scale-90 transition-transform" onClick={() => {
-                           if (item.partner_id) {
-                              router.push(`/partner/profile/${item.partner_id}`);
-                           } else {
-                              toast.error("Doanh nghiệp này chưa cập nhật hồ sơ công khai!");
-                           }
+                           if (item.partner_id) router.push(`/partner/profile/${item.partner_id}`);
+                           else toast.error("Doanh nghiệp này chưa cập nhật hồ sơ công khai!");
                         }}>
                           <div className="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-zinc-800 flex items-center justify-center shadow-lg group-hover:border-[#80BF84] transition-colors">
-                             {item.users?.avatar_url ? (
-                                <img src={item.users.avatar_url} className="w-full h-full object-cover"/>
-                             ) : (
-                                <UserIcon size={24} className="text-zinc-400" />
-                             )}
+                             {item.users?.avatar_url ? <img src={item.users.avatar_url} className="w-full h-full object-cover"/> : <UserIcon size={24} className="text-zinc-400" />}
                           </div>
                           <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-5 h-5 bg-[#80BF84] rounded-full flex items-center justify-center border-2 border-zinc-900 group-hover:scale-110 transition-transform"><Plus size={12} className="text-zinc-950" strokeWidth={4} /></div>
                         </div>
@@ -520,28 +486,23 @@ export default function UserFeed() {
           })}
         </div>
 
-        {/* 3. MOBILE BOTTOM DOCK CÓ MENU */}
+        {/* 3. MOBILE BOTTOM DOCK */}
         <div className="md:hidden absolute bottom-6 left-1/2 -translate-x-1/2 z-40 w-max animate-slide-up pointer-events-auto">
           <div className="px-8 py-3.5 rounded-full flex items-center justify-center gap-8 sm:gap-10 shadow-2xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/60 backdrop-blur-2xl transition-colors duration-500">
-            <button onClick={() => router.push('/')} className="text-[#80BF84] hover:text-emerald-600 dark:hover:text-white transition-colors group"><Home size={26} strokeWidth={2.5} /></button>
+            <button className="text-[#80BF84] transition-colors group"><Home size={26} strokeWidth={2.5} /></button>
             <button onClick={() => router.push('/features/explore')} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Compass size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
             <button onClick={() => setIsChatOpen(true)} className="relative -mt-10 group">
               <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#80BF84] to-emerald-300 p-[2px] shadow-[0_0_20px_rgba(128,191,132,0.3)] group-hover:scale-105 transition-all duration-300"><div className="w-full h-full bg-white dark:bg-zinc-950 rounded-full flex items-center justify-center transition-colors duration-500"><Sparkles size={26} className="text-[#80BF84]" strokeWidth={2.5} /></div></div>
             </button>
             <button onClick={() => router.push('/features/favorite')} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Heart size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
             
-            {/* KHU VỰC AVATAR MOBILE CÓ MENU */}
             <div className="relative">
               {isUserMenuOpen && user && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setIsUserMenuOpen(false)}></div>
                   <div className="absolute bottom-full mb-6 right-0 w-48 p-2 flex flex-col gap-1 z-50 animate-fade-in bg-white/90 dark:bg-black/80 backdrop-blur-3xl shadow-2xl border border-slate-200 dark:border-white/10 rounded-2xl">
-                      <button onClick={handleGoToProfile} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white font-bold transition-all text-sm w-full text-left">
-                        <UserIcon size={16} /> Trang cá nhân
-                      </button>
-                      <button onClick={handleLogout} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-rose-500/10 text-rose-500 font-bold transition-all text-sm w-full text-left">
-                        <LogOut size={16} /> Đăng xuất
-                      </button>
+                      <button onClick={handleGoToProfile} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white font-bold transition-all text-sm w-full text-left"><UserIcon size={16} /> Trang cá nhân</button>
+                      <button onClick={handleLogout} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-rose-500/10 text-rose-500 font-bold transition-all text-sm w-full text-left"><LogOut size={16} /> Đăng xuất</button>
                   </div>
                 </>
               )}
@@ -549,7 +510,6 @@ export default function UserFeed() {
                 <UserIcon size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
               </button>
             </div>
-
           </div>
         </div>
       </div>
@@ -575,13 +535,11 @@ export default function UserFeed() {
         </div>
       )}
 
-      {/* --- MODAL THÔNG BÁO (NÂNG CẤP) --- */}
+      {/* --- MODAL THÔNG BÁO --- */}
       {isNotificationOpen && (
         <div className="fixed inset-0 z-[110] flex justify-center items-end md:items-center md:justify-end md:p-6 pointer-events-auto">
           <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm transition-colors duration-500" onClick={() => setIsNotificationOpen(false)}></div>
           <div className="relative w-full md:w-[420px] h-[85vh] md:h-[calc(100vh-48px)] bg-white/80 dark:bg-black/60 backdrop-blur-3xl rounded-t-[2.5rem] md:rounded-[2.5rem] border border-slate-200 dark:border-white/10 flex flex-col shadow-2xl transition-colors duration-500 animate-slide-up">
-
-             {/* Header Thông báo */}
              <div className="pt-8 pb-4 px-6 border-b border-slate-200 dark:border-white/10 flex justify-between items-center transition-colors duration-500">
                <h3 className="text-xl font-black text-slate-900 dark:text-white transition-colors duration-500">Thông báo</h3>
                <div className="flex items-center gap-3">
@@ -589,8 +547,6 @@ export default function UserFeed() {
                   <button onClick={() => setIsNotificationOpen(false)} className="text-slate-500 dark:text-white hover:text-slate-900 transition-colors"><X size={20}/></button>
                </div>
              </div>
-
-             {/* Tabs Lọc */}
              <div className="px-6 py-3 border-b border-slate-200 dark:border-white/10 flex gap-2">
                <button onClick={() => setActiveNotifTab('all')} className={`px-4 py-2 rounded-xl font-bold text-xs transition-all ${activeNotifTab === 'all' ? 'bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}>Tất cả</button>
                <button onClick={() => setActiveNotifTab('unread')} className={`px-4 py-2 rounded-xl font-bold text-xs transition-all flex items-center gap-2 ${activeNotifTab === 'unread' ? 'bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}>
@@ -598,8 +554,6 @@ export default function UserFeed() {
                   {notifications.filter(n => !n.isRead).length > 0 && <span className="px-1.5 py-0.5 bg-rose-500 text-white rounded-md text-[10px] leading-none">{notifications.filter(n => !n.isRead).length}</span>}
                </button>
              </div>
-
-             {/* Danh sách Thông báo */}
              <div className="flex-1 overflow-y-auto p-4 space-y-3 no-scrollbar">
                 {filteredNotifs.length === 0 ? (
                     <div className="w-full h-full flex flex-col items-center justify-center text-center px-4">
@@ -612,13 +566,9 @@ export default function UserFeed() {
                         const Icon = notif.icon;
                         return (
                             <div key={notif.id} className={`p-4 rounded-2xl flex gap-4 items-start transition-all cursor-pointer hover:bg-white dark:hover:bg-white/5 border border-transparent hover:border-slate-200 dark:hover:border-white/10 ${!notif.isRead ? 'bg-white/60 dark:bg-white/5' : 'opacity-70'}`}>
-                                <div className={`p-2.5 rounded-xl ${notif.bg} ${notif.color} shrink-0`}>
-                                    <Icon size={20} strokeWidth={2.5} />
-                                </div>
+                                <div className={`p-2.5 rounded-xl ${notif.bg} ${notif.color} shrink-0`}><Icon size={20} strokeWidth={2.5} /></div>
                                 <div className="flex-1">
-                                    <div className="flex justify-between items-start mb-1">
-                                        <h4 className={`text-sm font-black leading-tight ${!notif.isRead ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-zinc-300'}`}>{notif.title}</h4>
-                                    </div>
+                                    <div className="flex justify-between items-start mb-1"><h4 className={`text-sm font-black leading-tight ${!notif.isRead ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-zinc-300'}`}>{notif.title}</h4></div>
                                     <p className={`text-xs mt-1 mb-2 ${!notif.isRead ? 'text-slate-600 dark:text-zinc-400 font-medium' : 'text-slate-500 dark:text-zinc-500'}`}>{notif.desc}</p>
                                     <span className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500">{notif.time}</span>
                                 </div>
@@ -715,7 +665,6 @@ export default function UserFeed() {
           </div>
         </div>
       )}
-
     </div>
   );
 }
