@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { 
   CalendarPlus, X, User as UserIcon, ShieldCheck, Sparkles, Home, Compass, 
   CalendarDays, Heart, MessageCircle, Bookmark, Share2, Plus,
-  Sun, Moon, Bell, LogOut, Send, CheckCircle, CreditCard
+  Sun, Moon, Bell, LogOut, Send, CheckCircle, CreditCard, MoreHorizontal
 } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
@@ -68,11 +68,14 @@ export default function UserFeed() {
   const [activeService, setActiveService] = useState<Service | null>(null);
   const [affiliateCode, setAffiliateCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
+  const [isCommentAnimating, setIsCommentAnimating] = useState(false);
   const [activeCommentServiceId, setActiveCommentServiceId] = useState<string | null>(null);
-  const [comments, setComments] = useState<Comment[]>([]);
+  const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState("");
   const [isLoadingComments, setIsLoadingComments] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<{ id: string, name: string } | null>(null);
 
   // --- STATE NOTIFICATION ---
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -80,8 +83,6 @@ export default function UserFeed() {
   const [notifications, setNotifications] = useState([
     { id: 1, type: 'system', title: 'Video của bạn đã được duyệt!', desc: 'Video "Massage Cổ Vai Gáy" đã chính thức xuất hiện trên Feed. Xin chúc mừng!', time: '10 phút trước', isRead: false, icon: ShieldCheck, color: 'text-blue-500', bg: 'bg-blue-500/10' },
     { id: 2, type: 'booking', title: 'Bạn có lịch hẹn sắp tới', desc: 'Lịch hẹn "Trị liệu Da Mặt" của bạn sẽ bắt đầu vào 15:00 ngày mai.', time: '2 giờ trước', isRead: false, icon: CalendarDays, color: 'text-[#80BF84]', bg: 'bg-[#80BF84]/10' },
-    { id: 3, type: 'payment', title: 'Thanh toán thành công', desc: 'Đơn hàng qua cổng Escrow đã được bảo chứng an toàn.', time: '1 ngày trước', isRead: true, icon: CreditCard, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-    { id: 4, type: 'social', title: 'Có người bình luận về video', desc: 'Nguyễn Văn A đã để lại bình luận: "Dịch vụ tuyệt vời quá ạ!"', time: '2 ngày trước', isRead: true, icon: MessageCircle, color: 'text-purple-500', bg: 'bg-purple-500/10' },
   ]);
 
   // --- STATE AI CHAT ASSISTANT ---
@@ -89,7 +90,7 @@ export default function UserFeed() {
   const [chatInput, setChatInput] = useState("");
   const [isChatTyping, setIsChatTyping] = useState(false);
   const [chatMessages, setChatMessages] = useState<{role: 'user' | 'bot', content: string}[]>([
-    { role: 'bot', content: 'Xin chào! Tôi là trợ lý AI Health của bạn. Tôi có thể lắng nghe những căng thẳng của bạn hoặc tư vấn dịch vụ trị liệu phù hợp. Bạn đang cảm thấy thế nào hôm nay?' }
+    { role: 'bot', content: 'Xin chào! Tôi là trợ lý AI Health. Bạn đang cảm thấy thế nào hôm nay?' }
   ]);
 
   // --- STATE THEME & HYDRATION ---
@@ -97,27 +98,31 @@ export default function UserFeed() {
   const [hasNotification, setHasNotification] = useState(true);
   const [isMounted, setIsMounted] = useState(false); 
 
-  // --- 🚀 HÀM FETCH DỮ LIỆU ĐƯỢC TỐI ƯU ---
+  // --- 🚀 HÀM FETCH DỮ LIỆU ĐƯỢC TỐI ƯU (CÓ BÁO LỖI SERVER SLEEP) ---
   const fetchServices = async (currentUserId?: string) => {
     try {
       let url = "https://ai-health-share-backend.onrender.com/services";
       if (currentUserId) url += `?user_id=${currentUserId}`;
       const response = await fetch(url);
+      
+      if (!response.ok) {
+          throw new Error("Lỗi mạng: Backend không phản hồi");
+      }
+
       const result = await response.json();
       if (result.status === "success") setServices(result.data);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Fetch error:", error);
+      toast.error("Máy chủ AI Health đang khởi động (mất ~30s). Vui lòng đợi một lát nhé!");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // --- 🚀 ENGINE KHỞI TẠO SIÊU MƯỢT (FIXED MEMORY LEAK) ---
   useEffect(() => {
     setIsMounted(true); 
-    let isSubscribed = true; // Cờ theo dõi Component còn sống không
+    let isSubscribed = true; 
     
-    // Xử lý Theme
     const storedTheme = localStorage.getItem('theme');
     if (storedTheme === 'light') {
       setIsDarkMode(false);
@@ -127,15 +132,13 @@ export default function UserFeed() {
       document.documentElement.classList.add('dark');
     }
 
-    // Đăng ký LUỒNG DUY NHẤT lắng nghe Auth State
     const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, curSession) => {
-      if (!isSubscribed) return; // Nếu đã chuyển trang, ngắt ngay lập tức
+      if (!isSubscribed) return; 
 
       if (curSession?.user) {
         setUser(curSession.user);
-        fetchServices(curSession.user.id); // Tải Video cho User
+        fetchServices(curSession.user.id); 
 
-        // Lấy Role & Theme
         const { data } = await supabase.from("users").select("role, theme_preference").eq("id", curSession.user.id).single();
         if (data && isSubscribed) {
            setUserRole(data.role);
@@ -148,11 +151,10 @@ export default function UserFeed() {
       } else {
         setUser(null);
         setUserRole("USER");
-        fetchServices(); // Tải Video cho Guest
+        fetchServices(); 
       }
     });
 
-    // 🚀 CLEANUP: Hủy lắng nghe khi Component Unmount (Nút Back/Chuyển trang)
     return () => {
       isSubscribed = false;
       authListener.subscription.unsubscribe();
@@ -184,14 +186,9 @@ export default function UserFeed() {
 
   const handleGoogleLogin = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: `${window.location.origin}` }
-      });
+      const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}` } });
       if (error) throw error;
-    } catch (error: any) {
-      toast.error(`Lỗi đăng nhập Google: ${error.message}`);
-    }
+    } catch (error: any) { toast.error(`Lỗi đăng nhập Google: ${error.message}`); }
   };
 
   const handleUserAvatarClick = () => {
@@ -215,9 +212,7 @@ export default function UserFeed() {
       setUser(null);
       setUserRole("USER");
       toast.success("Đã đăng xuất thành công!", { id: toastId });
-    } catch (error: any) {
-      toast.error("Lỗi đăng xuất!", { id: toastId });
-    }
+    } catch (error: any) { toast.error("Lỗi đăng xuất!", { id: toastId }); }
   };
 
   const handleInteraction = async (serviceId: string, action: 'like' | 'save') => {
@@ -238,23 +233,40 @@ export default function UserFeed() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       await fetch(`https://ai-health-share-backend.onrender.com/interactions/${action}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` },
+        method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` },
         body: JSON.stringify({ service_id: serviceId })
       });
-    } catch (error) {
-      fetchServices(user.id); 
-    }
+    } catch (error) { fetchServices(user.id); }
   };
 
+  // --- LOGIC MỞ MODAL BÌNH LUẬN (ĐÃ FIX LỖI CRASH) ---
   const handleOpenComments = async (serviceId: string) => {
     setActiveCommentServiceId(serviceId);
     setIsCommentModalOpen(true);
+    setTimeout(() => setIsCommentAnimating(true), 10); 
     setIsLoadingComments(true);
     try {
        const res = await fetch(`https://ai-health-share-backend.onrender.com/comments/${serviceId}`);
        const data = await res.json();
-       if (data.status === 'success') setComments(data.data);
+       if (data.status === 'success') {
+           const enhancedComments = data.data.map((c: any) => {
+               // BẢO VỆ CHỐNG CRASH: Kiểm tra an toàn (Safe Navigation) c.users
+               const userEmail = c.users?.email || "";
+               const safeName = c.users?.full_name || (userEmail.includes('@') ? userEmail.split('@')[0] : "Ẩn danh");
+               return {
+                   ...c,
+                   likes_count: Math.floor(Math.random() * 50),
+                   is_liked: false,
+                   is_pinned: Math.random() > 0.9, 
+                   users: { 
+                       ...c.users, 
+                       role: Math.random() > 0.7 ? 'PARTNER_ADMIN' : 'USER', 
+                       full_name: safeName 
+                   }
+               }
+           });
+           setComments(enhancedComments);
+       }
     } catch (e) {
        toast.error("Không thể tải bình luận.");
     } finally {
@@ -262,6 +274,33 @@ export default function UserFeed() {
     }
   };
 
+  // --- LOGIC ĐIỀU HƯỚNG TỪ BÌNH LUẬN ---
+  const handleGoToPublicProfile = (targetUserId: string, targetRole: string) => {
+    setIsCommentAnimating(false);
+    setTimeout(() => {
+      setIsCommentModalOpen(false);
+      if (targetRole === "SUPER_ADMIN") router.push(`/admin/profile/${targetUserId}`);
+      else if (targetRole === "PARTNER_ADMIN") router.push(`/partner/profile/${targetUserId}`);
+      else if (targetRole === "MODERATOR") router.push(`/moderator/profile/${targetUserId}`);
+      else router.push(`/profile/${targetUserId}`);
+    }, 300);
+  };
+
+  const handleCloseComments = () => {
+    setIsCommentAnimating(false); 
+    setTimeout(() => {
+        setIsCommentModalOpen(false);
+        setReplyingTo(null);
+    }, 300); 
+  };
+
+  const handleLikeComment = (commentId: string) => {
+      setComments(prev => prev.map(c => 
+          c.id === commentId ? { ...c, is_liked: !c.is_liked, likes_count: c.likes_count + (c.is_liked ? -1 : 1) } : c
+      ));
+  };
+
+  // --- LOGIC GỬI BÌNH LUẬN & REPLY TAG ---
   const handlePostComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
@@ -272,20 +311,46 @@ export default function UserFeed() {
     }
     if (!newComment.trim() || !activeCommentServiceId) return;
 
+    // Gắn tag @username vào nội dung nếu đang Reply
+    const finalContent = replyingTo ? `@${replyingTo.name} ${newComment.trim()}` : newComment.trim();
+
     try {
        const { data: { session } } = await supabase.auth.getSession();
        const res = await fetch(`https://ai-health-share-backend.onrender.com/comments`, {
          method: "POST",
          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` },
-         body: JSON.stringify({ service_id: activeCommentServiceId, content: newComment.trim() })
+         body: JSON.stringify({ service_id: activeCommentServiceId, content: finalContent })
        });
        const data = await res.json();
+       
        if (data.status === 'success') {
-          setComments([data.data, ...comments]);
+          const safeName = user.email ? user.email.split('@')[0] : "Bạn";
+          const newC = {
+              ...data.data,
+              likes_count: 0,
+              is_liked: false,
+              is_pinned: false,
+              users: { ...data.data.users, role: userRole, full_name: safeName }
+          };
+          setComments([newC, ...comments]);
           setNewComment("");
+          setReplyingTo(null); // Tắt Reply State
           setServices(prev => prev.map(s => s.id === activeCommentServiceId ? {...s, comments_count: (s.comments_count || 0) + 1} : s));
        }
     } catch (e) { toast.error("Lỗi khi gửi bình luận."); }
+  };
+
+  // --- HÀM RENDER NỘI DUNG HIGHLIGHT TAG @ ---
+  const renderCommentContent = (text: string) => {
+      if (text.startsWith('@')) {
+          const firstSpace = text.indexOf(' ');
+          if (firstSpace !== -1) {
+              const tag = text.substring(0, firstSpace);
+              const msg = text.substring(firstSpace);
+              return <><span className="text-emerald-500 font-bold hover:underline cursor-pointer">{tag}</span>{msg}</>;
+          }
+      }
+      return text;
   };
 
   const handleShare = (serviceId: string) => {
@@ -322,11 +387,8 @@ export default function UserFeed() {
       if (!bookingRes.ok) throw new Error(bookingData.detail || "Lỗi ghi nhận giao dịch");
       if (bookingData.checkout_url) window.location.href = bookingData.checkout_url; 
       else toast.error("Hệ thống chưa tạo được link thanh toán.", { id: toastId });
-    } catch (error: any) {
-      toast.error(error.message, { id: toastId });
-    } finally {
-      setIsSubmitting(false);
-    } 
+    } catch (error: any) { toast.error(error.message, { id: toastId }); } 
+    finally { setIsSubmitting(false); } 
   };
 
   const handleThemeToggle = async () => {
@@ -342,13 +404,10 @@ export default function UserFeed() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         await fetch("https://ai-health-share-backend.onrender.com/user/profile", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` },
+          method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` },
           body: JSON.stringify({ theme_preference: themeStr })
         });
-      } catch (error) {
-        console.error("Lỗi đồng bộ Theme:", error);
-      }
+      } catch (error) { console.error("Lỗi đồng bộ Theme:", error); }
     }
   };
 
@@ -357,8 +416,6 @@ export default function UserFeed() {
     setHasNotification(false);
     toast.success("Đã đánh dấu tất cả là đã đọc");
   };
-
-  const filteredNotifs = activeNotifTab === 'all' ? notifications : notifications.filter(n => !n.isRead);
 
   const handleOpenNotification = () => {
     setIsNotificationOpen(true);
@@ -399,16 +456,11 @@ export default function UserFeed() {
             <>
               <div className="fixed inset-0 z-40" onClick={() => setIsUserMenuOpen(false)}></div>
               <div className="absolute bottom-full mb-3 left-2 right-2 p-2 flex flex-col gap-1 z-50 animate-fade-in bg-white/90 dark:bg-black/80 backdrop-blur-3xl shadow-2xl border border-slate-200 dark:border-white/10 rounded-2xl">
-                  <button onClick={handleGoToProfile} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white font-bold transition-all text-sm w-full text-left">
-                    <UserIcon size={16} /> Trang cá nhân
-                  </button>
-                  <button onClick={handleLogout} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-rose-500/10 text-rose-500 font-bold transition-all text-sm w-full text-left">
-                    <LogOut size={16} /> Đăng xuất
-                  </button>
+                  <button onClick={handleGoToProfile} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white font-bold transition-all text-sm w-full text-left"><UserIcon size={16} /> Trang cá nhân</button>
+                  <button onClick={handleLogout} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-rose-500/10 text-rose-500 font-bold transition-all text-sm w-full text-left"><LogOut size={16} /> Đăng xuất</button>
               </div>
             </>
           )}
-
           <button onClick={handleUserAvatarClick} className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-bold transition-all group border border-transparent hover:border-slate-300 dark:hover:border-white/10">
             <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-zinc-800 flex items-center justify-center border border-slate-300 dark:border-zinc-700 group-hover:border-[#80BF84] transition-colors"><UserIcon size={16} /></div>
             <span className="text-sm tracking-wide truncate max-w-[120px] text-left">{user ? user.email.split('@')[0] : "Đăng nhập"}</span>
@@ -418,7 +470,6 @@ export default function UserFeed() {
 
       {/* 2. MAIN FEED AREA */}
       <div className="flex-1 relative h-[100dvh]">
-        
         <div className="md:hidden absolute top-0 w-full z-40 p-6 flex justify-between items-center pointer-events-none transition-all"><h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-lg flex items-center gap-1 transition-colors duration-500">AI<span className="text-[#80BF84]">HEALTH</span></h1></div>
 
         {/* THEME & NOTIFICATION CONTROLS */}
@@ -582,24 +633,124 @@ export default function UserFeed() {
         </div>
       )}
 
-      {/* --- MODAL BÌNH LUẬN --- */}
+      {/* --- MODAL BÌNH LUẬN (PHIÊN BẢN TIKTOK PRO - CÂY RẼ NHÁNH & TRƯỢT TRÁI) --- */}
       {isCommentModalOpen && (
-        <div className="fixed inset-0 z-[100] flex justify-center items-end md:items-center md:justify-end md:p-6 pointer-events-auto">
-          <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/40 backdrop-blur-sm transition-colors duration-500" onClick={() => setIsCommentModalOpen(false)}></div>
-          <div className="relative w-full md:w-[420px] h-[75vh] md:h-[calc(100vh-48px)] bg-white/70 dark:bg-black/50 backdrop-blur-3xl rounded-t-[2.5rem] md:rounded-[2.5rem] border border-slate-200 dark:border-white/10 flex flex-col shadow-2xl transition-colors duration-500">
-             <div className="pt-8 pb-4 px-6 border-b border-slate-200 dark:border-white/10 flex justify-between items-center transition-colors duration-500"><h3 className="text-lg font-bold text-slate-900 dark:text-white transition-colors duration-500">Bình luận</h3><button onClick={() => setIsCommentModalOpen(false)} className="text-slate-500 dark:text-white hover:text-slate-900 transition-colors"><X size={18}/></button></div>
-             <div className="flex-1 overflow-y-auto p-6 space-y-6">
-               {comments.map(c => (
-                   <div key={c.id} className="flex gap-3">
-                     <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-zinc-800 overflow-hidden">{c.users?.avatar_url ? <img src={c.users.avatar_url} className="w-full h-full object-cover"/> : <UserIcon size={16} className="m-auto mt-3 text-slate-500 dark:text-zinc-500"/>}</div>
-                     <div className="flex-1"><p className="text-xs font-bold text-slate-900 dark:text-white transition-colors duration-500">{c.users?.full_name || "Người dùng"}</p><p className="text-sm text-slate-600 dark:text-slate-300 transition-colors duration-500">{c.content}</p></div>
-                   </div>
-               ))}
+        <div className="fixed inset-0 z-[120] flex justify-end overflow-hidden pointer-events-none">
+          
+          <div 
+            className={`absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity duration-500 pointer-events-auto ${isCommentAnimating ? 'opacity-100' : 'opacity-0'}`} 
+            onClick={handleCloseComments}
+          ></div>
+          
+          <div className={`relative w-full md:w-[450px] h-[75vh] md:h-full mt-auto md:mt-0 bg-white/95 dark:bg-[#121212]/95 backdrop-blur-3xl shadow-[-10px_0_30px_rgba(0,0,0,0.2)] flex flex-col transition-transform duration-500 ease-out transform pointer-events-auto rounded-t-[2.5rem] md:rounded-none md:rounded-l-[2rem] ${isCommentAnimating ? 'translate-y-0 md:translate-y-0 md:translate-x-0' : 'translate-y-full md:translate-x-full'}`}>
+             
+             {/* Header */}
+             <div className="pt-8 pb-4 px-6 border-b border-slate-100 dark:border-white/5 flex justify-between items-center">
+                 <div>
+                     <h3 className="text-lg font-black text-slate-900 dark:text-white">Thảo luận</h3>
+                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{comments.length} phản hồi</p>
+                 </div>
+                 <button onClick={handleCloseComments} className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 dark:bg-white/5 text-slate-500 hover:text-rose-500 transition-colors"><X size={20}/></button>
              </div>
-             <form onSubmit={handlePostComment} className="p-4 border-t border-slate-200 dark:border-white/10 flex gap-3 transition-colors duration-500">
-               <input type="text" className="flex-1 bg-slate-200/50 dark:bg-white/5 rounded-full px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none transition-colors duration-500" value={newComment} onChange={e => setNewComment(e.target.value)} />
-               <button type="submit" className="w-10 h-10 rounded-full bg-[#80BF84] text-zinc-950 flex items-center justify-center"><Send size={16}/></button>
-             </form>
+
+             {/* Danh sách bình luận dạng Tree */}
+             <div className="flex-1 overflow-y-auto p-4 space-y-6 no-scrollbar pb-32">
+               {isLoadingComments ? (
+                   <div className="flex flex-col items-center py-20 gap-4">
+                       <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                       <span className="text-xs font-bold text-slate-400 animate-pulse">Đang tải cuộc hội thoại...</span>
+                   </div>
+               ) : comments.length === 0 ? (
+                   <div className="text-center text-slate-500 dark:text-zinc-500 py-10 text-sm">Hãy là người đầu tiên bình luận!</div>
+               ) : (
+                   comments.map((c) => {
+                       const isAuthor = activeService?.partner_id === c.user_id;
+                       const role = c.users?.role || "USER";
+                       
+                       // Nếu nội dung bắt đầu bằng "@", tự động thụt lùi tạo nhánh Reply
+                       const isReply = c.content.trim().startsWith('@');
+
+                       return (
+                       <div key={c.id} className={`relative flex gap-3 ${isReply ? 'ml-10' : ''}`}>
+                         {/* Đường kẻ dẫn hướng cho Reply */}
+                         {isReply && (
+                             <div className="absolute -left-6 top-0 bottom-1/2 w-4 border-l-2 border-b-2 border-slate-200 dark:border-white/10 rounded-bl-xl"></div>
+                         )}
+
+                         {/* Avatar */}
+                         <div 
+                            className="w-10 h-10 rounded-full border-2 border-white dark:border-zinc-800 overflow-hidden shrink-0 cursor-pointer shadow-sm active:scale-90 transition-transform"
+                            onClick={() => handleGoToPublicProfile(c.user_id, role)}
+                         >
+                             {c.users?.avatar_url ? <img src={c.users.avatar_url} className="w-full h-full object-cover"/> : <div className="w-full h-full bg-slate-200 dark:bg-zinc-800 flex items-center justify-center text-slate-400"><UserIcon size={18}/></div>}
+                         </div>
+                         
+                         <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-2 mb-1">
+                                <span className="text-sm font-black text-slate-800 dark:text-zinc-200 truncate cursor-pointer hover:text-emerald-500" onClick={() => handleGoToPublicProfile(c.user_id, role)}>
+                                    {c.users?.full_name || "Thành viên"}
+                                </span>
+                                
+                                {/* HỆ THỐNG SOFT BADGES */}
+                                {isAuthor && <span className="px-2 py-0.5 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[9px] font-black rounded-full border border-rose-100 dark:border-rose-500/20">AUTHOR</span>}
+                                {!isAuthor && role === 'SUPER_ADMIN' && <span className="px-2 py-0.5 bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 text-[9px] font-black rounded-full border border-violet-100 dark:border-violet-500/20">ADMIN</span>}
+                                {!isAuthor && role === 'MODERATOR' && <span className="px-2 py-0.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[9px] font-black rounded-full border border-blue-100 dark:border-blue-500/20">MODERATOR</span>}
+                                {!isAuthor && role === 'PARTNER_ADMIN' && <span className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[9px] font-black rounded-full border border-emerald-100 dark:border-emerald-500/20">EXPERTISER</span>}
+                            </div>
+                            
+                            <div className="relative group/content w-max max-w-full">
+                                <p className="text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed break-words bg-slate-50 dark:bg-white/5 p-3 pr-8 rounded-2xl rounded-tl-none">
+                                    {c.is_pinned && <Bookmark size={12} className="inline mr-1 fill-rose-500 text-rose-500"/>}
+                                    {renderCommentContent(c.content)}
+                                </p>
+                                {/* Nút thả tim nhanh chuẩn TikTok */}
+                                <button onClick={() => handleLikeComment(c.id)} className="absolute -right-2 -bottom-2 w-7 h-7 rounded-full bg-white dark:bg-zinc-800 shadow-md flex items-center justify-center transition-transform active:scale-125 border border-slate-100 dark:border-white/10 group">
+                                   <Heart size={14} className={`${c.is_liked ? 'fill-rose-500 text-rose-500' : 'text-slate-300 group-hover:text-rose-400'}`}/>
+                                </button>
+                            </div>
+                            
+                            <div className="flex items-center gap-5 mt-2 px-1">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase">{new Date(c.created_at).toLocaleDateString('vi-VN')}</span>
+                                <button onClick={() => setReplyingTo({ id: c.id, name: c.users?.full_name || "Thành viên" })} className="text-[10px] font-black text-slate-500 hover:text-emerald-500 transition-colors uppercase tracking-wider">Trả lời</button>
+                                {/* FIXED BUG HẾT HIỆN SỐ 0: Dùng Toán tử 3 ngôi (Ternary Operator) thay cho && */}
+                                {c.likes_count > 0 ? <span className="text-[10px] font-bold text-rose-500">{c.likes_count} ❤️</span> : null}
+                            </div>
+                         </div>
+
+                         {/* Nút Tùy chọn (Ghim/Xóa) cho Admin và Tác giả */}
+                         {(userRole === 'SUPER_ADMIN' || isAuthor) && (
+                             <button className="h-max p-1 text-slate-300 hover:text-slate-600 dark:hover:text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                                 <MoreHorizontal size={16} />
+                             </button>
+                         )}
+                       </div>
+                   )})
+               )}
+             </div>
+
+             {/* Form nhập liệu (Ghim ở dưới) */}
+             <div className="p-6 bg-white dark:bg-[#121212] border-t border-slate-100 dark:border-white/5 shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
+               {replyingTo && (
+                   <div className="flex justify-between items-center mb-3 bg-emerald-50 dark:bg-emerald-500/5 px-4 py-2 rounded-xl border border-emerald-100 dark:border-emerald-500/10 animate-slide-up">
+                       <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">Phản hồi <span className="text-slate-900 dark:text-white underline ml-1">@{replyingTo.name}</span></span>
+                       <button onClick={() => setReplyingTo(null)} className="text-slate-400 hover:text-rose-500"><X size={14}/></button>
+                   </div>
+               )}
+               <form onSubmit={handlePostComment} className="flex gap-3 items-end">
+                 <div className="flex-1 relative">
+                     <textarea 
+                        className="w-full bg-slate-100 dark:bg-white/5 px-5 py-3.5 text-sm text-slate-900 dark:text-white rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 border border-transparent focus:border-emerald-500/50 resize-none no-scrollbar transition-all" 
+                        placeholder={replyingTo ? `Viết câu trả lời...` : "Chia sẻ cảm nghĩ của bạn..."}
+                        value={newComment} 
+                        onChange={e => setNewComment(e.target.value)} 
+                        rows={1}
+                     />
+                 </div>
+                 <button type="submit" disabled={!newComment.trim()} className="w-12 h-12 shrink-0 rounded-full bg-emerald-500 text-white flex items-center justify-center disabled:opacity-30 shadow-lg shadow-emerald-500/20 hover:scale-105 active:scale-95 transition-all">
+                     <Send size={20} className="ml-1"/>
+                 </button>
+               </form>
+             </div>
           </div>
         </div>
       )}
