@@ -276,7 +276,13 @@ export default function ModeratorDashboard() {
                 <div className="w-full md:w-1/2 p-6 md:p-10 flex flex-col h-full max-h-[50vh] md:max-h-full overflow-y-auto no-scrollbar">
                     <div className="flex justify-between items-start mb-6">
                         <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-zinc-800 overflow-hidden"><img src={selectedService.users?.avatar_url || ""} className="w-full h-full object-cover"/></div>
+                        <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-zinc-800 overflow-hidden flex items-center justify-center">
+    {selectedService.users?.avatar_url ? (
+        <img src={selectedService.users.avatar_url} className="w-full h-full object-cover"/>
+    ) : (
+        <UserIcon size={24} className="text-slate-400 dark:text-zinc-600" />
+    )}
+</div>
                             <div>
                                 <p className="text-sm font-bold text-slate-900 dark:text-white">{selectedService.users?.full_name || "Partner"}</p>
                                 <p className="text-xs text-slate-500 dark:text-zinc-400">{selectedService.users?.email}</p>
