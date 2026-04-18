@@ -219,11 +219,11 @@ export default function PartnerPublicProfile() {
                             reviews.map((review) => (
                                 <div key={review.id} className="p-5 rounded-[1.5rem] bg-white/60 dark:bg-white/5 backdrop-blur-2xl border border-slate-200 dark:border-white/10 shadow-sm flex gap-4">
                                     <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-200 dark:bg-zinc-800 shrink-0">
-                                        {review.users?.avatar_url ? <img src={review.users.avatar_url} className="w-full h-full object-cover"/> : <UserIcon className="w-full h-full p-2 text-slate-400" />}
+                                    {review['users!partner_reviews_user_id_fkey']?.avatar_url ? <img src={review['users!partner_reviews_user_id_fkey'].avatar_url} className="w-full h-full object-cover"/> : <UserIcon className="w-full h-full p-2 text-slate-400 dark:text-zinc-600" />}
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-2 mb-1">
-                                            <h5 className="font-bold text-slate-900 dark:text-white">{review.users?.full_name || "Khách hàng"}</h5>
+                                            <h5 className="font-bold text-slate-900 dark:text-white">{review['users!partner_reviews_user_id_fkey']?.full_name || "Khách hàng"}</h5>
                                             <div className="flex text-amber-400">
                                                 {[...Array(5)].map((_, i) => (
                                                     <Star key={i} size={12} className={i < review.rating ? "fill-amber-400" : "text-slate-300 dark:text-zinc-700"} />
