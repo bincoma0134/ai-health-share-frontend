@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { 
-  Home, User as UserIcon, ShieldCheck, CheckCircle, Clock, 
-  Save, Sun, Moon, Bell, Edit3, ShieldAlert
-} from "lucide-react";
+    Home, User as UserIcon, ShieldCheck, CheckCircle, Clock, 
+    Save, Sun, Moon, Bell, Edit3, ShieldAlert, Sparkles
+  } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
