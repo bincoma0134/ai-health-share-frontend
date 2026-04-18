@@ -26,6 +26,7 @@ interface Service {
   service_name: string;
   description: string;
   price: number;
+  video_url?: string; // <-- THÊM DÒNG NÀY (Nhận link video thật)
   likes_count?: number;
   saves_count?: number;
   comments_count?: number;
@@ -445,10 +446,12 @@ export default function UserFeed() {
 
             return (
               <div key={item.id} className="relative h-[100dvh] w-full snap-start snap-always bg-slate-100 dark:bg-black overflow-hidden flex items-center justify-center transition-colors duration-500">
-                <div className="hidden md:block absolute inset-0 w-full h-full"><video src={`/video-${videoNumber}.mp4`} className="w-full h-full object-cover opacity-10 dark:opacity-30 blur-[60px] scale-125 transition-opacity duration-500" loop autoPlay muted playsInline /></div>
+                {/* Nền mờ Desktop dùng video thật */}
+                <div className="hidden md:block absolute inset-0 w-full h-full"><video src={item.video_url || `/video-${videoNumber}.mp4`} className="w-full h-full object-cover opacity-10 dark:opacity-30 blur-[60px] scale-125 transition-opacity duration-500" loop autoPlay muted playsInline /></div>
                 <div className={`relative w-full h-full md:h-[94vh] md:w-auto ${desktopRatioClass} md:rounded-[2.5rem] overflow-hidden bg-black md:border border-slate-200 dark:border-white/10 md:shadow-[0_0_50px_rgba(0,0,0,0.1)] dark:md:shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-all duration-500`}>
                     
-                    <video src={`/video-${videoNumber}.mp4`} className="absolute inset-0 w-full h-full object-cover opacity-90" loop autoPlay muted playsInline />
+                    {/* Video Player chính dùng video thật */}
+                    <video src={item.video_url || `/video-${videoNumber}.mp4`} className="absolute inset-0 w-full h-full object-cover opacity-90" loop autoPlay muted playsInline />
                     <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none"></div>
                     
                     <div className="absolute bottom-[100px] md:bottom-[40px] left-4 md:left-6 z-10 max-w-[75%] pointer-events-auto animate-slide-up">
