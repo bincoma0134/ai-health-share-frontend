@@ -19,14 +19,15 @@ if (!supabaseUrl || !supabaseAnonKey) {
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 interface PendingService {
-  id: string;
-  partner_id: string;
-  service_name: string;
-  description: string;
-  price: number;
-  created_at: string;
-  users?: { full_name?: string; email?: string; avatar_url?: string };
-}
+    id: string;
+    partner_id: string;
+    service_name: string;
+    description: string;
+    price: number;
+    video_url?: string; // <-- THÊM DÒNG NÀY ĐỂ NHẬN LINK TỪ DATABASE
+    created_at: string;
+    users?: { full_name?: string; email?: string; avatar_url?: string };
+  }
 
 export default function ModeratorDashboard() {
   const router = useRouter();
@@ -220,7 +221,8 @@ export default function ModeratorDashboard() {
                             {/* Khung giả lập Thumbnail Video */}
                             <div className="w-full aspect-[4/3] bg-slate-800 dark:bg-zinc-900 rounded-2xl mb-4 relative overflow-hidden flex items-center justify-center">
                                 {/* Dùng video mặc định để demo UI */}
-                                <video src={`/video-${(index % 3) + 1}.mp4`} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
+                                {/* Hiển thị Video thật từ Supabase Storage */}
+                                <video src={service.video_url} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
                                 <div className="absolute inset-0 bg-black/20 flex items-center justify-center"><div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white"><Play size={24} className="ml-1"/></div></div>
                                 <div className="absolute top-3 left-3 px-2 py-1 bg-amber-500/90 text-zinc-950 text-[10px] font-black uppercase tracking-wider rounded-md">PENDING</div>
                             </div>
@@ -268,7 +270,7 @@ export default function ModeratorDashboard() {
                 
                 {/* Trái: Video Player (9:16) */}
                 <div className="w-full md:w-1/2 bg-black h-[40vh] md:h-full relative flex items-center justify-center">
-                    <video src={`/video-${(pendingServices.indexOf(selectedService) % 3) + 1}.mp4`} className="w-full h-full object-cover md:object-contain" autoPlay loop controls playsInline />
+                    <video src={selectedService.video_url} className="w-full h-full object-cover md:object-contain" autoPlay loop controls playsInline />
                     <button onClick={closeModal} className="md:hidden absolute top-4 right-4 w-10 h-10 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center text-white"><X size={20}/></button>
                 </div>
 
