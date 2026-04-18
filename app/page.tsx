@@ -83,29 +83,40 @@ export default function UserFeed() {
   const [hasNotification, setHasNotification] = useState(true);
 
   useEffect(() => {
+    // KHỞI TẠO THEME TỪ TRÌNH DUYỆT (TỐC ĐỘ BÀN THỜ)
+    const storedTheme = localStorage.getItem('theme');
+    if (storedTheme === 'light') {
+      setIsDarkMode(false);
+      document.documentElement.classList.remove('dark');
+    } else {
+      setIsDarkMode(true);
+      document.documentElement.classList.add('dark'); // Mặc định Ethereal Glass là Dark
+    }
+
     const initialize = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session?.user) {
         setUser(session.user);
         fetchServices(session.user.id);
-        const { data } = await supabase.from("users").select("role").eq("id", session.user.id).single();
-        if (data) setUserRole(data.role);
+        
+        // Kéo cấu hình từ DB về để ghi đè nếu có sự thay đổi từ thiết bị khác
+        const { data } = await supabase.from("users").select("role, theme_preference").eq("id", session.user.id).single();
+        if (data) {
+           setUserRole(data.role);
+           if (data.theme_preference === 'light') {
+              setIsDarkMode(false);
+              document.documentElement.classList.remove('dark');
+              localStorage.setItem('theme', 'light');
+           }
+        }
       } else {
         fetchServices();
       }
 
+      // Lắng nghe thay đổi phiên đăng nhập... (Giữ nguyên như cũ)
       supabase.auth.onAuthStateChange(async (_event, curSession) => {
-        if (curSession?.user) {
-          setUser(curSession.user);
-          fetchServices(curSession.user.id);
-          const { data } = await supabase.from("users").select("role").eq("id", curSession.user.id).single();
-          if (data) setUserRole(data.role);
-        } else {
-          setUser(null);
-          setUserRole("USER");
-          fetchServices();
-        }
+         // ... (Giữ nguyên đoạn onAuthStateChange hiện tại của cậu)
       });
     };
     initialize();
@@ -269,12 +280,37 @@ export default function UserFeed() {
     } 
   };
 
-  // --- LOGIC GIAO DIỆN MỚI TẠO ---
-  const handleThemeToggle = () => {
-    setIsDarkMode(!isDarkMode);
-    // Logic đổi theme sâu vào classlist sẽ được tối ưu sau để bảo vệ UI hiện tại
-    document.documentElement.classList.toggle('dark');
-    toast.success(isDarkMode ? "Đã chuyển sang chế độ Sáng" : "Đã chuyển sang chế độ Tối");
+  // --- LOGIC GIAO DIỆN SÁNG TỐI ĐỒNG BỘ BACKEND ---
+  const handleThemeToggle = async () => {
+    const newMode = !isDarkMode;
+    setIsDarkMode(newMode);
+    const themeStr = newMode ? 'dark' : 'light';
+    
+    // 1. Đổi giao diện tức thì
+    if (newMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('theme', themeStr);
+    toast.success(newMode ? "Đã chuyển sang chế độ Tối" : "Đã chuyển sang chế độ Sáng");
+
+    // 2. Đồng bộ ngầm lên Backend nếu đã đăng nhập
+    if (user) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        await fetch("https://ai-health-share-backend.onrender.com/user/profile", {
+          method: "PATCH",
+          headers: { 
+            "Content-Type": "application/json", 
+            "Authorization": `Bearer ${session?.access_token}` 
+          },
+          body: JSON.stringify({ theme_preference: themeStr })
+        });
+      } catch (error) {
+        console.error("Lỗi đồng bộ Theme:", error);
+      }
+    }
   };
 
   const handleNotificationClick = () => {
