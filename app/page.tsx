@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import { 
   CalendarPlus, X, User as UserIcon, ShieldCheck, Sparkles, Home, Compass, 
   CalendarDays, Heart, MessageCircle, Bookmark, Share2, Plus,
-  Sun, Moon, Bell, LogOut, Send, CheckCircle, CreditCard, MoreHorizontal
+  Sun, Moon, Bell, LogOut, Send, CheckCircle
 } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import CommentModal from "@/components/CommentModal";
 
 // --- KHỞI TẠO SUPABASE CLIENT ---
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -35,23 +36,13 @@ interface Service {
   users?: { avatar_url?: string; full_name?: string };
 }
 
-interface Comment {
-  id: string;
-  user_id: string;
-  service_id: string;
-  content: string;
-  created_at: string;
-  users?: { email?: string; avatar_url?: string; full_name?: string };
-}
-
 export default function UserFeed() {
   const router = useRouter();
   
-  // --- STATE DỮ LIỆU CHÍNH ---
   const [services, setServices] = useState<Service[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  // --- STATE AUTH & ROLE ---
+  // --- AUTH & ROLE STATE ---
   const [user, setUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<string>("USER");
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -59,25 +50,19 @@ export default function UserFeed() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
-
-  // --- STATE MENU PROFILE ---
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
-  // --- STATE BOOKING & COMMENT ---
+  // --- BOOKING STATE ---
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeService, setActiveService] = useState<Service | null>(null);
   const [affiliateCode, setAffiliateCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // --- COMMENT STATE (Đã được tối giản nhờ Component) ---
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
-  const [isCommentAnimating, setIsCommentAnimating] = useState(false);
   const [activeCommentServiceId, setActiveCommentServiceId] = useState<string | null>(null);
-  const [comments, setComments] = useState<any[]>([]);
-  const [newComment, setNewComment] = useState("");
-  const [isLoadingComments, setIsLoadingComments] = useState(false);
-  const [replyingTo, setReplyingTo] = useState<{ id: string, name: string } | null>(null);
 
-  // --- STATE NOTIFICATION ---
+  // --- NOTIFICATION STATE ---
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [activeNotifTab, setActiveNotifTab] = useState<'all' | 'unread'>('all');
   const [notifications, setNotifications] = useState([
@@ -85,7 +70,7 @@ export default function UserFeed() {
     { id: 2, type: 'booking', title: 'Bạn có lịch hẹn sắp tới', desc: 'Lịch hẹn "Trị liệu Da Mặt" của bạn sẽ bắt đầu vào 15:00 ngày mai.', time: '2 giờ trước', isRead: false, icon: CalendarDays, color: 'text-[#80BF84]', bg: 'bg-[#80BF84]/10' },
   ]);
 
-  // --- STATE AI CHAT ASSISTANT ---
+  // --- CHAT AI STATE ---
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [isChatTyping, setIsChatTyping] = useState(false);
@@ -93,27 +78,22 @@ export default function UserFeed() {
     { role: 'bot', content: 'Xin chào! Tôi là trợ lý AI Health. Bạn đang cảm thấy thế nào hôm nay?' }
   ]);
 
-  // --- STATE THEME & HYDRATION ---
+  // --- THEME & SYSTEM STATE ---
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [hasNotification, setHasNotification] = useState(true);
   const [isMounted, setIsMounted] = useState(false); 
 
-  // --- 🚀 HÀM FETCH DỮ LIỆU ĐƯỢC TỐI ƯU (CÓ BÁO LỖI SERVER SLEEP) ---
+  // --- FETCH SERVICES ---
   const fetchServices = async (currentUserId?: string) => {
     try {
       let url = "https://ai-health-share-backend.onrender.com/services";
       if (currentUserId) url += `?user_id=${currentUserId}`;
       const response = await fetch(url);
-      
-      if (!response.ok) {
-          throw new Error("Lỗi mạng: Backend không phản hồi");
-      }
-
+      if (!response.ok) throw new Error("Lỗi mạng: Backend không phản hồi");
       const result = await response.json();
       if (result.status === "success") setServices(result.data);
-    } catch (error: any) {
-      console.error("Fetch error:", error);
-      toast.error("Máy chủ AI Health đang khởi động (mất ~30s). Vui lòng đợi một lát nhé!");
+    } catch (error) {
+      toast.error("Máy chủ AI Health đang khởi động. Vui lòng đợi một lát nhé!");
     } finally {
       setIsLoading(false);
     }
@@ -161,6 +141,7 @@ export default function UserFeed() {
     };
   }, []);
 
+  // --- AUTH LOGIC ---
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthLoading(true);
@@ -215,6 +196,7 @@ export default function UserFeed() {
     } catch (error: any) { toast.error("Lỗi đăng xuất!", { id: toastId }); }
   };
 
+  // --- INTERACTION LOGIC (Like, Save) ---
   const handleInteraction = async (serviceId: string, action: 'like' | 'save') => {
     if (!user) {
       toast.info(`Vui lòng đăng nhập để ${action === 'like' ? 'thích' : 'lưu'} video!`);
@@ -239,120 +221,13 @@ export default function UserFeed() {
     } catch (error) { fetchServices(user.id); }
   };
 
-  // --- LOGIC MỞ MODAL BÌNH LUẬN (ĐÃ FIX LỖI CRASH) ---
-  const handleOpenComments = async (serviceId: string) => {
+  // --- COMMENT LOGIC (Đã tối giản) ---
+  const handleOpenComments = (serviceId: string) => {
     setActiveCommentServiceId(serviceId);
     setIsCommentModalOpen(true);
-    setTimeout(() => setIsCommentAnimating(true), 10); 
-    setIsLoadingComments(true);
-    try {
-       const res = await fetch(`https://ai-health-share-backend.onrender.com/comments/${serviceId}`);
-       const data = await res.json();
-       if (data.status === 'success') {
-           const enhancedComments = data.data.map((c: any) => {
-               // BẢO VỆ CHỐNG CRASH: Kiểm tra an toàn (Safe Navigation) c.users
-               const userEmail = c.users?.email || "";
-               const safeName = c.users?.full_name || (userEmail.includes('@') ? userEmail.split('@')[0] : "Ẩn danh");
-               return {
-                   ...c,
-                   likes_count: Math.floor(Math.random() * 50),
-                   is_liked: false,
-                   is_pinned: Math.random() > 0.9, 
-                   users: { 
-                       ...c.users, 
-                       role: Math.random() > 0.7 ? 'PARTNER_ADMIN' : 'USER', 
-                       full_name: safeName 
-                   }
-               }
-           });
-           setComments(enhancedComments);
-       }
-    } catch (e) {
-       toast.error("Không thể tải bình luận.");
-    } finally {
-       setIsLoadingComments(false);
-    }
   };
 
-  // --- LOGIC ĐIỀU HƯỚNG TỪ BÌNH LUẬN ---
-  const handleGoToPublicProfile = (targetUserId: string, targetRole: string) => {
-    setIsCommentAnimating(false);
-    setTimeout(() => {
-      setIsCommentModalOpen(false);
-      if (targetRole === "SUPER_ADMIN") router.push(`/admin/profile/${targetUserId}`);
-      else if (targetRole === "PARTNER_ADMIN") router.push(`/partner/profile/${targetUserId}`);
-      else if (targetRole === "MODERATOR") router.push(`/moderator/profile/${targetUserId}`);
-      else router.push(`/profile/${targetUserId}`);
-    }, 300);
-  };
-
-  const handleCloseComments = () => {
-    setIsCommentAnimating(false); 
-    setTimeout(() => {
-        setIsCommentModalOpen(false);
-        setReplyingTo(null);
-    }, 300); 
-  };
-
-  const handleLikeComment = (commentId: string) => {
-      setComments(prev => prev.map(c => 
-          c.id === commentId ? { ...c, is_liked: !c.is_liked, likes_count: c.likes_count + (c.is_liked ? -1 : 1) } : c
-      ));
-  };
-
-  // --- LOGIC GỬI BÌNH LUẬN & REPLY TAG ---
-  const handlePostComment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) {
-       toast.info("Vui lòng đăng nhập để bình luận!");
-       setIsCommentModalOpen(false);
-       setIsAuthModalOpen(true);
-       return;
-    }
-    if (!newComment.trim() || !activeCommentServiceId) return;
-
-    // Gắn tag @username vào nội dung nếu đang Reply
-    const finalContent = replyingTo ? `@${replyingTo.name} ${newComment.trim()}` : newComment.trim();
-
-    try {
-       const { data: { session } } = await supabase.auth.getSession();
-       const res = await fetch(`https://ai-health-share-backend.onrender.com/comments`, {
-         method: "POST",
-         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` },
-         body: JSON.stringify({ service_id: activeCommentServiceId, content: finalContent })
-       });
-       const data = await res.json();
-       
-       if (data.status === 'success') {
-          const safeName = user.email ? user.email.split('@')[0] : "Bạn";
-          const newC = {
-              ...data.data,
-              likes_count: 0,
-              is_liked: false,
-              is_pinned: false,
-              users: { ...data.data.users, role: userRole, full_name: safeName }
-          };
-          setComments([newC, ...comments]);
-          setNewComment("");
-          setReplyingTo(null); // Tắt Reply State
-          setServices(prev => prev.map(s => s.id === activeCommentServiceId ? {...s, comments_count: (s.comments_count || 0) + 1} : s));
-       }
-    } catch (e) { toast.error("Lỗi khi gửi bình luận."); }
-  };
-
-  // --- HÀM RENDER NỘI DUNG HIGHLIGHT TAG @ ---
-  const renderCommentContent = (text: string) => {
-      if (text.startsWith('@')) {
-          const firstSpace = text.indexOf(' ');
-          if (firstSpace !== -1) {
-              const tag = text.substring(0, firstSpace);
-              const msg = text.substring(firstSpace);
-              return <><span className="text-emerald-500 font-bold hover:underline cursor-pointer">{tag}</span>{msg}</>;
-          }
-      }
-      return text;
-  };
-
+  // --- UTILS & OTHERS ---
   const handleShare = (serviceId: string) => {
     navigator.clipboard.writeText(`${window.location.origin}/?service=${serviceId}`);
     toast.success("Đã sao chép liên kết vào khay nhớ tạm!");
@@ -420,9 +295,10 @@ export default function UserFeed() {
   const handleOpenNotification = () => {
     setIsNotificationOpen(true);
     setHasNotification(false);
-  }
+  };
 
-  if (isLoading) {
+  // --- BẢO VỆ GIAO DIỆN (HYDRATION) ---
+  if (isLoading || !isMounted) {
     return (
       <div className="h-[100dvh] w-full bg-slate-50 dark:bg-zinc-950 flex flex-col items-center justify-center gap-6 transition-colors duration-500">
         <div className="relative w-16 h-16"><div className="absolute inset-0 bg-emerald-200 rounded-full animate-ping opacity-70"></div><div className="absolute inset-2 bg-emerald-400 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30"><Sparkles className="text-white w-6 h-6 animate-pulse" /></div></div>
@@ -431,10 +307,12 @@ export default function UserFeed() {
     );
   }
 
+  const filteredNotifs = activeNotifTab === 'all' ? notifications : notifications.filter(n => !n.isRead);
+
   return (
     <div className="h-[100dvh] w-full bg-slate-50 dark:bg-black overflow-hidden flex relative transition-colors duration-500">
       
-      {/* 1. LEFT SIDEBAR DESKTOP */}
+      {/* ================= LEFT SIDEBAR DESKTOP ================= */}
       <div className="hidden md:flex flex-col w-[260px] h-full bg-white/40 dark:bg-black/40 backdrop-blur-3xl border-r border-slate-200 dark:border-white/10 z-50 pt-8 pb-6 px-4 shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.05)] dark:shadow-[4px_0_24px_rgba(0,0,0,0.5)] transition-colors duration-500">
         <div className="px-4 mb-10"><h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-lg flex items-center gap-1 cursor-pointer transition-colors duration-500">AI<span className="text-[#80BF84]">HEALTH</span></h1></div>
         <div className="flex flex-col gap-2 flex-1">
@@ -450,17 +328,21 @@ export default function UserFeed() {
           </div>
         </div>
         
-        {/* NÚT AVATAR VÀ MENU DESKTOP */}
         <div className="mt-auto px-2 relative">
           {isUserMenuOpen && user && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setIsUserMenuOpen(false)}></div>
               <div className="absolute bottom-full mb-3 left-2 right-2 p-2 flex flex-col gap-1 z-50 animate-fade-in bg-white/90 dark:bg-black/80 backdrop-blur-3xl shadow-2xl border border-slate-200 dark:border-white/10 rounded-2xl">
-                  <button onClick={handleGoToProfile} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white font-bold transition-all text-sm w-full text-left"><UserIcon size={16} /> Trang cá nhân</button>
-                  <button onClick={handleLogout} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-rose-500/10 text-rose-500 font-bold transition-all text-sm w-full text-left"><LogOut size={16} /> Đăng xuất</button>
+                  <button onClick={handleGoToProfile} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white font-bold transition-all text-sm w-full text-left">
+                    <UserIcon size={16} /> Trang cá nhân
+                  </button>
+                  <button onClick={handleLogout} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-rose-500/10 text-rose-500 font-bold transition-all text-sm w-full text-left">
+                    <LogOut size={16} /> Đăng xuất
+                  </button>
               </div>
             </>
           )}
+
           <button onClick={handleUserAvatarClick} className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-bold transition-all group border border-transparent hover:border-slate-300 dark:hover:border-white/10">
             <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-zinc-800 flex items-center justify-center border border-slate-300 dark:border-zinc-700 group-hover:border-[#80BF84] transition-colors"><UserIcon size={16} /></div>
             <span className="text-sm tracking-wide truncate max-w-[120px] text-left">{user ? user.email.split('@')[0] : "Đăng nhập"}</span>
@@ -468,14 +350,14 @@ export default function UserFeed() {
         </div>
       </div>
 
-      {/* 2. MAIN FEED AREA */}
+      {/* ================= MAIN FEED AREA ================= */}
       <div className="flex-1 relative h-[100dvh]">
         <div className="md:hidden absolute top-0 w-full z-40 p-6 flex justify-between items-center pointer-events-none transition-all"><h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-lg flex items-center gap-1 transition-colors duration-500">AI<span className="text-[#80BF84]">HEALTH</span></h1></div>
 
         {/* THEME & NOTIFICATION CONTROLS */}
         <div className="absolute top-6 right-6 md:top-8 md:right-8 z-[60] flex items-center gap-3 pointer-events-auto">
           <button onClick={handleThemeToggle} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:bg-white/80 dark:hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg group">
-            {!isMounted ? <div className="w-5 h-5"></div> : isDarkMode ? <Sun size={20} className="group-hover:text-amber-300 transition-colors"/> : <Moon size={20} className="group-hover:text-blue-500 transition-colors"/>}
+            {isDarkMode ? <Sun size={20} className="group-hover:text-amber-300 transition-colors"/> : <Moon size={20} className="group-hover:text-blue-500 transition-colors"/>}
           </button>
           <button onClick={handleOpenNotification} className="relative w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:bg-white/80 dark:hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg group">
             <Bell size={20} className="group-hover:text-[#80BF84] transition-colors"/>
@@ -518,14 +400,17 @@ export default function UserFeed() {
                           <div className={`p-3 rounded-full backdrop-blur-md transition-all ${item.is_liked ? 'bg-rose-500/20 text-rose-500 border border-rose-500/50' : 'bg-white/20 dark:bg-black/40 border border-white/30 dark:border-white/10 text-white group-hover:bg-rose-500/30 dark:group-hover:bg-rose-500/20 group-hover:text-rose-400 group-hover:border-rose-500/50'}`}><Heart size={24} strokeWidth={2} className={`group-active:scale-75 transition-transform ${item.is_liked ? 'fill-rose-500' : ''}`} /></div>
                           <span className="text-xs font-bold text-white drop-shadow-md">{item.likes_count || 0}</span>
                         </button>
+                        
                         <button onClick={() => handleOpenComments(item.id)} className="flex flex-col items-center gap-1 group">
                           <div className="p-3 rounded-full bg-white/20 dark:bg-black/40 backdrop-blur-md border border-white/30 dark:border-white/10 text-white group-hover:bg-white/30 dark:group-hover:bg-white/20 transition-all"><MessageCircle size={24} strokeWidth={2} className="group-active:scale-75 transition-transform" /></div>
                           <span className="text-xs font-bold text-white drop-shadow-md">{item.comments_count || 0}</span>
                         </button>
+                        
                         <button onClick={() => handleInteraction(item.id, 'save')} className="flex flex-col items-center gap-1 group">
                           <div className={`p-3 rounded-full backdrop-blur-md transition-all ${item.is_saved ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50' : 'bg-white/20 dark:bg-black/40 border border-white/30 dark:border-white/10 text-white group-hover:bg-amber-500/30 dark:group-hover:bg-amber-500/20 group-hover:text-amber-400 group-hover:border-amber-500/50'}`}><Bookmark size={24} strokeWidth={2} className={`group-active:scale-75 transition-transform ${item.is_saved ? 'fill-amber-400' : ''}`} /></div>
                           <span className="text-xs font-bold text-white drop-shadow-md">{item.saves_count || 0}</span>
                         </button>
+                        
                         <button onClick={() => handleShare(item.id)} className="flex flex-col items-center gap-1 group">
                           <div className="p-3 rounded-full bg-white/20 dark:bg-black/40 backdrop-blur-md border border-white/30 dark:border-white/10 text-white group-hover:bg-white/30 dark:group-hover:bg-white/20 transition-all"><Share2 size={24} strokeWidth={2} className="group-active:scale-75 transition-transform" /></div>
                           <span className="text-xs font-bold text-white drop-shadow-md">Chia sẻ</span>
@@ -537,7 +422,7 @@ export default function UserFeed() {
           })}
         </div>
 
-        {/* 3. MOBILE BOTTOM DOCK */}
+        {/* ================= MOBILE BOTTOM DOCK ================= */}
         <div className="md:hidden absolute bottom-6 left-1/2 -translate-x-1/2 z-40 w-max animate-slide-up pointer-events-auto">
           <div className="px-8 py-3.5 rounded-full flex items-center justify-center gap-8 sm:gap-10 shadow-2xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/60 backdrop-blur-2xl transition-colors duration-500">
             <button className="text-[#80BF84] transition-colors group"><Home size={26} strokeWidth={2.5} /></button>
@@ -565,7 +450,18 @@ export default function UserFeed() {
         </div>
       </div>
 
-      {/* --- MODAL CHAT --- */}
+      {/* ================= CÁC COMPONENTS MODAL CON ================= */}
+      
+      {/* 1. Modal Bình Luận (Component Tách Biệt) */}
+      <CommentModal 
+        isOpen={isCommentModalOpen}
+        onClose={() => setIsCommentModalOpen(false)}
+        serviceId={activeCommentServiceId || ""}
+        user={user}
+        userRole={userRole}
+      />
+
+      {/* 2. Modal AI Chat */}
       {isChatOpen && (
         <div className="fixed inset-0 z-[110] flex justify-center items-end md:items-center md:justify-end md:p-6 pointer-events-auto">
           <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm transition-colors duration-500" onClick={() => setIsChatOpen(false)}></div>
@@ -586,7 +482,7 @@ export default function UserFeed() {
         </div>
       )}
 
-      {/* --- MODAL THÔNG BÁO --- */}
+      {/* 3. Modal Thông báo */}
       {isNotificationOpen && (
         <div className="fixed inset-0 z-[110] flex justify-center items-end md:items-center md:justify-end md:p-6 pointer-events-auto">
           <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm transition-colors duration-500" onClick={() => setIsNotificationOpen(false)}></div>
@@ -633,129 +529,7 @@ export default function UserFeed() {
         </div>
       )}
 
-      {/* --- MODAL BÌNH LUẬN (PHIÊN BẢN TIKTOK PRO - CÂY RẼ NHÁNH & TRƯỢT TRÁI) --- */}
-      {isCommentModalOpen && (
-        <div className="fixed inset-0 z-[120] flex justify-end overflow-hidden pointer-events-none">
-          
-          <div 
-            className={`absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity duration-500 pointer-events-auto ${isCommentAnimating ? 'opacity-100' : 'opacity-0'}`} 
-            onClick={handleCloseComments}
-          ></div>
-          
-          <div className={`relative w-full md:w-[450px] h-[75vh] md:h-full mt-auto md:mt-0 bg-white/95 dark:bg-[#121212]/95 backdrop-blur-3xl shadow-[-10px_0_30px_rgba(0,0,0,0.2)] flex flex-col transition-transform duration-500 ease-out transform pointer-events-auto rounded-t-[2.5rem] md:rounded-none md:rounded-l-[2rem] ${isCommentAnimating ? 'translate-y-0 md:translate-y-0 md:translate-x-0' : 'translate-y-full md:translate-x-full'}`}>
-             
-             {/* Header */}
-             <div className="pt-8 pb-4 px-6 border-b border-slate-100 dark:border-white/5 flex justify-between items-center">
-                 <div>
-                     <h3 className="text-lg font-black text-slate-900 dark:text-white">Thảo luận</h3>
-                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{comments.length} phản hồi</p>
-                 </div>
-                 <button onClick={handleCloseComments} className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 dark:bg-white/5 text-slate-500 hover:text-rose-500 transition-colors"><X size={20}/></button>
-             </div>
-
-             {/* Danh sách bình luận dạng Tree */}
-             <div className="flex-1 overflow-y-auto p-4 space-y-6 no-scrollbar pb-32">
-               {isLoadingComments ? (
-                   <div className="flex flex-col items-center py-20 gap-4">
-                       <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-                       <span className="text-xs font-bold text-slate-400 animate-pulse">Đang tải cuộc hội thoại...</span>
-                   </div>
-               ) : comments.length === 0 ? (
-                   <div className="text-center text-slate-500 dark:text-zinc-500 py-10 text-sm">Hãy là người đầu tiên bình luận!</div>
-               ) : (
-                   comments.map((c) => {
-                       const isAuthor = activeService?.partner_id === c.user_id;
-                       const role = c.users?.role || "USER";
-                       
-                       // Nếu nội dung bắt đầu bằng "@", tự động thụt lùi tạo nhánh Reply
-                       const isReply = c.content.trim().startsWith('@');
-
-                       return (
-                       <div key={c.id} className={`relative flex gap-3 ${isReply ? 'ml-10' : ''}`}>
-                         {/* Đường kẻ dẫn hướng cho Reply */}
-                         {isReply && (
-                             <div className="absolute -left-6 top-0 bottom-1/2 w-4 border-l-2 border-b-2 border-slate-200 dark:border-white/10 rounded-bl-xl"></div>
-                         )}
-
-                         {/* Avatar */}
-                         <div 
-                            className="w-10 h-10 rounded-full border-2 border-white dark:border-zinc-800 overflow-hidden shrink-0 cursor-pointer shadow-sm active:scale-90 transition-transform"
-                            onClick={() => handleGoToPublicProfile(c.user_id, role)}
-                         >
-                             {c.users?.avatar_url ? <img src={c.users.avatar_url} className="w-full h-full object-cover"/> : <div className="w-full h-full bg-slate-200 dark:bg-zinc-800 flex items-center justify-center text-slate-400"><UserIcon size={18}/></div>}
-                         </div>
-                         
-                         <div className="flex-1 min-w-0">
-                            <div className="flex flex-wrap items-center gap-2 mb-1">
-                                <span className="text-sm font-black text-slate-800 dark:text-zinc-200 truncate cursor-pointer hover:text-emerald-500" onClick={() => handleGoToPublicProfile(c.user_id, role)}>
-                                    {c.users?.full_name || "Thành viên"}
-                                </span>
-                                
-                                {/* HỆ THỐNG SOFT BADGES */}
-                                {isAuthor && <span className="px-2 py-0.5 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[9px] font-black rounded-full border border-rose-100 dark:border-rose-500/20">AUTHOR</span>}
-                                {!isAuthor && role === 'SUPER_ADMIN' && <span className="px-2 py-0.5 bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 text-[9px] font-black rounded-full border border-violet-100 dark:border-violet-500/20">ADMIN</span>}
-                                {!isAuthor && role === 'MODERATOR' && <span className="px-2 py-0.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[9px] font-black rounded-full border border-blue-100 dark:border-blue-500/20">MODERATOR</span>}
-                                {!isAuthor && role === 'PARTNER_ADMIN' && <span className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[9px] font-black rounded-full border border-emerald-100 dark:border-emerald-500/20">EXPERTISER</span>}
-                            </div>
-                            
-                            <div className="relative group/content w-max max-w-full">
-                                <p className="text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed break-words bg-slate-50 dark:bg-white/5 p-3 pr-8 rounded-2xl rounded-tl-none">
-                                    {c.is_pinned && <Bookmark size={12} className="inline mr-1 fill-rose-500 text-rose-500"/>}
-                                    {renderCommentContent(c.content)}
-                                </p>
-                                {/* Nút thả tim nhanh chuẩn TikTok */}
-                                <button onClick={() => handleLikeComment(c.id)} className="absolute -right-2 -bottom-2 w-7 h-7 rounded-full bg-white dark:bg-zinc-800 shadow-md flex items-center justify-center transition-transform active:scale-125 border border-slate-100 dark:border-white/10 group">
-                                   <Heart size={14} className={`${c.is_liked ? 'fill-rose-500 text-rose-500' : 'text-slate-300 group-hover:text-rose-400'}`}/>
-                                </button>
-                            </div>
-                            
-                            <div className="flex items-center gap-5 mt-2 px-1">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase">{new Date(c.created_at).toLocaleDateString('vi-VN')}</span>
-                                <button onClick={() => setReplyingTo({ id: c.id, name: c.users?.full_name || "Thành viên" })} className="text-[10px] font-black text-slate-500 hover:text-emerald-500 transition-colors uppercase tracking-wider">Trả lời</button>
-                                {/* FIXED BUG HẾT HIỆN SỐ 0: Dùng Toán tử 3 ngôi (Ternary Operator) thay cho && */}
-                                {c.likes_count > 0 ? <span className="text-[10px] font-bold text-rose-500">{c.likes_count} ❤️</span> : null}
-                            </div>
-                         </div>
-
-                         {/* Nút Tùy chọn (Ghim/Xóa) cho Admin và Tác giả */}
-                         {(userRole === 'SUPER_ADMIN' || isAuthor) && (
-                             <button className="h-max p-1 text-slate-300 hover:text-slate-600 dark:hover:text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                                 <MoreHorizontal size={16} />
-                             </button>
-                         )}
-                       </div>
-                   )})
-               )}
-             </div>
-
-             {/* Form nhập liệu (Ghim ở dưới) */}
-             <div className="p-6 bg-white dark:bg-[#121212] border-t border-slate-100 dark:border-white/5 shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
-               {replyingTo && (
-                   <div className="flex justify-between items-center mb-3 bg-emerald-50 dark:bg-emerald-500/5 px-4 py-2 rounded-xl border border-emerald-100 dark:border-emerald-500/10 animate-slide-up">
-                       <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">Phản hồi <span className="text-slate-900 dark:text-white underline ml-1">@{replyingTo.name}</span></span>
-                       <button onClick={() => setReplyingTo(null)} className="text-slate-400 hover:text-rose-500"><X size={14}/></button>
-                   </div>
-               )}
-               <form onSubmit={handlePostComment} className="flex gap-3 items-end">
-                 <div className="flex-1 relative">
-                     <textarea 
-                        className="w-full bg-slate-100 dark:bg-white/5 px-5 py-3.5 text-sm text-slate-900 dark:text-white rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 border border-transparent focus:border-emerald-500/50 resize-none no-scrollbar transition-all" 
-                        placeholder={replyingTo ? `Viết câu trả lời...` : "Chia sẻ cảm nghĩ của bạn..."}
-                        value={newComment} 
-                        onChange={e => setNewComment(e.target.value)} 
-                        rows={1}
-                     />
-                 </div>
-                 <button type="submit" disabled={!newComment.trim()} className="w-12 h-12 shrink-0 rounded-full bg-emerald-500 text-white flex items-center justify-center disabled:opacity-30 shadow-lg shadow-emerald-500/20 hover:scale-105 active:scale-95 transition-all">
-                     <Send size={20} className="ml-1"/>
-                 </button>
-               </form>
-             </div>
-          </div>
-        </div>
-      )}
-
-      {/* --- MODAL ĐẶT LỊCH --- */}
+      {/* 4. Modal Đặt Lịch */}
       {isModalOpen && activeService && user && (
         <div className="fixed inset-0 z-[100] flex justify-center items-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 dark:bg-slate-900/80 backdrop-blur-xl transition-colors duration-500" onClick={() => setIsModalOpen(false)}></div>
@@ -769,7 +543,7 @@ export default function UserFeed() {
         </div>
       )}
 
-      {/* --- MODAL ĐĂNG NHẬP --- */}
+      {/* 5. Modal Đăng Nhập / Đăng Ký */}
       {isAuthModalOpen && (
         <div className="fixed inset-0 z-[100] flex justify-center items-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 dark:bg-slate-900/80 backdrop-blur-xl transition-colors duration-500" onClick={() => setIsAuthModalOpen(false)}></div>
