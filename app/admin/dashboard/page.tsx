@@ -12,7 +12,8 @@ import { useRouter } from "next/navigation";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from "recharts";
-import GlobalLoading from "../../loading"; // Tích hợp hiệu ứng loading đồng bộ
+import { useUI } from "@/context/UIContext"; // IMPORT CONTEXT THÔNG BÁO
+import GlobalLoading from "../../loading"; 
 
 // --- KHỞI TẠO SUPABASE CLIENT ---
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -21,6 +22,7 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default function AdminDashboardOverview() {
   const router = useRouter();
+  const { setIsNotifOpen } = useUI(); // LẤY HÀM MỞ THÔNG BÁO
   
   // --- STATE HỆ THỐNG & AUTH ---
   const [user, setUser] = useState<any>(null);
@@ -148,18 +150,27 @@ export default function AdminDashboardOverview() {
       <div className="hidden md:flex flex-col w-[260px] h-full bg-white/40 dark:bg-black/40 backdrop-blur-3xl border-r border-slate-200 dark:border-white/10 z-50 pt-8 pb-6 px-4 shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.05)] dark:shadow-[4px_0_24px_rgba(0,0,0,0.5)]">
         <div className="px-4 mb-8" onClick={() => router.push('/')}><h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-lg flex items-center gap-1 cursor-pointer">AI<span className="text-[#80BF84]">HEALTH</span></h1></div>
         
-        <div className="flex flex-col gap-2 flex-1 overflow-y-auto no-scrollbar">
+        <div className="flex flex-col gap-2 flex-1 overflow-y-auto no-scrollbar pb-6">
           {/* Main App Links */}
           <button onClick={() => router.push('/')} className="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-bold transition-all"><Home size={24} strokeWidth={2.5} /><span className="text-sm tracking-wide">Trang chủ</span></button>
           <button onClick={() => router.push('/features/explore')} className="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-bold transition-all group"><Compass size={24} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /><span className="text-sm tracking-wide">Khám phá</span></button>
+          <button onClick={() => router.push('/features/calendar')} className="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-bold transition-all group"><CalendarDays size={24} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /><span className="text-sm tracking-wide">Lịch hẹn</span></button>
+          <button onClick={() => router.push('/features/favorite')} className="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-bold transition-all group"><Heart size={24} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /><span className="text-sm tracking-wide">Yêu thích</span></button>
+          <div className="mt-2 px-2">
+            <button onClick={() => router.push('/features/AI')} className="w-full relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-[#80BF84] to-emerald-300 rounded-2xl blur-lg opacity-40 group-hover:opacity-70 transition-opacity duration-300"></div>
+              <div className="relative flex items-center justify-center gap-3 px-4 py-4 rounded-2xl bg-gradient-to-tr from-[#80BF84] to-emerald-500 text-zinc-950 shadow-xl group-hover:scale-[1.02] transition-all"><Sparkles size={20} strokeWidth={3} /><span className="font-black text-sm tracking-wide">AI Trợ lý</span></div>
+            </button>
+          </div>
           
-          <div className="w-full h-px bg-slate-200 dark:bg-white/10 my-2"></div>
+          <div className="w-full h-px bg-slate-200 dark:bg-white/10 my-4"></div>
           
           {/* Admin Specific Links */}
           <div className="px-4 py-2"><span className="text-xs font-black text-violet-500 tracking-wider uppercase">Vùng Quản Trị</span></div>
           
           <button onClick={() => router.push('/admin/profile')} className="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-violet-500/10 hover:text-violet-600 dark:hover:bg-violet-500/20 dark:hover:text-violet-400 font-bold transition-all group"><Crown size={24} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /><span className="text-sm tracking-wide">Hồ sơ Tối cao</span></button>
           
+          {/* Nút Đang Active */}
           <button className="flex items-center gap-4 px-4 py-3 rounded-2xl bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 font-bold transition-all border border-violet-500/20">
             <Settings size={24} strokeWidth={2.5} className="animate-[spin_4s_linear_infinite]" />
             <span className="text-sm tracking-wide">Bảng Điều Khiển</span>
@@ -167,7 +178,7 @@ export default function AdminDashboardOverview() {
         </div>
 
         {/* NÚT AVATAR VÀ MENU DESKTOP */}
-        <div className="mt-auto px-2 relative pt-4">
+        <div className="mt-auto px-2 relative pt-4 border-t border-slate-200 dark:border-white/10">
           {isUserMenuOpen && user && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setIsUserMenuOpen(false)}></div>
@@ -192,7 +203,9 @@ export default function AdminDashboardOverview() {
           <button onClick={handleThemeToggle} className="w-10 h-10 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:scale-105 transition-all shadow-lg">
             {isDarkMode ? <Sun size={20}/> : <Moon size={20}/>}
           </button>
-          <button className="relative w-10 h-10 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:scale-105 transition-all shadow-lg">
+          
+          {/* NÚT THÔNG BÁO ĐÃ ĐƯỢC KẾT NỐI */}
+          <button onClick={() => setIsNotifOpen(true)} className="relative w-10 h-10 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:scale-105 hover:text-violet-500 transition-all shadow-lg">
             <Bell size={20}/>
             {hasNotification && <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white dark:border-zinc-950 animate-pulse"></span>}
           </button>
@@ -312,7 +325,7 @@ export default function AdminDashboardOverview() {
             </div>
         </div>
 
-        {/* 3. MOBILE BOTTOM DOCK (Có tích hợp Menu) */}
+        {/* 3. MOBILE BOTTOM DOCK */}
         <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-max pointer-events-auto">
           <div className="px-8 py-3.5 rounded-full flex items-center justify-center gap-8 sm:gap-10 shadow-2xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/60 backdrop-blur-2xl">
             <button onClick={() => router.push('/')} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Home size={26} strokeWidth={2.5} /></button>
