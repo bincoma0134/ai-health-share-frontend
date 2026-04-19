@@ -44,6 +44,7 @@ export default function UserFeed() {
   
   // --- AUTH & ROLE STATE ---
   const [user, setUser] = useState<any>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null); // State mới để chặn lỗi Lock
   const [userRole, setUserRole] = useState<string>("USER");
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isLoginMode, setIsLoginMode] = useState(true);
@@ -58,7 +59,7 @@ export default function UserFeed() {
   const [affiliateCode, setAffiliateCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // --- COMMENT STATE (Đã được tối giản nhờ Component) ---
+  // --- COMMENT STATE ---
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
   const [activeCommentServiceId, setActiveCommentServiceId] = useState<string | null>(null);
 
@@ -102,6 +103,7 @@ export default function UserFeed() {
   useEffect(() => {
     setIsMounted(true); 
     let isSubscribed = true; 
+    let authListener: any = null; // Trình nghe thay đổi auth
     
     const storedTheme = localStorage.getItem('theme');
     if (storedTheme === 'light') {
@@ -112,32 +114,44 @@ export default function UserFeed() {
       document.documentElement.classList.add('dark');
     }
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, curSession) => {
-      if (!isSubscribed) return; 
+    // KỸ THUẬT DEBOUNCE: Chống lỗi Lock Supabase trong React Strict Mode
+    const initAuth = () => {
+      const { data } = supabase.auth.onAuthStateChange(async (_event, curSession) => {
+        if (!isSubscribed) return; 
 
-      if (curSession?.user) {
-        setUser(curSession.user);
-        fetchServices(curSession.user.id); 
+        if (curSession?.user) {
+          setUser(curSession.user);
+          setAccessToken(curSession.access_token); // Lưu token cố định vào State
+          fetchServices(curSession.user.id); 
 
-        const { data } = await supabase.from("users").select("role, theme_preference").eq("id", curSession.user.id).single();
-        if (data && isSubscribed) {
-           setUserRole(data.role);
-           if (data.theme_preference === 'light') {
-              setIsDarkMode(false);
-              document.documentElement.classList.remove('dark');
-              localStorage.setItem('theme', 'light');
-           }
+          const { data: userData } = await supabase.from("users").select("role, theme_preference").eq("id", curSession.user.id).single();
+          if (userData && isSubscribed) {
+             setUserRole(userData.role);
+             if (userData.theme_preference === 'light') {
+                setIsDarkMode(false);
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+             }
+          }
+        } else {
+          setUser(null);
+          setAccessToken(null);
+          setUserRole("USER");
+          fetchServices(); 
         }
-      } else {
-        setUser(null);
-        setUserRole("USER");
-        fetchServices(); 
-      }
-    });
+      });
+      authListener = data;
+    };
+
+    // Tạo độ trễ 100ms để triệt tiêu lần chạy ảo của Strict Mode
+    const timeoutId = setTimeout(initAuth, 100);
 
     return () => {
       isSubscribed = false;
-      authListener.subscription.unsubscribe();
+      clearTimeout(timeoutId); // Xóa hàng đợi nếu component bị hủy
+      if (authListener) {
+        authListener.subscription.unsubscribe();
+      }
     };
   }, []);
 
@@ -191,14 +205,15 @@ export default function UserFeed() {
     try {
       await supabase.auth.signOut();
       setUser(null);
+      setAccessToken(null);
       setUserRole("USER");
       toast.success("Đã đăng xuất thành công!", { id: toastId });
     } catch (error: any) { toast.error("Lỗi đăng xuất!", { id: toastId }); }
   };
 
-  // --- INTERACTION LOGIC (Like, Save) ---
+  // --- INTERACTION LOGIC ---
   const handleInteraction = async (serviceId: string, action: 'like' | 'save') => {
-    if (!user) {
+    if (!user || !accessToken) {
       toast.info(`Vui lòng đăng nhập để ${action === 'like' ? 'thích' : 'lưu'} video!`);
       setIsAuthModalOpen(true);
       return;
@@ -213,15 +228,15 @@ export default function UserFeed() {
     }));
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      // Dùng luôn State accessToken, KHÔNG gọi lại getSession()
       await fetch(`https://ai-health-share-backend.onrender.com/interactions/${action}`, {
-        method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` },
+        method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${accessToken}` },
         body: JSON.stringify({ service_id: serviceId })
       });
     } catch (error) { fetchServices(user.id); }
   };
 
-  // --- COMMENT LOGIC (Đã tối giản) ---
+  // --- COMMENT LOGIC ---
   const handleOpenComments = (serviceId: string) => {
     setActiveCommentServiceId(serviceId);
     setIsCommentModalOpen(true);
@@ -233,29 +248,64 @@ export default function UserFeed() {
     toast.success("Đã sao chép liên kết vào khay nhớ tạm!");
   };
 
-  const handleSendChatMessage = (e: React.FormEvent) => {
+  const handleSendChatMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!chatInput.trim() || isChatTyping) return;
-    setChatMessages(prev => [...prev, { role: 'user', content: chatInput.trim() }]);
+    
+    const userMessage = chatInput.trim();
+    // 1. Cập nhật giao diện ngay lập tức với tin nhắn của user
+    const newMessages = [...chatMessages, { role: 'user' as const, content: userMessage }];
+    setChatMessages(newMessages);
     setChatInput("");
     setIsChatTyping(true);
-    setTimeout(() => {
-      setChatMessages(prev => [...prev, { role: 'bot', content: 'Tôi sẽ phân tích triệu chứng này ở Backend sắp tới!' }]);
+
+    try {
+      // 2. Lấy token xác thực (dùng accessToken ở State hoặc fetch mới)
+      const { data: { session } } = await supabase.auth.getSession();
+      const currentToken = session?.access_token || accessToken;
+
+      // 3. Bắn API xuống Backend
+      const response = await fetch("https://ai-health-share-backend.onrender.com/ai/chat", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json", 
+          "Authorization": `Bearer ${currentToken}` 
+        },
+        body: JSON.stringify({ messages: newMessages })
+      });
+
+      if (!response.ok) {
+        throw new Error("Không thể kết nối đến Trạm trung chuyển AI.");
+      }
+
+      const result = await response.json();
+      
+      // 4. Nhận kết quả và hiển thị
+      if (result.status === "success" && result.data?.reply) {
+        setChatMessages(prev => [...prev, { role: 'bot', content: result.data.reply }]);
+      } else {
+        throw new Error("AI trả về dữ liệu không hợp lệ.");
+      }
+      
+    } catch (error: any) {
+      console.error("AI Chat Error:", error);
+      toast.error(error.message);
+      setChatMessages(prev => [...prev, { role: 'bot', content: "Xin lỗi, hệ thống AI đang gặp sự cố kết nối. Vui lòng thử lại sau nhé!" }]);
+    } finally {
       setIsChatTyping(false);
-    }, 1500);
+    }
   };
 
   const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!activeService || !user) return;
+    if (!activeService || !user || !accessToken) return;
     setIsSubmitting(true);
     const toastId = toast.loading("Đang thiết lập cổng bảo chứng Escrow...");
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Phiên đăng nhập đã hết hạn.");
+      // Dùng luôn State accessToken, KHÔNG gọi lại getSession()
       const bookingRes = await fetch("https://ai-health-share-backend.onrender.com/bookings", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${accessToken}` },
         body: JSON.stringify({ user_id: user.id, service_id: activeService.id, affiliate_code: affiliateCode || null, total_amount: activeService.price })
       });
       const bookingData = await bookingRes.json();
@@ -275,11 +325,11 @@ export default function UserFeed() {
     else document.documentElement.classList.remove('dark');
     localStorage.setItem('theme', themeStr);
 
-    if (user) {
+    if (user && accessToken) {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        // Dùng luôn State accessToken, KHÔNG gọi lại getSession()
         await fetch("https://ai-health-share-backend.onrender.com/user/profile", {
-          method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` },
+          method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${accessToken}` },
           body: JSON.stringify({ theme_preference: themeStr })
         });
       } catch (error) { console.error("Lỗi đồng bộ Theme:", error); }
@@ -321,7 +371,7 @@ export default function UserFeed() {
           <button onClick={() => router.push('/features/calendar')} className="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-bold transition-all group"><CalendarDays size={24} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /><span className="text-sm tracking-wide">Lịch hẹn</span></button>
           <button onClick={() => router.push('/features/favorite')} className="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-bold transition-all group"><Heart size={24} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /><span className="text-sm tracking-wide">Yêu thích</span></button>
           <div className="mt-8 px-2">
-            <button onClick={() => setIsChatOpen(true)} className="w-full relative group">
+            <button onClick={() => router.push('/features/AI')} className="w-full relative group">
               <div className="absolute inset-0 bg-gradient-to-r from-[#80BF84] to-emerald-300 rounded-2xl blur-lg opacity-40 group-hover:opacity-70 transition-opacity duration-300"></div>
               <div className="relative flex items-center justify-center gap-3 px-4 py-4 rounded-2xl bg-gradient-to-tr from-[#80BF84] to-emerald-500 text-zinc-950 shadow-xl group-hover:scale-[1.02] transition-all"><Sparkles size={20} strokeWidth={3} /><span className="font-black text-sm tracking-wide">AI Trợ lý</span></div>
             </button>
@@ -423,11 +473,11 @@ export default function UserFeed() {
         </div>
 
         {/* ================= MOBILE BOTTOM DOCK ================= */}
-        <div className="md:hidden absolute bottom-6 left-1/2 -translate-x-1/2 z-40 w-max animate-slide-up pointer-events-auto">
+        <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-max animate-slide-up pointer-events-auto">
           <div className="px-8 py-3.5 rounded-full flex items-center justify-center gap-8 sm:gap-10 shadow-2xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/60 backdrop-blur-2xl transition-colors duration-500">
             <button className="text-[#80BF84] transition-colors group"><Home size={26} strokeWidth={2.5} /></button>
             <button onClick={() => router.push('/features/explore')} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Compass size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
-            <button onClick={() => setIsChatOpen(true)} className="relative -mt-10 group">
+            <button onClick={() => router.push('/features/AI')} className="relative -mt-10 group">
               <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#80BF84] to-emerald-300 p-[2px] shadow-[0_0_20px_rgba(128,191,132,0.3)] group-hover:scale-105 transition-all duration-300"><div className="w-full h-full bg-white dark:bg-zinc-950 rounded-full flex items-center justify-center transition-colors duration-500"><Sparkles size={26} className="text-[#80BF84]" strokeWidth={2.5} /></div></div>
             </button>
             <button onClick={() => router.push('/features/favorite')} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Heart size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
@@ -461,28 +511,7 @@ export default function UserFeed() {
         userRole={userRole}
       />
 
-      {/* 2. Modal AI Chat */}
-      {isChatOpen && (
-        <div className="fixed inset-0 z-[110] flex justify-center items-end md:items-center md:justify-end md:p-6 pointer-events-auto">
-          <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm transition-colors duration-500" onClick={() => setIsChatOpen(false)}></div>
-          <div className="relative w-full md:w-[420px] h-[85vh] md:h-[calc(100vh-48px)] bg-white/70 dark:bg-black/50 backdrop-blur-3xl rounded-t-[2.5rem] md:rounded-[2.5rem] border border-slate-200 dark:border-white/10 flex flex-col shadow-2xl transition-colors duration-500">
-             <div className="pt-8 pb-4 px-6 border-b border-slate-200 dark:border-white/10 flex justify-between items-center transition-colors duration-500"><h3 className="text-base font-bold text-slate-900 dark:text-white transition-colors duration-500">AI Trợ Lý</h3><button onClick={() => setIsChatOpen(false)} className="text-slate-500 dark:text-white hover:text-slate-900 transition-colors"><X size={18}/></button></div>
-             <div className="flex-1 overflow-y-auto p-5 space-y-5 no-scrollbar flex flex-col">
-                {chatMessages.map((msg, idx) => (
-                  <div key={idx} className={`flex max-w-[85%] ${msg.role === 'user' ? 'self-end' : 'self-start'}`}>
-                    <div className={`p-4 text-sm ${msg.role === 'user' ? 'bg-[#80BF84] text-zinc-950 rounded-[1.5rem] rounded-tr-sm' : 'bg-slate-200/50 dark:bg-white/10 text-slate-900 dark:text-white rounded-[1.5rem] rounded-tl-sm transition-colors duration-500'}`}>{msg.content}</div>
-                  </div>
-                ))}
-             </div>
-             <form onSubmit={handleSendChatMessage} className="p-4 border-t border-slate-200 dark:border-white/10 flex gap-3 transition-colors duration-500">
-               <input type="text" className="flex-1 bg-slate-200/50 dark:bg-white/5 rounded-full px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none transition-colors duration-500" value={chatInput} onChange={e => setChatInput(e.target.value)} />
-               <button type="submit" className="w-10 h-10 rounded-full bg-[#80BF84] text-zinc-950 flex items-center justify-center"><Send size={16}/></button>
-             </form>
-          </div>
-        </div>
-      )}
-
-      {/* 3. Modal Thông báo */}
+      {/* 2. Modal Thông báo */}
       {isNotificationOpen && (
         <div className="fixed inset-0 z-[110] flex justify-center items-end md:items-center md:justify-end md:p-6 pointer-events-auto">
           <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm transition-colors duration-500" onClick={() => setIsNotificationOpen(false)}></div>
@@ -529,7 +558,7 @@ export default function UserFeed() {
         </div>
       )}
 
-      {/* 4. Modal Đặt Lịch */}
+      {/* 3. Modal Đặt Lịch */}
       {isModalOpen && activeService && user && (
         <div className="fixed inset-0 z-[100] flex justify-center items-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 dark:bg-slate-900/80 backdrop-blur-xl transition-colors duration-500" onClick={() => setIsModalOpen(false)}></div>
@@ -543,7 +572,7 @@ export default function UserFeed() {
         </div>
       )}
 
-      {/* 5. Modal Đăng Nhập / Đăng Ký */}
+      {/* 4. Modal Đăng Nhập / Đăng Ký */}
       {isAuthModalOpen && (
         <div className="fixed inset-0 z-[100] flex justify-center items-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 dark:bg-slate-900/80 backdrop-blur-xl transition-colors duration-500" onClick={() => setIsAuthModalOpen(false)}></div>
