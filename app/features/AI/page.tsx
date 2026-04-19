@@ -84,27 +84,69 @@ export default function AIFeature() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
-  // --- LOGIC CHAT ---
+  // --- LOGIC CHAT (ĐÃ KẾT NỐI API THỰC TẾ) ---
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isTyping) return;
 
+    // 1. Cập nhật tin nhắn user lên UI
     const userMsg: ChatMessage = { id: Date.now().toString(), role: 'user', content: input.trim(), timestamp: new Date() };
-    setMessages(prev => [...prev, userMsg]);
+    const newMessages = [...messages, userMsg];
+    
+    setMessages(newMessages);
     setInput("");
     setIsTyping(true);
 
-    // MÔ PHỎNG KẾT NỐI API AI (Sẽ đấu nối thực tế ở Backend sau)
-    setTimeout(() => {
-      const botMsg: ChatMessage = { 
-        id: (Date.now() + 1).toString(), 
+    try {
+      // 2. Lấy Token xác thực
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      // 3. Chuẩn hóa dữ liệu theo schema AIChatRequest của Backend
+      const apiMessages = newMessages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+
+      // 4. Gọi API Backend
+      const response = await fetch("https://ai-health-share-backend.onrender.com/ai/chat", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json", 
+          ...(token && { "Authorization": `Bearer ${token}` })
+        },
+        body: JSON.stringify({ messages: apiMessages })
+      });
+
+      if (!response.ok) throw new Error("Mất kết nối với Trạm trung chuyển AI.");
+      
+      const result = await response.json();
+      
+      // 5. Cập nhật phản hồi từ Llama lên UI
+      if (result.status === "success" && result.data?.reply) {
+        const botMsg: ChatMessage = { 
+          id: Date.now().toString(), 
+          role: 'bot', 
+          content: result.data.reply, 
+          timestamp: new Date() 
+        };
+        setMessages(prev => [...prev, botMsg]);
+      } else {
+        throw new Error("Phản hồi từ LLM không hợp lệ.");
+      }
+    } catch (error: any) {
+      console.error("LLM Error:", error);
+      toast.error(error.message);
+      const errorMsg: ChatMessage = { 
+        id: Date.now().toString(), 
         role: 'bot', 
-        content: 'Hệ thống đang ghi nhận thông tin của bạn. Trong các bản cập nhật tới, tôi sẽ kết nối trực tiếp với mô hình ngôn ngữ lớn (LLM) từ Backend để đưa ra những phân tích y khoa chuyên sâu và đề xuất liệu trình chính xác nhất!', 
+        content: "Hệ thống AI hiện không phản hồi. Vui lòng kiểm tra lại kết nối hoặc thử lại sau.", 
         timestamp: new Date() 
       };
-      setMessages(prev => [...prev, botMsg]);
+      setMessages(prev => [...prev, errorMsg]);
+    } finally {
       setIsTyping(false);
-    }, 2000);
+    }
   };
 
   const clearChat = () => {
