@@ -1,39 +1,30 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { Toaster } from "sonner"; // Nhúng thư viện Toast
+import { Be_Vietnam_Pro } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "sonner";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+const beVietnam = Be_Vietnam_Pro({ 
+  subsets: ["vietnamese", "latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  variable: "--font-be-vietnam", // Tạo biến CSS để Tailwind v4 đọc được
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-// Cập nhật lại Tiêu đề và Mô tả cho chuyên nghiệp
 export const metadata: Metadata = {
   title: "AI Health Share",
-  description: "Nền tảng Escrow & Affiliate Y tế tự động",
+  description: "Nền tảng sức khỏe toàn diện - Bảo chứng Escrow",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html
-      lang="vi" // Đổi sang tiếng Việt
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">
-        {/* HỆ THỐNG THÔNG BÁO TOAST GLOBALS */}
-        <Toaster position="top-center" richColors theme="dark" />
-        
+    <html lang="vi">
+      {/* Nạp Font tiếng Việt vào body */}
+      <body className={`${beVietnam.variable} antialiased`}>
         {children}
+        <Toaster position="top-center" richColors />
       </body>
     </html>
   );

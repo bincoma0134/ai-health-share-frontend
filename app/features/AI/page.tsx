@@ -8,6 +8,7 @@ import {
 import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import ReactMarkdown from 'react-markdown';
 
 // --- KHỞI TẠO SUPABASE CLIENT ---
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -29,29 +30,23 @@ export default function AIFeature() {
   const router = useRouter();
   const chatEndRef = useRef<HTMLDivElement>(null);
   
-  // --- STATE HỆ THỐNG & AUTH ---
   const [user, setUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<string>("USER");
   const [isMounted, setIsMounted] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   
-  // --- STATE CHAT ---
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { 
+  const [messages, setMessages] = useState<ChatMessage[]>([{ 
       id: 'welcome-msg', 
       role: 'bot', 
-      content: 'Xin chào! Tôi là Trợ lý AI Health. Tôi có thể giúp bạn phân tích triệu chứng, tư vấn liệu trình hoặc tìm kiếm chuyên gia phù hợp. Bạn đang cảm thấy thế nào hôm nay?', 
+      content: 'Xin chào! Tôi là Trợ lý AI Health. Hệ thống đã sẵn sàng phân tích và tư vấn. Bạn cần giúp gì hôm nay?', 
       timestamp: new Date() 
-    }
-  ]);
+  }]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
-    
-    // Khởi tạo Theme
     const storedTheme = localStorage.getItem('theme');
     if (storedTheme === 'light') {
       setIsDarkMode(false);
@@ -65,31 +60,42 @@ export default function AIFeature() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         setUser(session.user);
-        try {
-            const res = await fetch("https://ai-health-share-backend.onrender.com/user/profile", {
-                headers: { "Authorization": `Bearer ${session.access_token}` }
-            });
-            const result = await res.json();
+        
+        // Load User Role
+        fetch("https://ai-health-share-backend.onrender.com/user/profile", {
+            headers: { "Authorization": `Bearer ${session.access_token}` }
+        }).then(res => res.json()).then(result => {
             if (result.status === "success") setUserRole(result.data.profile.role);
-        } catch (error) {
-            console.error("Lỗi lấy Profile:", error);
-        }
+        }).catch(err => console.error("Lỗi lấy Profile:", err));
+
+        // Load Chat History
+        fetch("https://ai-health-share-backend.onrender.com/ai/history", {
+            headers: { "Authorization": `Bearer ${session.access_token}` }
+        }).then(res => res.json()).then(result => {
+            if (result.status === "success" && result.data.length > 0) {
+                const history = result.data.map((m: any) => ({
+                    id: m.id,
+                    role: m.role === 'assistant' ? 'bot' : 'user',
+                    content: m.content,
+                    timestamp: new Date(m.created_at)
+                }));
+                // Bỏ câu chào mặc định, nạp lịch sử thật
+                setMessages(history); 
+            }
+        }).catch(err => console.error("Lỗi load History:", err));
       }
     };
     loadData();
   }, []);
 
-  // Tự động cuộn xuống cuối khi có tin nhắn mới
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
-  // --- LOGIC CHAT (ĐÃ KẾT NỐI API THỰC TẾ) ---
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isTyping) return;
 
-    // 1. Cập nhật tin nhắn user lên UI
     const userMsg: ChatMessage = { id: Date.now().toString(), role: 'user', content: input.trim(), timestamp: new Date() };
     const newMessages = [...messages, userMsg];
     
@@ -98,80 +104,56 @@ export default function AIFeature() {
     setIsTyping(true);
 
     try {
-      // 2. Lấy Token xác thực
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
 
-      // 3. Chuẩn hóa dữ liệu theo schema AIChatRequest của Backend
-      const apiMessages = newMessages.map(msg => ({
-        role: msg.role,
-        content: msg.content
-      }));
+      if (!token) throw new Error("Vui lòng đăng nhập để sử dụng AI Assistant.");
 
-      // 4. Gọi API Backend
+      const apiMessages = newMessages.map(msg => ({ role: msg.role, content: msg.content }));
+
       const response = await fetch("https://ai-health-share-backend.onrender.com/ai/chat", {
         method: "POST",
-        headers: { 
-          "Content-Type": "application/json", 
-          ...(token && { "Authorization": `Bearer ${token}` })
-        },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify({ messages: apiMessages })
       });
 
-      if (!response.ok) throw new Error("Mất kết nối với Trạm trung chuyển AI.");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || `Lỗi HTTP: ${response.status}`);
+      }
       
       const result = await response.json();
       
-      // 5. Cập nhật phản hồi từ Llama lên UI
       if (result.status === "success" && result.data?.reply) {
-        const botMsg: ChatMessage = { 
-          id: Date.now().toString(), 
-          role: 'bot', 
-          content: result.data.reply, 
-          timestamp: new Date() 
-        };
+        const botMsg: ChatMessage = { id: Date.now().toString(), role: 'bot', content: result.data.reply, timestamp: new Date() };
         setMessages(prev => [...prev, botMsg]);
       } else {
         throw new Error("Phản hồi từ LLM không hợp lệ.");
       }
     } catch (error: any) {
-      console.error("LLM Error:", error);
       toast.error(error.message);
-      const errorMsg: ChatMessage = { 
-        id: Date.now().toString(), 
-        role: 'bot', 
-        content: "Hệ thống AI hiện không phản hồi. Vui lòng kiểm tra lại kết nối hoặc thử lại sau.", 
-        timestamp: new Date() 
-      };
-      setMessages(prev => [...prev, errorMsg]);
+      setMessages(prev => [...prev, { id: Date.now().toString(), role: 'bot', content: `Sự cố: ${error.message}`, timestamp: new Date() }]);
     } finally {
       setIsTyping(false);
     }
   };
 
   const clearChat = () => {
-    if(confirm("Bạn có chắc chắn muốn xóa toàn bộ lịch sử cuộc trò chuyện này?")) {
-        setMessages([{ 
-            id: 'welcome-msg', 
-            role: 'bot', 
-            content: 'Cuộc trò chuyện đã được làm mới. Tôi có thể giúp gì cho bạn?', 
-            timestamp: new Date() 
-        }]);
+    if(confirm("Bạn có chắc muốn làm mới cuộc trò chuyện? (Lịch sử sẽ bị ẩn khỏi màn hình này)")) {
+        setMessages([{ id: 'welcome-msg', role: 'bot', content: 'Cuộc trò chuyện đã được làm mới. Tôi có thể giúp gì cho bạn?', timestamp: new Date() }]);
     }
   };
 
-  // --- UTILS ---
-  const handleThemeToggle = async () => {
+  const handleThemeToggle = async () => { /* ... giữ nguyên ... */
     const newMode = !isDarkMode;
     setIsDarkMode(newMode);
     const themeStr = newMode ? 'dark' : 'light';
     if (newMode) document.documentElement.classList.add('dark');
     else document.documentElement.classList.remove('dark');
     localStorage.setItem('theme', themeStr);
-
     if (user) {
         const { data: { session } } = await supabase.auth.getSession();
-        await fetch("https://ai-health-share-backend.onrender.com/user/profile", {
+        fetch("https://ai-health-share-backend.onrender.com/user/profile", {
           method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` },
           body: JSON.stringify({ theme_preference: themeStr })
         });
@@ -183,7 +165,7 @@ export default function AIFeature() {
     const toastId = toast.loading("Đang đăng xuất...");
     try {
       await supabase.auth.signOut();
-      toast.success("Đã đăng xuất thành công!", { id: toastId });
+      toast.success("Đã đăng xuất!", { id: toastId });
       router.push("/");
     } catch (error) { toast.error("Lỗi đăng xuất!", { id: toastId }); }
   };
@@ -200,7 +182,7 @@ export default function AIFeature() {
   return (
     <div className="h-[100dvh] w-full bg-slate-50 dark:bg-black overflow-hidden flex relative transition-colors duration-500">
       
-      {/* ================= 1. LEFT SIDEBAR ================= */}
+      {/* 1. LEFT SIDEBAR */}
       <div className="hidden md:flex flex-col w-[260px] h-full bg-white/40 dark:bg-black/40 backdrop-blur-3xl border-r border-slate-200 dark:border-white/10 z-50 pt-8 pb-6 px-4 shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.05)] dark:shadow-[4px_0_24px_rgba(0,0,0,0.5)] transition-colors duration-500">
         <div className="px-4 mb-10"><h1 onClick={() => router.push('/')} className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-lg flex items-center gap-1 cursor-pointer transition-colors duration-500">AI<span className="text-[#80BF84]">HEALTH</span></h1></div>
         <div className="flex flex-col gap-2 flex-1">
@@ -209,7 +191,6 @@ export default function AIFeature() {
           <button onClick={() => router.push('/features/calendar')} className="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-bold transition-all group"><CalendarDays size={24} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /><span className="text-sm tracking-wide">Lịch hẹn</span></button>
           <button onClick={() => router.push('/features/favorite')} className="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-bold transition-all group"><Heart size={24} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /><span className="text-sm tracking-wide">Yêu thích</span></button>
           
-          {/* NÚT AI ĐANG ACTIVE */}
           <div className="mt-8 px-2">
             <button className="w-full relative group">
               <div className="absolute inset-0 bg-gradient-to-r from-[#80BF84] to-emerald-300 rounded-2xl blur-xl opacity-70 transition-opacity duration-300"></div>
@@ -218,7 +199,6 @@ export default function AIFeature() {
           </div>
         </div>
         
-        {/* NÚT AVATAR VÀ MENU DESKTOP */}
         <div className="mt-auto px-2 relative">
           {isUserMenuOpen && user && (
             <>
@@ -237,20 +217,17 @@ export default function AIFeature() {
         </div>
       </div>
 
-      {/* ================= 2. MAIN AI CHAT AREA ================= */}
+      {/* 2. MAIN AI CHAT AREA */}
       <div className="flex-1 relative h-[100dvh] flex flex-col bg-slate-50 dark:bg-zinc-950 transition-colors duration-500">
-        
-        {/* HEADER AREA */}
         <div className="absolute top-0 w-full z-40 p-6 flex justify-between items-center bg-gradient-to-b from-slate-50 dark:from-zinc-950 to-transparent pointer-events-none transition-all">
             <div className="flex items-center gap-3 pointer-events-auto">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#80BF84] to-emerald-400 flex items-center justify-center shadow-lg shadow-emerald-500/20"><Bot className="text-zinc-950" size={24} /></div>
                 <div>
                     <h2 className="text-lg md:text-xl font-black text-slate-900 dark:text-white leading-tight">AI Health Assistant</h2>
-                    <p className="text-[10px] font-bold text-[#80BF84] uppercase tracking-widest">Sẵn sàng tư vấn</p>
+                    <p className="text-[10px] font-bold text-[#80BF84] uppercase tracking-widest">Phân tích đa luồng</p>
                 </div>
             </div>
             
-            {/* THEME & UTILS */}
             <div className="flex items-center gap-3 pointer-events-auto">
                 <button onClick={clearChat} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 active:scale-95 transition-all shadow-lg" title="Xóa lịch sử">
                     <Trash2 size={18} />
@@ -261,22 +238,37 @@ export default function AIFeature() {
             </div>
         </div>
 
-        {/* CHAT MESSAGES AREA */}
+        {/* CHAT MESSAGES */}
         <div className="flex-1 overflow-y-auto w-full max-w-4xl mx-auto pt-28 pb-32 px-5 md:px-8 space-y-6 no-scrollbar scroll-smooth">
             {messages.map((msg) => (
                 <div key={msg.id} className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-slide-up`}>
-                    
                     {msg.role === 'bot' && (
                         <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-200 dark:bg-zinc-800 flex items-center justify-center shrink-0 border border-slate-300 dark:border-zinc-700 shadow-sm"><Bot size={18} className="text-[#80BF84]" /></div>
                     )}
 
                     <div className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} max-w-[85%] md:max-w-[75%]`}>
-                        <div className={`p-4 md:p-5 text-[15px] leading-relaxed shadow-lg ${
+                        {/* HIỂN THỊ MARKDOWN THÔNG MINH */}
+                        <div className={`p-4 md:p-6 text-[15px] leading-relaxed shadow-lg ${
                             msg.role === 'user' 
-                            ? 'bg-[#80BF84] text-zinc-950 rounded-[1.5rem] rounded-tr-sm' 
-                            : 'bg-white/70 dark:bg-white/10 backdrop-blur-xl border border-slate-200 dark:border-white/10 text-slate-800 dark:text-zinc-200 rounded-[1.5rem] rounded-tl-sm'
+                            ? 'bg-[#80BF84] text-zinc-950 rounded-[1.5rem] rounded-tr-sm whitespace-pre-wrap font-medium' 
+                            : 'bg-white/80 dark:bg-white/10 backdrop-blur-xl border border-slate-200 dark:border-white/10 text-slate-800 dark:text-zinc-200 rounded-[1.5rem] rounded-tl-sm'
                         }`}>
-                            {msg.content}
+                            {msg.role === 'user' ? (
+                                msg.content
+                            ) : (
+                                <ReactMarkdown
+                                  components={{
+                                    p: ({node, ...props}) => <p className="mb-3 last:mb-0" {...props} />,
+                                    ul: ({node, ...props}) => <ul className="list-disc ml-5 mb-3 space-y-1" {...props} />,
+                                    ol: ({node, ...props}) => <ol className="list-decimal ml-5 mb-3 space-y-1" {...props} />,
+                                    h2: ({node, ...props}) => <h2 className="text-lg font-black mb-2 mt-4 text-emerald-600 dark:text-emerald-400" {...props} />,
+                                    h3: ({node, ...props}) => <h3 className="text-md font-bold mb-2 mt-3" {...props} />,
+                                    strong: ({node, ...props}) => <strong className="font-bold text-slate-900 dark:text-white" {...props} />,
+                                  }}
+                                >
+                                    {msg.content}
+                                </ReactMarkdown>
+                            )}
                         </div>
                         <span className="text-[10px] font-bold text-slate-400 mt-2 px-1 uppercase tracking-wider">
                             {msg.timestamp.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
@@ -304,9 +296,9 @@ export default function AIFeature() {
 
         {/* INPUT AREA */}
         <div className="absolute bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 w-full max-w-3xl px-5 md:px-0 pointer-events-auto">
-            <form onSubmit={handleSendMessage} className="relative w-full flex items-end gap-3 p-2 bg-white/70 dark:bg-black/60 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-[2rem] shadow-2xl">
+            <form onSubmit={handleSendMessage} className="relative w-full flex items-end gap-3 p-2 bg-white/80 dark:bg-black/60 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-[2rem] shadow-2xl focus-within:border-[#80BF84]/50 transition-colors">
                 <textarea 
-                    className="flex-1 bg-transparent px-5 py-4 min-h-[56px] max-h-[120px] text-[15px] text-slate-900 dark:text-white placeholder:text-slate-500 focus:outline-none resize-none no-scrollbar" 
+                    className="flex-1 bg-transparent px-5 py-4 min-h-[56px] max-h-[120px] text-[15px] font-medium text-slate-900 dark:text-white placeholder:text-slate-500 focus:outline-none resize-none no-scrollbar" 
                     placeholder="Mô tả triệu chứng hoặc câu hỏi của bạn..."
                     value={input} 
                     onChange={e => setInput(e.target.value)} 
@@ -317,22 +309,18 @@ export default function AIFeature() {
                     <Send size={20} className="ml-1"/>
                 </button>
             </form>
-            <p className="text-center text-[10px] text-slate-400 mt-3 font-medium">AI Health Assistant có thể đưa ra kết quả không chính xác. Hãy luôn tham khảo ý kiến bác sĩ.</p>
+            <p className="text-center text-[10px] text-slate-400 mt-3 font-semibold">AI Health Assistant có thể đưa ra kết quả không chính xác. Hãy luôn tham khảo ý kiến bác sĩ.</p>
         </div>
 
-        {/* ================= 3. MOBILE BOTTOM DOCK ================= */}
+        {/* 3. MOBILE BOTTOM DOCK */}
         <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-max pointer-events-auto">
           <div className="px-8 py-3.5 rounded-full flex items-center justify-center gap-8 sm:gap-10 shadow-2xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/60 backdrop-blur-2xl transition-colors duration-500">
             <button onClick={() => router.push('/')} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Home size={26} strokeWidth={2.5} /></button>
             <button onClick={() => router.push('/features/explore')} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Compass size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
-            
-            {/* NÚT AI MOBILE ĐANG ACTIVE */}
             <button className="relative -mt-10 group cursor-default">
               <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#80BF84] to-emerald-300 p-[2px] shadow-[0_0_20px_rgba(128,191,132,0.4)] transition-all duration-300"><div className="w-full h-full bg-white dark:bg-zinc-950 rounded-full flex items-center justify-center transition-colors duration-500"><Sparkles size={26} className="text-[#80BF84]" strokeWidth={2.5} /></div></div>
             </button>
-
             <button onClick={() => router.push('/features/favorite')} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Heart size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
-            
             <div className="relative">
               {isUserMenuOpen && user && (
                 <>

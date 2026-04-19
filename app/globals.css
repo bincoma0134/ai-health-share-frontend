@@ -1,17 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  /* Nền tảng màu Sáng - Tươi mới, chữa lành (Slate nhạt pha Mint) */
   --background: #f8fafc;
   --foreground: #0f172a;
 }
 
-@theme inline {
+/* 🚀 FIX: KÍCH HOẠT DARK MODE CHUẨN TAILWIND V4 */
+@custom-variant dark (&:is(.dark *));
+
+@theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Inter", var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  /* SỬ DỤNG BIẾN FONT TỪ LAYOUT.TSX */
+  --font-sans: var(--font-be-vietnam), ui-sans-serif, system-ui, -apple-system, sans-serif;
   
-  /* Hiệu ứng chuyển động mềm mại */
   --animate-fade-in: fadeIn 0.5s ease-out;
   --animate-slide-up: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   --animate-float: float 6s ease-in-out infinite;
@@ -44,7 +46,6 @@ body {
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   
-  /* 🌟 TINH HOA APPLE GLASSMORPHISM */
   .glass-panel {
     @apply bg-white/40 backdrop-blur-3xl border border-white/60 shadow-[0_8px_32px_rgba(16,185,129,0.08)];
   }
@@ -54,6 +55,6 @@ body {
   }
 
   .glass-input {
-    @apply bg-white/50 border border-white/80 text-slate-800 placeholder:text-slate-400 focus:bg-white/80 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-400/20 rounded-2xl transition-all outline-none backdrop-blur-md;
+    @apply bg-white/50 border border-white/80 text-slate-800 placeholder:text-slate-400 focus:bg-white/80 focus:border-[#80BF84] focus:ring-4 focus:ring-[#80BF84]/20 rounded-2xl transition-all outline-none backdrop-blur-md font-medium;
   }
 }

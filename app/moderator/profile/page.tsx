@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { 
-    Home, User as UserIcon, ShieldCheck, CheckCircle, Clock, 
-    Save, Sun, Moon, Bell, Edit3, ShieldAlert, Sparkles
-  } from "lucide-react";
+  Home, User as UserIcon, ShieldCheck, CheckCircle, Clock, 
+  Save, Sun, Moon, Bell, Edit3, ShieldAlert, Sparkles, Image as ImageIcon, Activity
+} from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -36,8 +36,13 @@ export default function ModeratorProfile() {
     cover_url: ""
   });
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
-  // --- STATE THỐNG KÊ (Mock Data - Sẽ nối API sau) ---
+  // --- REFS CHO NÚT UPLOAD ẢNH ---
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+
+  // --- STATE THỐNG KÊ ---
   const [stats, setStats] = useState({
     pendingTotal: 0,
     approvedByMe: 0
@@ -74,7 +79,7 @@ export default function ModeratorProfile() {
         if (result.status === "success" && result.data.profile) {
             const p = result.data.profile;
             
-            // 🚨 BẢO MẬT: Chặn truy cập nếu không phải MODERATOR hoặc SUPER_ADMIN
+            // BẢO MẬT: Chặn truy cập nếu không phải MODERATOR hoặc SUPER_ADMIN
             if (p.role !== "MODERATOR" && p.role !== "SUPER_ADMIN") {
                 toast.error("Truy cập trái phép! Bạn không phải Kiểm duyệt viên.");
                 router.push("/");
@@ -95,10 +100,13 @@ export default function ModeratorProfile() {
                 localStorage.setItem('theme', 'light');
             }
 
-            // MÔ PHỎNG FETCH API THỐNG KÊ (Sẽ viết endpoint thật ở Backend sau)
-            setTimeout(() => {
-               setStats({ pendingTotal: 42, approvedByMe: 156 });
-            }, 500);
+            // Lấy dữ liệu thống kê thật từ Backend
+            if (result.data.stats) {
+                setStats({ 
+                    pendingTotal: result.data.stats.pendingTotal || 0, 
+                    approvedByMe: result.data.stats.approvedByMe || 0 
+                });
+            }
         }
       } catch (error) {
         toast.error("Không thể tải thông tin hồ sơ.");
@@ -115,6 +123,53 @@ export default function ModeratorProfile() {
     if (newMode) document.documentElement.classList.add('dark');
     else document.documentElement.classList.remove('dark');
     localStorage.setItem('theme', newMode ? 'dark' : 'light');
+  };
+
+  // --- LOGIC UPLOAD ẢNH TRỰC TIẾP LÊN SUPABASE STORAGE ---
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'cover') => {
+      const file = e.target.files?.[0];
+      if (!file || !user) return;
+
+      if (!file.type.startsWith("image/")) {
+          toast.error("Chỉ chấp nhận định dạng hình ảnh!");
+          return;
+      }
+
+      setIsUploadingImage(true);
+      const toastId = toast.loading(`Đang tải ảnh ${type === 'avatar' ? 'đại diện' : 'bìa'} lên hệ thống...`);
+
+      try {
+          // Tạo tên file độc nhất để không bị trùng lặp
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${user.id}-${type}-${Date.now()}.${fileExt}`;
+
+          // Upload lên Supabase Bucket "avatars"
+          const { error: uploadError } = await supabase.storage
+              .from('avatars')
+              .upload(fileName, file);
+
+          if (uploadError) throw uploadError;
+
+          // Lấy đường dẫn Public URL
+          const { data: publicUrlData } = supabase.storage
+              .from('avatars')
+              .getPublicUrl(fileName);
+
+          const publicUrl = publicUrlData.publicUrl;
+
+          // Cập nhật giao diện (Preview)
+          if (type === 'avatar') {
+              setProfileData({ ...profileData, avatar_url: publicUrl });
+          } else {
+              setProfileData({ ...profileData, cover_url: publicUrl });
+          }
+
+          toast.success("Tải ảnh lên thành công! Nhớ bấm Lưu Hồ Sơ nhé.", { id: toastId });
+      } catch (error: any) {
+          toast.error(`Lỗi tải ảnh: ${error.message}`, { id: toastId });
+      } finally {
+          setIsUploadingImage(false);
+      }
   };
 
   const handleSaveProfile = async () => {
@@ -135,7 +190,19 @@ export default function ModeratorProfile() {
     }
   };
 
-  if (isLoading || !isMounted) return <div className="h-[100dvh] bg-slate-50 dark:bg-black"></div>;
+  if (isLoading || !isMounted) return (
+    <div className="h-[100dvh] w-full bg-slate-50 dark:bg-zinc-950 flex flex-col items-center justify-center gap-6 transition-colors duration-500">
+      <div className="relative w-16 h-16">
+        <div className="absolute inset-0 bg-emerald-200 rounded-full animate-ping opacity-70"></div>
+        <div className="absolute inset-2 bg-emerald-400 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30">
+          <Sparkles className="text-white w-6 h-6 animate-pulse" />
+        </div>
+      </div>
+      <p className="text-slate-500 dark:text-zinc-500 text-sm font-medium tracking-widest uppercase animate-pulse">
+        Khơi nguồn sức sống...
+      </p>
+    </div>
+  );
 
   return (
     <div className="h-[100dvh] w-full bg-slate-50 dark:bg-black overflow-hidden flex relative transition-colors duration-500">
@@ -148,7 +215,6 @@ export default function ModeratorProfile() {
           
           <button className="flex items-center gap-4 px-4 py-3 rounded-2xl bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 font-bold transition-all border border-blue-500/20"><UserIcon size={24} strokeWidth={2.5} /><span className="text-sm tracking-wide">Hồ sơ Cán bộ</span></button>
           
-          {/* NÚT DẪN SANG DASHBOARD KIỂM DUYỆT */}
           <button onClick={() => router.push('/moderator/dashboard')} className="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-bold transition-all group">
             <div className="relative">
                 <ShieldCheck size={24} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
@@ -183,7 +249,7 @@ export default function ModeratorProfile() {
                 </div>
             </div>
 
-            {/* 🚀 KHU VỰC THỐNG KÊ (ANALYTICS WIDGETS) */}
+            {/* KHU VỰC THỐNG KÊ (ANALYTICS WIDGETS) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10 animate-slide-up">
                 {/* Thẻ 1: Hàng đợi hệ thống */}
                 <div className="glass-panel p-6 md:p-8 rounded-[2rem] bg-white/70 dark:bg-black/50 border border-amber-500/20 shadow-xl relative overflow-hidden group">
@@ -214,18 +280,37 @@ export default function ModeratorProfile() {
 
             {/* KHU VỰC HỒ SƠ */}
             <div className="animate-slide-up" style={{ animationDelay: '0.1s' }}>
-                <div className="glass-panel p-6 md:p-10 rounded-[2.5rem] bg-white/70 dark:bg-black/50 border-slate-200 dark:border-white/10 flex flex-col gap-8 shadow-2xl">
+                <div className="glass-panel p-6 md:p-10 rounded-[2.5rem] bg-white/70 dark:bg-black/50 border-slate-200 dark:border-white/10 flex flex-col gap-8 shadow-2xl relative">
+                    {/* Lớp phủ Đang tải */}
+                    {isUploadingImage && (
+                        <div className="absolute inset-0 bg-white/50 dark:bg-black/50 backdrop-blur-sm z-50 rounded-[2.5rem] flex items-center justify-center">
+                            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                    )}
+
                     <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-2">Thông tin Cán bộ</h3>
                     
-                    {/* Ảnh bìa & Avatar */}
-                    <div className="relative w-full h-40 md:h-56 rounded-3xl bg-slate-200 dark:bg-zinc-900 border-2 border-dashed border-slate-300 dark:border-white/20 flex flex-col items-center justify-center group overflow-hidden cursor-pointer">
-                        {profileData.cover_url && <img src={profileData.cover_url} className="w-full h-full object-cover" />}
+                    {/* Ảnh bìa & Avatar có chức năng Click để Upload */}
+                    <div onClick={() => coverInputRef.current?.click()} className="relative w-full h-40 md:h-56 rounded-3xl bg-slate-200 dark:bg-zinc-900 border-2 border-dashed border-slate-300 dark:border-white/20 flex flex-col items-center justify-center group overflow-hidden cursor-pointer transition-colors hover:border-blue-500/50">
+                        {profileData.cover_url ? (
+                            <img src={profileData.cover_url} className="w-full h-full object-cover" />
+                        ) : (
+                            <><ImageIcon size={32} className="text-slate-400 dark:text-zinc-600 mb-2 group-hover:scale-110 transition-transform" /><span className="text-sm font-semibold text-slate-500 dark:text-zinc-500">Tải lên Ảnh Bìa</span></>
+                        )}
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><Edit3 className="text-white"/></div>
+                        {/* Input ẩn cho Bìa */}
+                        <input type="file" accept="image/*" ref={coverInputRef} className="hidden" onChange={(e) => handleImageUpload(e, 'cover')} />
                     </div>
 
-                    <div className="relative -mt-16 md:-mt-20 ml-8 w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white dark:border-zinc-950 bg-slate-200 dark:bg-zinc-800 flex items-center justify-center shadow-xl group cursor-pointer overflow-hidden z-10">
-                         {profileData.avatar_url ? <img src={profileData.avatar_url} className="w-full h-full object-cover" /> : <UserIcon size={40} className="text-slate-400 dark:text-zinc-600" />}
+                    <div onClick={() => avatarInputRef.current?.click()} className="relative -mt-16 md:-mt-20 ml-8 w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white dark:border-zinc-950 bg-slate-200 dark:bg-zinc-800 flex items-center justify-center shadow-xl group cursor-pointer overflow-hidden z-10 transition-transform hover:scale-105">
+                        {profileData.avatar_url ? (
+                            <img src={profileData.avatar_url} className="w-full h-full object-cover" />
+                        ) : (
+                            <UserIcon size={40} className="text-slate-400 dark:text-zinc-600" />
+                        )}
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><Edit3 className="text-white"/></div>
+                        {/* Input ẩn cho Avatar */}
+                        <input type="file" accept="image/*" ref={avatarInputRef} className="hidden" onChange={(e) => handleImageUpload(e, 'avatar')} />
                     </div>
 
                     {/* Form Nhập liệu */}
@@ -241,7 +326,7 @@ export default function ModeratorProfile() {
                     </div>
 
                     <div className="flex justify-end pt-4 border-t border-slate-200 dark:border-white/10">
-                        <button onClick={handleSaveProfile} disabled={isSavingProfile} className="flex items-center gap-2 px-8 py-4 bg-blue-600 text-white font-black rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)]">
+                        <button onClick={handleSaveProfile} disabled={isSavingProfile || isUploadingImage} className="flex items-center gap-2 px-8 py-4 bg-blue-600 text-white font-black rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)] disabled:opacity-50 disabled:cursor-not-allowed">
                             {isSavingProfile ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"/> : <Save size={20}/>}
                             LƯU HỒ SƠ
                         </button>

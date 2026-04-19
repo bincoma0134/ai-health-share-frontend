@@ -23,6 +23,7 @@ export default function PartnerDashboard() {
   const [wallet, setWallet] = useState({ balance: 0, total_earned: 0 });
   const [transactions, setTransactions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
 
   // --- STATE MODAL RÚT TIỀN ---
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
@@ -31,6 +32,10 @@ export default function PartnerDashboard() {
   const [accountNumber, setAccountNumber] = useState("");
   const [accountName, setAccountName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     const fetchPartnerData = async () => {
@@ -119,19 +124,19 @@ export default function PartnerDashboard() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="h-[100dvh] w-full bg-slate-50 flex flex-col items-center justify-center gap-6">
-        <div className="relative w-16 h-16">
-          <div className="absolute inset-0 bg-emerald-200 rounded-full animate-ping opacity-70"></div>
-          <div className="absolute inset-2 bg-emerald-400 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30">
-            <Wallet className="text-white w-6 h-6 animate-pulse" />
-          </div>
+  if (isLoading || !isMounted) return (
+    <div className="h-[100dvh] w-full bg-slate-50 dark:bg-zinc-950 flex flex-col items-center justify-center gap-6 transition-colors duration-500">
+      <div className="relative w-16 h-16">
+        <div className="absolute inset-0 bg-emerald-200 rounded-full animate-ping opacity-70"></div>
+        <div className="absolute inset-2 bg-emerald-400 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30">
+          <Sparkles className="text-white w-6 h-6 animate-pulse" />
         </div>
-        <p className="text-slate-500 text-sm font-medium tracking-widest uppercase animate-pulse">Đang đồng bộ ví...</p>
       </div>
-    );
-  }
+      <p className="text-slate-500 dark:text-zinc-500 text-sm font-medium tracking-widest uppercase animate-pulse">
+        Khơi nguồn sức sống...
+      </p>
+    </div>
+  );
 
   return (
     <div className="h-[100dvh] bg-slate-50 overflow-hidden relative flex flex-col font-sans">
