@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import { Be_Vietnam_Pro } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
+import { UIProvider } from "@/context/UIContext";
+import NotificationModal from "@/components/NotificationModal";
 
 const beVietnam = Be_Vietnam_Pro({ 
   subsets: ["vietnamese", "latin"],
   weight: ["300", "400", "500", "600", "700", "800"],
-  variable: "--font-be-vietnam", // Tạo biến CSS để Tailwind v4 đọc được
+  variable: "--font-be-vietnam",
 });
 
 export const metadata: Metadata = {
@@ -21,9 +23,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="vi">
-      {/* Nạp Font tiếng Việt vào body */}
       <body className={`${beVietnam.variable} antialiased`}>
-        {children}
+        <UIProvider>
+          {children}
+          <NotificationModal />
+        </UIProvider>
         <Toaster position="top-center" richColors />
       </body>
     </html>

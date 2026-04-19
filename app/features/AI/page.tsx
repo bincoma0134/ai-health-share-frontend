@@ -9,8 +9,8 @@ import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import ReactMarkdown from 'react-markdown';
+import { useUI } from "@/context/UIContext";
 
-// --- KHỞI TẠO SUPABASE CLIENT ---
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -29,6 +29,7 @@ interface ChatMessage {
 export default function AIFeature() {
   const router = useRouter();
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const { setIsNotifOpen } = useUI();
   
   const [user, setUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<string>("USER");
@@ -61,14 +62,12 @@ export default function AIFeature() {
       if (session?.user) {
         setUser(session.user);
         
-        // Load User Role
         fetch("https://ai-health-share-backend.onrender.com/user/profile", {
             headers: { "Authorization": `Bearer ${session.access_token}` }
         }).then(res => res.json()).then(result => {
             if (result.status === "success") setUserRole(result.data.profile.role);
         }).catch(err => console.error("Lỗi lấy Profile:", err));
 
-        // Load Chat History
         fetch("https://ai-health-share-backend.onrender.com/ai/history", {
             headers: { "Authorization": `Bearer ${session.access_token}` }
         }).then(res => res.json()).then(result => {
@@ -79,7 +78,6 @@ export default function AIFeature() {
                     content: m.content,
                     timestamp: new Date(m.created_at)
                 }));
-                // Bỏ câu chào mặc định, nạp lịch sử thật
                 setMessages(history); 
             }
         }).catch(err => console.error("Lỗi load History:", err));
@@ -144,7 +142,7 @@ export default function AIFeature() {
     }
   };
 
-  const handleThemeToggle = async () => { /* ... giữ nguyên ... */
+  const handleThemeToggle = async () => {
     const newMode = !isDarkMode;
     setIsDarkMode(newMode);
     const themeStr = newMode ? 'dark' : 'light';
@@ -232,6 +230,12 @@ export default function AIFeature() {
                 <button onClick={clearChat} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 active:scale-95 transition-all shadow-lg" title="Xóa lịch sử">
                     <Trash2 size={18} />
                 </button>
+
+                {/* ĐÂY LÀ NÚT CHUÔNG ĐÃ ĐƯỢC GẮN STATE MỞ MODAL */}
+                <button onClick={() => setIsNotifOpen(true)} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 hover:text-[#80BF84] hover:bg-[#80BF84]/10 active:scale-95 transition-all shadow-lg" title="Thông báo">
+                    <Bell size={18} />
+                </button>
+
                 <button onClick={handleThemeToggle} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:bg-white/80 dark:hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg group">
                     {isDarkMode ? <Sun size={20} className="group-hover:text-amber-300 transition-colors"/> : <Moon size={20} className="group-hover:text-blue-500 transition-colors"/>}
                 </button>
@@ -247,11 +251,10 @@ export default function AIFeature() {
                     )}
 
                     <div className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} max-w-[85%] md:max-w-[75%]`}>
-                        {/* HIỂN THỊ MARKDOWN THÔNG MINH */}
-                        <div className={`p-4 md:p-6 text-[15px] leading-relaxed shadow-lg ${
+                        <div className={`p-4 md:p-6 text-[15px] leading-relaxed transition-all duration-300 ${
                             msg.role === 'user' 
-                            ? 'bg-[#80BF84] text-zinc-950 rounded-[1.5rem] rounded-tr-sm whitespace-pre-wrap font-medium' 
-                            : 'bg-white/80 dark:bg-white/10 backdrop-blur-xl border border-slate-200 dark:border-white/10 text-slate-800 dark:text-zinc-200 rounded-[1.5rem] rounded-tl-sm'
+                            ? 'bg-[#80BF84] text-zinc-950 rounded-[1.5rem] rounded-tr-sm whitespace-pre-wrap font-medium shadow-md dark:shadow-[0_0_15px_rgba(128,191,132,0.2)]' 
+                            : 'bg-white/80 dark:bg-zinc-900/60 backdrop-blur-2xl border border-slate-200 dark:border-white/10 text-slate-800 dark:text-zinc-200 rounded-[1.5rem] rounded-tl-sm shadow-lg dark:shadow-[0_0_15px_rgba(128,191,132,0.15)]'
                         }`}>
                             {msg.role === 'user' ? (
                                 msg.content
@@ -284,7 +287,7 @@ export default function AIFeature() {
             {isTyping && (
                 <div className="flex gap-4 justify-start animate-fade-in">
                     <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-200 dark:bg-zinc-800 flex items-center justify-center shrink-0 border border-slate-300 dark:border-zinc-700 shadow-sm"><Bot size={18} className="text-[#80BF84]" /></div>
-                    <div className="bg-white/70 dark:bg-white/10 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-[1.5rem] rounded-tl-sm px-5 py-4 flex items-center gap-1.5 shadow-lg">
+                    <div className="bg-white/80 dark:bg-zinc-900/60 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-[1.5rem] rounded-tl-sm px-5 py-4 flex items-center gap-1.5 shadow-lg dark:shadow-[0_0_15px_rgba(128,191,132,0.15)]">
                         <div className="w-2 h-2 rounded-full bg-[#80BF84] animate-bounce" style={{ animationDelay: '0ms' }}></div>
                         <div className="w-2 h-2 rounded-full bg-[#80BF84] animate-bounce" style={{ animationDelay: '150ms' }}></div>
                         <div className="w-2 h-2 rounded-full bg-[#80BF84] animate-bounce" style={{ animationDelay: '300ms' }}></div>
@@ -296,7 +299,7 @@ export default function AIFeature() {
 
         {/* INPUT AREA */}
         <div className="absolute bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 w-full max-w-3xl px-5 md:px-0 pointer-events-auto">
-            <form onSubmit={handleSendMessage} className="relative w-full flex items-end gap-3 p-2 bg-white/80 dark:bg-black/60 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-[2rem] shadow-2xl focus-within:border-[#80BF84]/50 transition-colors">
+            <form onSubmit={handleSendMessage} className="relative w-full flex items-end gap-3 p-2 bg-white/80 dark:bg-black/60 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-[2rem] shadow-2xl focus-within:border-[#80BF84]/50 dark:focus-within:shadow-[0_0_20px_rgba(128,191,132,0.15)] transition-all duration-300">
                 <textarea 
                     className="flex-1 bg-transparent px-5 py-4 min-h-[56px] max-h-[120px] text-[15px] font-medium text-slate-900 dark:text-white placeholder:text-slate-500 focus:outline-none resize-none no-scrollbar" 
                     placeholder="Mô tả triệu chứng hoặc câu hỏi của bạn..."

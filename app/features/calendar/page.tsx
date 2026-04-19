@@ -9,6 +9,7 @@ import {
 import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useUI } from "@/context/UIContext"; // IMPORT CONTEXT THÔNG BÁO
 
 // --- KHỞI TẠO SUPABASE CLIENT ---
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -32,6 +33,7 @@ interface Booking {
 
 export default function CalendarFeature() {
   const router = useRouter();
+  const { setIsNotifOpen } = useUI(); // LẤY HÀM MỞ THÔNG BÁO
   
   // --- STATE HỆ THỐNG & AUTH ---
   const [user, setUser] = useState<any>(null);
@@ -196,7 +198,9 @@ export default function CalendarFeature() {
           <button onClick={handleThemeToggle} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:bg-white/80 dark:hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg group">
             {isDarkMode ? <Sun size={20} className="group-hover:text-amber-300 transition-colors"/> : <Moon size={20} className="group-hover:text-blue-500 transition-colors"/>}
           </button>
-          <button onClick={() => router.push('/features/notification')} className="relative w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:bg-white/80 dark:hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg group">
+          
+          {/* NÚT THÔNG BÁO ĐÃ ĐƯỢC CẬP NHẬT GỌI MODAL */}
+          <button onClick={() => setIsNotifOpen(true)} className="relative w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:bg-white/80 dark:hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg group">
             <Bell size={20} className="group-hover:text-[#80BF84] transition-colors"/>
           </button>
         </div>

@@ -10,6 +10,7 @@ import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import GlobalLoading from "../../loading";
+import { useUI } from "@/context/UIContext"; // ĐÃ THÊM IMPORT
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -28,6 +29,7 @@ interface Service {
 
 export default function ExploreFeature() {
   const router = useRouter();
+  const { setIsNotifOpen } = useUI(); // ĐÃ THÊM HOOK
   
   // --- STATE HỆ THỐNG & AUTH ---
   const [user, setUser] = useState<any>(null);
@@ -191,7 +193,9 @@ export default function ExploreFeature() {
           <button onClick={handleThemeToggle} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:bg-white/80 dark:hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg group">
             {isDarkMode ? <Sun size={20} className="group-hover:text-amber-300 transition-colors"/> : <Moon size={20} className="group-hover:text-blue-500 transition-colors"/>}
           </button>
-          <button onClick={() => router.push('/features/notification')} className="relative w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:bg-white/80 dark:hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg group">
+          
+          {/* NÚT THÔNG BÁO ĐÃ ĐƯỢC CẬP NHẬT */}
+          <button onClick={() => setIsNotifOpen(true)} className="relative w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:bg-white/80 dark:hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg group">
             <Bell size={20} className="group-hover:text-[#80BF84] transition-colors"/>
           </button>
         </div>

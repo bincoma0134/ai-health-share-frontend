@@ -10,6 +10,7 @@ import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import CommentModal from "@/components/CommentModal";
+import { useUI } from "@/context/UIContext";
 
 // --- KHỞI TẠO SUPABASE CLIENT ---
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
