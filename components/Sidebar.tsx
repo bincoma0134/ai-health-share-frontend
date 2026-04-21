@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { 
   Home, Compass, CalendarDays, Heart, Sparkles, Crown, Settings, 
-  LogOut, ShieldCheck, LayoutDashboard, User as UserIcon, MapPin 
+  LogOut, ShieldCheck, LayoutDashboard, User as UserIcon, MapPin, MessageSquare 
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -88,6 +88,7 @@ export default function Sidebar() {
 
   const mainLinks = [
     { name: "Trang chủ", icon: Home, path: "/" },
+    { name: "Cộng đồng", icon: MessageSquare, path: "/features/community" },
     { name: "Khám phá", icon: Compass, path: "/features/explore" },
     { name: "Bản đồ Dịch vụ", icon: MapPin, path: "/features/map" },
     { name: "Lịch hẹn", icon: CalendarDays, path: "/features/calendar" },
@@ -171,3 +172,4 @@ export default function Sidebar() {
     </div>
   );
 }
+
