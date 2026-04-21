@@ -1,63 +1,54 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, useMap, ZoomControl } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
 import L from "leaflet";
 import { useEffect } from "react";
 
-// Marker cho đối tác (Emerald)
+// Marker Đối tác - Hiệu ứng Glow Emerald
 const partnerIcon = L.divIcon({
   className: "custom-pin",
-  html: `<div style="background-color: #80BF84; width: 34px; height: 34px; border-radius: 50%; border: 3px solid white; box-shadow: 0 8px 20px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;"><div style="width: 10px; height: 10px; background: white; border-radius: 50%;"></div></div>`,
-  iconSize: [34, 34],
-  iconAnchor: [17, 34],
+  html: `<div class="relative w-10 h-10 flex items-center justify-center">
+            <div class="absolute inset-0 bg-[#80BF84] rounded-full blur-md opacity-40 animate-pulse"></div>
+            <div class="relative w-8 h-8 bg-[#80BF84] rounded-full border-[3px] border-white shadow-2xl flex items-center justify-center">
+              <div class="w-2 h-2 bg-white rounded-full"></div>
+            </div>
+         </div>`,
+  iconSize: [40, 40],
+  iconAnchor: [20, 40],
 });
 
-// Marker cho người dùng (Blue Glow)
+// Marker Người dùng - Hiệu ứng Radar Blue
 const userIcon = L.divIcon({
   className: "user-pin",
-  html: `<div class="relative w-6 h-6 bg-blue-500 rounded-full border-2 border-white shadow-[0_0_15px_rgba(59,130,246,0.8)] flex items-center justify-center">
-            <div class="absolute inset-0 bg-blue-400 rounded-full animate-ping opacity-40"></div>
-            <div class="w-2 h-2 bg-white rounded-full relative z-10"></div>
+  html: `<div class="relative w-8 h-8 flex items-center justify-center">
+            <div class="absolute inset-0 bg-blue-500 rounded-full animate-ping opacity-20"></div>
+            <div class="relative w-5 h-5 bg-blue-600 rounded-full border-2 border-white shadow-[0_0_15px_rgba(37,99,235,0.6)]"></div>
          </div>`,
-  iconSize: [24, 24],
-  iconAnchor: [12, 12],
+  iconSize: [32, 32],
+  iconAnchor: [16, 16],
 });
 
-// Component điều khiển nội bộ
-function MapUpdater({ center, zoom, mapType }: { center: [number, number], zoom: number, mapType: string }) {
+function MapUpdater({ center, zoom, mapType }: any) {
   const map = useMap();
   useEffect(() => {
-    map.setView(center, zoom, { animate: true, duration: 0.8 });
+    map.setView(center, zoom, { animate: true, duration: 1 });
   }, [center, zoom, map]);
 
   return (
     <TileLayer
       url={mapType === "satellite" 
         ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-        : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"}
+        : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"}
       attribution='&copy; AI Health Share'
     />
   );
 }
 
 export default function MapClient({ partners, onMarkerClick, mapState, userLocation }: any) {
-  useEffect(() => {
-    delete (L.Icon.Default.prototype as any)._getIconUrl;
-    L.Icon.Default.mergeOptions({
-      iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-      iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-    });
-  }, []);
-
   return (
     <MapContainer center={mapState.center} zoom={mapState.zoom} zoomControl={false} className="w-full h-full z-0">
       <MapUpdater center={mapState.center} zoom={mapState.zoom} mapType={mapState.mapType} />
-      
-      {/* Vị trí người dùng */}
       {userLocation && <Marker position={userLocation} icon={userIcon} />}
-
-      {/* Danh sách Đối tác */}
       {partners.map((p: any) => (
         <Marker 
           key={p.id} 
