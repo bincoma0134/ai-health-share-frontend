@@ -1,18 +1,22 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction } from "react";
 
 interface UIContextType {
   isNotifOpen: boolean;
-  setIsNotifOpen: (val: boolean) => void;
+  setIsNotifOpen: Dispatch<SetStateAction<boolean>>;
+  isAuthModalOpen: boolean;
+  setIsAuthModalOpen: Dispatch<SetStateAction<boolean>>;
 }
 
 const UIContext = createContext<UIContextType | undefined>(undefined);
 
 export function UIProvider({ children }: { children: ReactNode }) {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
   return (
-    <UIContext.Provider value={{ isNotifOpen, setIsNotifOpen }}>
+    <UIContext.Provider value={{ isNotifOpen, setIsNotifOpen, isAuthModalOpen, setIsAuthModalOpen }}>
       {children}
     </UIContext.Provider>
   );

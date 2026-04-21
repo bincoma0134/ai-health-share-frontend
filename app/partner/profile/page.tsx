@@ -95,7 +95,7 @@ export default function PartnerBackstage() {
         if (result.status === "success" && result.data.profile) {
             const p = result.data.profile;
             if (p.role === "USER") {
-                toast.error("Bạn không có quyền truy cập Hậu trường Doanh nghiệp!");
+                toast.error("Bạn không có quyền truy cập!");
                 router.push("/");
                 return;
             }
@@ -271,15 +271,7 @@ export default function PartnerBackstage() {
   return (
     <div className="h-[100dvh] w-full bg-slate-50 dark:bg-zinc-950 overflow-hidden flex relative transition-colors duration-500">
       
-      {/* 1. LEFT SIDEBAR */}
-      <div className="hidden md:flex flex-col w-[260px] h-full bg-white/40 dark:bg-black/40 backdrop-blur-3xl border-r border-slate-200 dark:border-white/10 z-50 pt-8 pb-6 px-4 shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.05)] dark:shadow-[4px_0_24px_rgba(0,0,0,0.5)]">
-        <div className="px-4 mb-10" onClick={() => router.push('/')}><h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-lg flex items-center gap-1 cursor-pointer">AI<span className="text-[#80BF84]">HEALTH</span></h1></div>
-        <div className="flex flex-col gap-2 flex-1">
-          <button onClick={() => router.push('/')} className="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-bold transition-all"><Home size={24} strokeWidth={2.5} /><span className="text-sm tracking-wide">Trang chủ</span></button>
-          <button className="flex items-center gap-4 px-4 py-3 rounded-2xl bg-slate-200/50 dark:bg-white/10 text-slate-900 dark:text-white font-bold transition-all"><LayoutDashboard size={24} strokeWidth={2.5} className="text-[#80BF84]" /><span className="text-sm tracking-wide">Tổng quan</span></button>
-          <button onClick={() => router.push('/partner/dashboard')} className="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-bold transition-all"><DollarSign size={24} strokeWidth={2.5} /><span className="text-sm tracking-wide">Dòng tiền</span></button>
-        </div>
-      </div>
+      
 
       {/* 2. MAIN BACKSTAGE AREA */}
       <div className="flex-1 relative h-[100dvh] overflow-y-auto no-scrollbar scroll-smooth">
@@ -291,7 +283,7 @@ export default function PartnerBackstage() {
 
         <div className="max-w-[1400px] mx-auto pt-24 pb-32 px-4 md:px-8 xl:px-12">
             <div className="mb-10 animate-slide-up">
-                <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-2">Hậu trường Doanh nghiệp</h2>
+                <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-2">Hồ sơ Doanh nghiệp</h2>
                 <p className="text-slate-500 dark:text-zinc-400 font-medium">Tùy chỉnh nhận diện thương hiệu và tải lên video dịch vụ chất lượng cao.</p>
             </div>
 

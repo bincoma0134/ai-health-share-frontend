@@ -59,6 +59,10 @@ export default function UserFeed() {
   const [activeService, setActiveService] = useState<Service | null>(null);
   const [affiliateCode, setAffiliateCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // 3 DÒNG MỚI THÊM VÀO:
+  const [bookingName, setBookingName] = useState("");
+  const [bookingPhone, setBookingPhone] = useState("");
+  const [bookingNote, setBookingNote] = useState("");
   
   // --- COMMENT STATE ---
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
@@ -300,21 +304,60 @@ export default function UserFeed() {
   const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeService || !user || !accessToken) return;
+    
+    // Validate form cơ bản
+    if (!bookingName.trim() || !bookingPhone.trim()) {
+      toast.error("Vui lòng nhập đầy đủ Họ tên và Số điện thoại!");
+      return;
+    }
+
     setIsSubmitting(true);
     const toastId = toast.loading("Đang thiết lập cổng bảo chứng Escrow...");
+    
     try {
-      // Dùng luôn State accessToken, KHÔNG gọi lại getSession()
+      const code = affiliateCode.trim();
+
+      // 1. KIỂM TRA MÃ GIỚI THIỆU (NẾU NGƯỜI DÙNG CÓ NHẬP)
+      if (code !== "") {
+        const validateRes = await fetch(`https://ai-health-share-backend.onrender.com/affiliates/validate?code=${code}`, {
+          headers: { "Authorization": `Bearer ${accessToken}` }
+        });
+        
+        if (!validateRes.ok) {
+          throw new Error("Mã giới thiệu không hợp lệ hoặc không tồn tại trong hệ thống!");
+        }
+      }
+
+      // 2. GỌI API ĐẶT LỊCH (Gửi kèm Họ tên, SĐT, Lời nhắn)
       const bookingRes = await fetch("https://ai-health-share-backend.onrender.com/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${accessToken}` },
-        body: JSON.stringify({ user_id: user.id, service_id: activeService.id, affiliate_code: affiliateCode || null, total_amount: activeService.price })
+        body: JSON.stringify({ 
+          user_id: user.id, 
+          service_id: activeService.id, 
+          affiliate_code: code || null, 
+          total_amount: activeService.price,
+          customer_name: bookingName.trim(),   // Truyền tên
+          customer_phone: bookingPhone.trim(), // Truyền SĐT
+          note: bookingNote.trim()             // Truyền Lời nhắn
+        })
       });
+      
       const bookingData = await bookingRes.json();
+      
       if (!bookingRes.ok) throw new Error(bookingData.detail || "Lỗi ghi nhận giao dịch");
-      if (bookingData.checkout_url) window.location.href = bookingData.checkout_url; 
-      else toast.error("Hệ thống chưa tạo được link thanh toán.", { id: toastId });
-    } catch (error: any) { toast.error(error.message, { id: toastId }); } 
-    finally { setIsSubmitting(false); } 
+      
+      if (bookingData.checkout_url) {
+        window.location.href = bookingData.checkout_url; 
+      } else {
+        toast.error("Hệ thống chưa tạo được link thanh toán.", { id: toastId });
+      }
+      
+    } catch (error: any) { 
+      toast.error(error.message, { id: toastId }); 
+    } finally { 
+      setIsSubmitting(false); 
+    } 
   };
 
   const handleThemeToggle = async () => {
@@ -363,43 +406,7 @@ export default function UserFeed() {
   return (
     <div className="h-[100dvh] w-full bg-slate-50 dark:bg-black overflow-hidden flex relative transition-colors duration-500">
       
-      {/* ================= LEFT SIDEBAR DESKTOP ================= */}
-      <div className="hidden md:flex flex-col w-[260px] h-full bg-white/40 dark:bg-black/40 backdrop-blur-3xl border-r border-slate-200 dark:border-white/10 z-50 pt-8 pb-6 px-4 shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.05)] dark:shadow-[4px_0_24px_rgba(0,0,0,0.5)] transition-colors duration-500">
-        <div className="px-4 mb-10"><h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-lg flex items-center gap-1 cursor-pointer transition-colors duration-500">AI<span className="text-[#80BF84]">HEALTH</span></h1></div>
-        <div className="flex flex-col gap-2 flex-1">
-          <button onClick={() => router.push('/')} className="flex items-center gap-4 px-4 py-3 rounded-2xl bg-slate-200/50 dark:bg-white/10 text-slate-900 dark:text-white font-bold transition-all"><Home size={24} strokeWidth={2.5} className="text-[#80BF84]" /><span className="text-sm tracking-wide">Trang chủ</span></button>
-          <button onClick={() => router.push('/features/explore')} className="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-bold transition-all group"><Compass size={24} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /><span className="text-sm tracking-wide">Khám phá</span></button>
-          <button onClick={() => router.push('/features/calendar')} className="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-bold transition-all group"><CalendarDays size={24} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /><span className="text-sm tracking-wide">Lịch hẹn</span></button>
-          <button onClick={() => router.push('/features/favorite')} className="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-bold transition-all group"><Heart size={24} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /><span className="text-sm tracking-wide">Yêu thích</span></button>
-          <div className="mt-8 px-2">
-            <button onClick={() => router.push('/features/AI')} className="w-full relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-[#80BF84] to-emerald-300 rounded-2xl blur-lg opacity-40 group-hover:opacity-70 transition-opacity duration-300"></div>
-              <div className="relative flex items-center justify-center gap-3 px-4 py-4 rounded-2xl bg-gradient-to-tr from-[#80BF84] to-emerald-500 text-zinc-950 shadow-xl group-hover:scale-[1.02] transition-all"><Sparkles size={20} strokeWidth={3} /><span className="font-black text-sm tracking-wide">AI Trợ lý</span></div>
-            </button>
-          </div>
-        </div>
-        
-        <div className="mt-auto px-2 relative">
-          {isUserMenuOpen && user && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setIsUserMenuOpen(false)}></div>
-              <div className="absolute bottom-full mb-3 left-2 right-2 p-2 flex flex-col gap-1 z-50 animate-fade-in bg-white/90 dark:bg-black/80 backdrop-blur-3xl shadow-2xl border border-slate-200 dark:border-white/10 rounded-2xl">
-                  <button onClick={handleGoToProfile} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white font-bold transition-all text-sm w-full text-left">
-                    <UserIcon size={16} /> Trang cá nhân
-                  </button>
-                  <button onClick={handleLogout} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-rose-500/10 text-rose-500 font-bold transition-all text-sm w-full text-left">
-                    <LogOut size={16} /> Đăng xuất
-                  </button>
-              </div>
-            </>
-          )}
-
-          <button onClick={handleUserAvatarClick} className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-bold transition-all group border border-transparent hover:border-slate-300 dark:hover:border-white/10">
-            <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-zinc-800 flex items-center justify-center border border-slate-300 dark:border-zinc-700 group-hover:border-[#80BF84] transition-colors"><UserIcon size={16} /></div>
-            <span className="text-sm tracking-wide truncate max-w-[120px] text-left">{user ? user.email.split('@')[0] : "Đăng nhập"}</span>
-          </button>
-        </div>
-      </div>
+      
 
       {/* ================= MAIN FEED AREA ================= */}
       <div className="flex-1 relative h-[100dvh]">
@@ -559,15 +566,58 @@ export default function UserFeed() {
         </div>
       )}
 
-      {/* 3. Modal Đặt Lịch */}
+      {/* 3. Modal Đặt Lịch - Premium Glass UI */}
       {isModalOpen && activeService && user && (
-        <div className="fixed inset-0 z-[100] flex justify-center items-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 dark:bg-slate-900/80 backdrop-blur-xl transition-colors duration-500" onClick={() => setIsModalOpen(false)}></div>
-          <div className="relative w-full max-w-md bg-white/90 dark:bg-zinc-900/90 backdrop-blur-3xl rounded-[3rem] p-8 z-10 shadow-2xl border border-slate-200 dark:border-white/10 transition-colors duration-500">
-            <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-8 transition-colors duration-500">Xác nhận lịch hẹn</h3>
-            <form onSubmit={handleBooking} className="flex flex-col gap-6">
-              <input type="text" placeholder="Mã giới thiệu..." className="w-full px-5 py-4 bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white font-medium uppercase focus:outline-none focus:border-[#80BF84] transition-colors duration-500" value={affiliateCode} onChange={e => setAffiliateCode(e.target.value)} />
-              <button type="submit" disabled={isSubmitting} className="w-full py-4 bg-[#80BF84] text-zinc-950 font-black text-lg rounded-2xl active:scale-95 transition-all">Tiếp tục thanh toán</button>
+        <div className="fixed inset-0 z-[150] flex justify-center items-center p-4">
+          {/* Lớp nền mờ Blur */}
+          <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md transition-all duration-500" onClick={() => setIsModalOpen(false)}></div>
+          
+          {/* Box chính trôi nổi */}
+          <div className="relative w-full max-w-lg bg-white/70 dark:bg-zinc-950/70 backdrop-blur-3xl rounded-[2.5rem] p-8 md:p-10 z-10 shadow-[0_20px_60px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.8)] border border-white/50 dark:border-white/10 animate-slide-up">
+            
+            {/* Header Modal */}
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#80BF84]/10 border border-[#80BF84]/20 rounded-full text-[10px] font-bold text-[#80BF84] mb-3 uppercase tracking-wider">
+                  <Sparkles size={12} /> Đặt lịch dịch vụ
+                </div>
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white leading-tight pr-4">{activeService.service_name}</h3>
+                <p className="text-[#80BF84] font-black text-lg mt-1">{activeService.price.toLocaleString()} VND</p>
+              </div>
+              <button onClick={() => setIsModalOpen(false)} className="p-2 rounded-full bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-zinc-400 transition-colors shrink-0"><X size={20}/></button>
+            </div>
+
+            {/* Form Nhập Liệu */}
+            <form onSubmit={handleBooking} className="flex flex-col gap-4">
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-500 dark:text-zinc-400 ml-1">Họ và tên</label>
+                      <input type="text" placeholder="Nhập tên của bạn..." className="w-full px-5 py-3.5 bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:border-[#80BF84] focus:ring-1 focus:ring-[#80BF84]/50 transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-600" required value={bookingName} onChange={e => setBookingName(e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-500 dark:text-zinc-400 ml-1">Số điện thoại</label>
+                      <input type="tel" placeholder="09xx..." className="w-full px-5 py-3.5 bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:border-[#80BF84] focus:ring-1 focus:ring-[#80BF84]/50 transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-600" required value={bookingPhone} onChange={e => setBookingPhone(e.target.value)} />
+                  </div>
+              </div>
+
+              <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 dark:text-zinc-400 ml-1">Lời nhắn nhủ (Tùy chọn)</label>
+                  <textarea placeholder="Bạn có yêu cầu đặc biệt gì cho buổi trị liệu không?" rows={2} className="w-full px-5 py-3.5 bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:border-[#80BF84] focus:ring-1 focus:ring-[#80BF84]/50 transition-all resize-none placeholder:text-slate-400 dark:placeholder:text-zinc-600" value={bookingNote} onChange={e => setBookingNote(e.target.value)} />
+              </div>
+
+              <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 dark:text-zinc-400 ml-1">Mã giới thiệu (Tùy chọn)</label>
+                  <input type="text" placeholder="Nhập mã ưu đãi..." className="w-full px-5 py-3.5 bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white font-medium uppercase focus:outline-none focus:border-[#80BF84] focus:ring-1 focus:ring-[#80BF84]/50 transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-600 placeholder:normal-case" value={affiliateCode} onChange={e => setAffiliateCode(e.target.value)} />
+              </div>
+
+              <div className="mt-4">
+                  <button type="submit" disabled={isSubmitting} className="relative w-full py-4 bg-gradient-to-tr from-[#80BF84] to-emerald-400 text-zinc-950 font-black text-lg rounded-2xl active:scale-95 transition-all shadow-[0_10px_20px_rgba(128,191,132,0.3)] overflow-hidden group">
+                    <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full skew-x-12 transition-transform duration-500"></div>
+                    {isSubmitting ? "Đang xử lý..." : "Bảo chứng thanh toán ngay"}
+                  </button>
+                  <p className="text-center text-[10px] text-slate-400 dark:text-zinc-500 mt-4 flex items-center justify-center gap-1"><ShieldCheck size={12}/> Giao dịch được bảo vệ 100% bởi AI Health Escrow</p>
+              </div>
             </form>
           </div>
         </div>

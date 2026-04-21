@@ -168,45 +168,7 @@ export default function UserProfile() {
   return (
     <div className="h-[100dvh] w-full bg-black overflow-hidden flex relative font-sans">
       
-      {/* 1. LEFT SIDEBAR DESKTOP */}
-      <div className="hidden md:flex flex-col w-[260px] h-full bg-black/40 backdrop-blur-3xl border-r border-white/10 z-50 pt-8 pb-6 px-4 shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.5)]">
-        <div className="px-4 mb-10">
-          <h1 onClick={() => router.push("/")} className="text-3xl font-black text-white tracking-tighter drop-shadow-lg flex items-center gap-1 cursor-pointer">
-            AI<span className="text-[#80BF84]">HEALTH</span>
-          </h1>
-        </div>
-
-        <div className="flex flex-col gap-2 flex-1">
-          <button onClick={() => router.push("/")} className="flex items-center gap-4 px-4 py-3 rounded-2xl text-zinc-400 hover:bg-white/5 hover:text-white font-bold transition-all group">
-            <Home size={24} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
-            <span className="text-sm tracking-wide">Trang chủ</span>
-          </button>
-          <button onClick={() => toast.info("Đang phát triển")} className="flex items-center gap-4 px-4 py-3 rounded-2xl text-zinc-400 hover:bg-white/5 hover:text-white font-bold transition-all group">
-            <Compass size={24} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
-            <span className="text-sm tracking-wide">Khám phá</span>
-          </button>
-          
-          <div className="mt-8 px-2">
-            <button onClick={() => router.push("/")} className="w-full relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-[#80BF84] to-emerald-300 rounded-2xl blur-lg opacity-40 group-hover:opacity-70 transition-opacity duration-300"></div>
-              <div className="relative flex items-center justify-center gap-3 px-4 py-4 rounded-2xl bg-gradient-to-tr from-[#80BF84] to-emerald-500 text-zinc-950 shadow-xl group-hover:scale-[1.02] transition-all">
-                 <Sparkles size={20} strokeWidth={3} />
-                 <span className="font-black text-sm tracking-wide">AI Trợ lý</span>
-              </div>
-            </button>
-          </div>
-        </div>
-
-        <div className="mt-auto px-2">
-          <button className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl bg-white/10 text-white font-bold transition-all group border border-white/20 shadow-inner">
-            <div className="w-8 h-8 rounded-full bg-[#80BF84] text-zinc-900 flex items-center justify-center shadow-sm">
-              <UserIcon size={16} strokeWidth={2.5}/>
-            </div>
-            <span className="text-sm tracking-wide truncate max-w-[120px] text-left">Hồ sơ của tôi</span>
-          </button>
-        </div>
-      </div>
-
+      
       {/* 2. MAIN PROFILE AREA */}
       <div className="flex-1 relative h-[100dvh] overflow-y-auto no-scrollbar bg-zinc-950 pb-32 md:pb-0">
         

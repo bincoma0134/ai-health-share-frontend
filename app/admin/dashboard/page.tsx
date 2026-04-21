@@ -146,55 +146,7 @@ export default function AdminDashboardOverview() {
   return (
     <div className="h-[100dvh] w-full bg-slate-50 dark:bg-black overflow-hidden flex relative transition-colors duration-500">
       
-      {/* 1. LEFT SIDEBAR DESKTOP */}
-      <div className="hidden md:flex flex-col w-[260px] h-full bg-white/40 dark:bg-black/40 backdrop-blur-3xl border-r border-slate-200 dark:border-white/10 z-50 pt-8 pb-6 px-4 shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.05)] dark:shadow-[4px_0_24px_rgba(0,0,0,0.5)]">
-        <div className="px-4 mb-8" onClick={() => router.push('/')}><h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-lg flex items-center gap-1 cursor-pointer">AI<span className="text-[#80BF84]">HEALTH</span></h1></div>
-        
-        <div className="flex flex-col gap-2 flex-1 overflow-y-auto no-scrollbar pb-6">
-          {/* Main App Links */}
-          <button onClick={() => router.push('/')} className="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-bold transition-all"><Home size={24} strokeWidth={2.5} /><span className="text-sm tracking-wide">Trang chủ</span></button>
-          <button onClick={() => router.push('/features/explore')} className="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-bold transition-all group"><Compass size={24} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /><span className="text-sm tracking-wide">Khám phá</span></button>
-          <button onClick={() => router.push('/features/calendar')} className="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-bold transition-all group"><CalendarDays size={24} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /><span className="text-sm tracking-wide">Lịch hẹn</span></button>
-          <button onClick={() => router.push('/features/favorite')} className="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-bold transition-all group"><Heart size={24} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /><span className="text-sm tracking-wide">Yêu thích</span></button>
-          <div className="mt-2 px-2">
-            <button onClick={() => router.push('/features/AI')} className="w-full relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-[#80BF84] to-emerald-300 rounded-2xl blur-lg opacity-40 group-hover:opacity-70 transition-opacity duration-300"></div>
-              <div className="relative flex items-center justify-center gap-3 px-4 py-4 rounded-2xl bg-gradient-to-tr from-[#80BF84] to-emerald-500 text-zinc-950 shadow-xl group-hover:scale-[1.02] transition-all"><Sparkles size={20} strokeWidth={3} /><span className="font-black text-sm tracking-wide">AI Trợ lý</span></div>
-            </button>
-          </div>
-          
-          <div className="w-full h-px bg-slate-200 dark:bg-white/10 my-4"></div>
-          
-          {/* Admin Specific Links */}
-          <div className="px-4 py-2"><span className="text-xs font-black text-violet-500 tracking-wider uppercase">Vùng Quản Trị</span></div>
-          
-          <button onClick={() => router.push('/admin/profile')} className="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-violet-500/10 hover:text-violet-600 dark:hover:bg-violet-500/20 dark:hover:text-violet-400 font-bold transition-all group"><Crown size={24} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /><span className="text-sm tracking-wide">Hồ sơ Tối cao</span></button>
-          
-          {/* Nút Đang Active */}
-          <button className="flex items-center gap-4 px-4 py-3 rounded-2xl bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 font-bold transition-all border border-violet-500/20">
-            <Settings size={24} strokeWidth={2.5} className="animate-[spin_4s_linear_infinite]" />
-            <span className="text-sm tracking-wide">Bảng Điều Khiển</span>
-          </button>
-        </div>
-
-        {/* NÚT AVATAR VÀ MENU DESKTOP */}
-        <div className="mt-auto px-2 relative pt-4 border-t border-slate-200 dark:border-white/10">
-          {isUserMenuOpen && user && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setIsUserMenuOpen(false)}></div>
-              <div className="absolute bottom-full mb-3 left-2 right-2 p-2 flex flex-col gap-1 z-50 animate-fade-in bg-white/90 dark:bg-black/80 backdrop-blur-3xl shadow-2xl border border-slate-200 dark:border-white/10 rounded-2xl">
-                  <button onClick={() => router.push('/admin/profile')} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white font-bold transition-all text-sm w-full text-left"><Crown size={16} /> Hồ sơ Admin</button>
-                  <button onClick={handleLogout} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-rose-500/10 text-rose-500 font-bold transition-all text-sm w-full text-left"><LogOut size={16} /> Đăng xuất</button>
-              </div>
-            </>
-          )}
-          <button onClick={() => setIsUserMenuOpen(!isUserMenuOpen)} className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 dark:text-zinc-400 hover:bg-slate-200/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white font-bold transition-all group border border-transparent hover:border-slate-300 dark:hover:border-white/10">
-            <div className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-500/20 flex items-center justify-center border border-violet-300 dark:border-violet-500/50 group-hover:border-violet-500 transition-colors"><Crown size={16} className="text-violet-600 dark:text-violet-400" /></div>
-            <span className="text-sm tracking-wide truncate max-w-[120px] text-left">{user ? user.email.split('@')[0] : "Admin"}</span>
-          </button>
-        </div>
-      </div>
-
+      
       {/* 2. MAIN ADMIN DASHBOARD AREA */}
       <div className="flex-1 relative h-[100dvh] overflow-y-auto no-scrollbar scroll-smooth">
         
