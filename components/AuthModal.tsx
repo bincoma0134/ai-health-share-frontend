@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Mail, Lock, ShieldCheck } from "lucide-react";
+import { X, Mail, Lock, ShieldCheck, User as UserIcon, Phone } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { useUI } from "@/context/UIContext";
@@ -10,29 +10,83 @@ const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env
 
 export default function AuthModal() {
   const { isAuthModalOpen, setIsAuthModalOpen } = useUI();
-  const [isLoginMode, setIsLoginMode] = useState(true);
+  
+  // States quản lý luồng mới
+  const [authMode, setAuthMode] = useState<"LOGIN" | "REGISTER" | "SET_USERNAME">("LOGIN");
+  const [identifier, setIdentifier] = useState(""); // Cho Login: Email/Phone/Username
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
+  
   const [loading, setLoading] = useState(false);
+  const [pwdStrength, setPwdStrength] = useState(0);
+
+  // Thuật toán tính độ mạnh mật khẩu real-time
+  const evaluatePassword = (val: string) => {
+    setPassword(val);
+    let score = 0;
+    if (val.length >= 6) score += 30; // Tiêu chí tối thiểu
+    if (val.length >= 8) score += 20;
+    if (/[A-Z]/.test(val)) score += 20;
+    if (/[0-9]/.test(val)) score += 15;
+    if (/[^A-Za-z0-9]/.test(val)) score += 15;
+    setPwdStrength(Math.min(score, 100));
+  };
 
   if (!isAuthModalOpen) return null;
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const toastId = toast.loading("Đang kết nối không gian an toàn...");
+    const toastId = toast.loading("Đang xử lý yêu cầu...");
+
     try {
-      if (isLoginMode) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (authMode === "LOGIN") {
+        // BƯỚC 1: Phân giải Email từ Username/Phone qua Backend
+        const res = await fetch("http://localhost:8000/auth/resolve", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ identifier })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail);
+
+        // BƯỚC 2: Đăng nhập bằng Email đã phân giải
+        const { error } = await supabase.auth.signInWithPassword({ email: data.email, password });
         if (error) throw error;
         toast.success("Chào mừng bạn trở lại!", { id: toastId });
-      } else {
-        const { error } = await supabase.auth.signUp({ email, password });
+        setIsAuthModalOpen(false);
+        window.location.reload();
+
+      } else if (authMode === "REGISTER") {
+        if (pwdStrength < 30) throw new Error("Mật khẩu phải có ít nhất 6 ký tự!");
+        // Tạo tài khoản
+        const { error } = await supabase.auth.signUp({ email, password, options: { data: { phone } } });
         if (error) throw error;
-        toast.success("Khởi tạo thành công! Hãy kiểm tra email.", { id: toastId });
+        toast.success("Khởi tạo thành công! Vui lòng chọn Username.", { id: toastId });
+        setAuthMode("SET_USERNAME"); // Chuyển sang bước ép nhập Username
+
+      } else if (authMode === "SET_USERNAME") {
+        // Gọi Backend để lưu Username
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error("Mất phiên đăng nhập, vui lòng tải lại trang.");
+
+        const res = await fetch("http://localhost:8000/auth/set-username", {
+            method: "POST",
+            headers: { 
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({ username })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail);
+
+        toast.success("Hoàn tất thiết lập hồ sơ!", { id: toastId });
+        setIsAuthModalOpen(false);
+        window.location.reload();
       }
-      setIsAuthModalOpen(false);
-      window.location.reload(); 
     } catch (error: any) {
       toast.error(error.message, { id: toastId });
     } finally { setLoading(false); }
@@ -53,26 +107,66 @@ export default function AuthModal() {
         <div className="p-8 md:p-10 flex flex-col">
           <div className="flex justify-between items-start mb-8">
             <div>
-              <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">{isLoginMode ? "Đăng nhập" : "Tham gia mạng lưới"}</h3>
+              <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">{authMode === "LOGIN" ? "Đăng nhập" : "Tham gia mạng lưới"}</h3>
               <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">Hệ thống bảo chứng sức khỏe AI Health.</p>
             </div>
             <button onClick={() => setIsAuthModalOpen(false)} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 transition-colors"><X size={24}/></button>
           </div>
 
           <form onSubmit={handleAuth} className="space-y-4">
-            <div className="relative group">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#80BF84] transition-colors" size={20} />
-              <input type="email" placeholder="Email doanh nghiệp/cá nhân" className="w-full pl-12 pr-5 py-4 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white font-medium focus:outline-none focus:border-[#80BF84] transition-all" value={email} onChange={e => setEmail(e.target.value)} required />
-            </div>
             
-            <div className="relative group">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#80BF84] transition-colors" size={20} />
-              <input type="password" placeholder="Mật khẩu" className="w-full pl-12 pr-5 py-4 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white font-medium focus:outline-none focus:border-[#80BF84] transition-all" value={password} onChange={e => setPassword(e.target.value)} required />
-            </div>
+            {/* --- GIAO DIỆN ĐĂNG NHẬP --- */}
+            {authMode === "LOGIN" && (
+              <>
+                <div className="relative group">
+                  <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#80BF84] transition-colors" size={20} />
+                  <input type="text" placeholder="Email, Số điện thoại hoặc Username" className="w-full pl-12 pr-5 py-4 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white font-medium focus:outline-none focus:border-[#80BF84] transition-all" value={identifier} onChange={e => setIdentifier(e.target.value)} required />
+                </div>
+                <div className="relative group">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#80BF84] transition-colors" size={20} />
+                  <input type="password" placeholder="Mật khẩu" className="w-full pl-12 pr-5 py-4 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white font-medium focus:outline-none focus:border-[#80BF84] transition-all" value={password} onChange={e => setPassword(e.target.value)} required />
+                </div>
+              </>
+            )}
 
-            <button type="submit" disabled={loading} className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-zinc-950 font-black text-lg rounded-2xl active:scale-95 transition-all shadow-xl flex items-center justify-center gap-3">
+            {/* --- GIAO DIỆN ĐĂNG KÝ (BƯỚC 1) --- */}
+            {authMode === "REGISTER" && (
+              <>
+                <div className="flex gap-3">
+                    <div className="relative group flex-1">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#80BF84] transition-colors" size={18} />
+                      <input type="email" placeholder="Email" className="w-full pl-11 pr-4 py-4 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-sm text-slate-900 dark:text-white font-medium focus:outline-none focus:border-[#80BF84] transition-all" value={email} onChange={e => setEmail(e.target.value)} required />
+                    </div>
+                    <div className="relative group flex-1">
+                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#80BF84] transition-colors" size={18} />
+                      <input type="tel" placeholder="Số điện thoại" className="w-full pl-11 pr-4 py-4 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-sm text-slate-900 dark:text-white font-medium focus:outline-none focus:border-[#80BF84] transition-all" value={phone} onChange={e => setPhone(e.target.value)} required />
+                    </div>
+                </div>
+
+                <div className="relative group">
+                  <Lock className="absolute left-4 top-4 text-slate-400 group-focus-within:text-[#80BF84] transition-colors" size={20} />
+                  <input type="password" placeholder="Tạo mật khẩu (Tối thiểu 6 ký tự)" className="w-full pl-12 pr-5 pt-4 pb-6 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white font-medium focus:outline-none focus:border-[#80BF84] transition-all" value={password} onChange={e => evaluatePassword(e.target.value)} required />
+                  
+                  {/* Thanh đo độ mạnh mật khẩu */}
+                  <div className="absolute bottom-2 left-12 right-5 h-1.5 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+                    <div className={`h-full transition-all duration-500 ${pwdStrength < 40 ? 'bg-rose-500' : pwdStrength < 70 ? 'bg-amber-400' : 'bg-[#80BF84]'}`} style={{ width: `${pwdStrength}%` }}></div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* --- GIAO DIỆN CHỌN USERNAME (BƯỚC 2) --- */}
+            {authMode === "SET_USERNAME" && (
+              <div className="relative group animate-fade-in">
+                <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#80BF84] transition-colors" size={20} />
+                <input type="text" placeholder="Tạo Username duy nhất của bạn" className="w-full pl-12 pr-5 py-4 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white font-medium focus:outline-none focus:border-[#80BF84] transition-all" value={username} onChange={e => setUsername(e.target.value)} required />
+                <p className="text-[10px] text-slate-500 mt-2 px-1">*Username dùng để hiển thị trên Cộng đồng và Link Affiliate.</p>
+              </div>
+            )}
+
+            <button type="submit" disabled={loading || (authMode === "REGISTER" && pwdStrength < 30)} className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-zinc-950 font-black text-lg rounded-2xl disabled:opacity-50 active:scale-95 transition-all shadow-xl flex items-center justify-center gap-3 mt-2">
               {loading ? <div className="w-5 h-5 border-2 border-slate-400 border-t-white dark:border-zinc-300 dark:border-t-zinc-900 rounded-full animate-spin"/> : <ShieldCheck size={20}/>}
-              {isLoginMode ? "Xác thực truy cập" : "Khởi tạo tài khoản"}
+              {authMode === "LOGIN" ? "Xác thực truy cập" : authMode === "REGISTER" ? "Khởi tạo tài khoản" : "Hoàn tất"}
             </button>
           </form>
 
@@ -92,9 +186,12 @@ export default function AuthModal() {
           </button>
 
           <p className="mt-8 text-center text-sm font-medium text-slate-500 dark:text-zinc-400">
-            {isLoginMode ? "Chưa có định danh?" : "Đã là thành viên?"}
-            <button onClick={() => setIsLoginMode(!isLoginMode)} className="ml-2 text-[#80BF84] font-black hover:underline underline-offset-4 transition-all">
-              {isLoginMode ? "Đăng ký ngay" : "Đăng nhập tại đây"}
+            {authMode === "LOGIN" ? "Chưa có định danh?" : "Đã là thành viên?"}
+            <button
+              onClick={() => setAuthMode(authMode === "LOGIN" ? "REGISTER" : "LOGIN")}
+              className="ml-2 text-[#80BF84] font-black hover:underline underline-offset-4 transition-all"
+            >
+              {authMode === "LOGIN" ? "Đăng ký ngay" : "Đăng nhập tại đây"}
             </button>
           </p>
         </div>

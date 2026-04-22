@@ -90,9 +90,9 @@ export default function Sidebar() {
     { name: "Trang chủ", icon: Home, path: "/" },
     { name: "Cộng đồng", icon: MessageSquare, path: "/features/community" },
     { name: "Khám phá", icon: Compass, path: "/features/explore" },
-    { name: "Bản đồ Dịch vụ", icon: MapPin, path: "/features/map" },
+    { name: "Bản đồ", icon: MapPin, path: "/features/map" },
     { name: "Lịch hẹn", icon: CalendarDays, path: "/features/calendar" },
-    { name: "Yêu thích", icon: Heart, path: "/features/favorite" },
+    //{ name: "Yêu thích", icon: Heart, path: "/features/favorite" },
   ];
 
   if (isLoading) return null;
