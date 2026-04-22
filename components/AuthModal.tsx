@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { X, Mail, Lock, ShieldCheck, User as UserIcon, Phone, Smartphone, KeyRound, ArrowRight, CheckCircle2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { X, Mail, Lock, ShieldCheck, User as UserIcon, Phone, Smartphone, ArrowRight, CheckCircle2 } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { useUI } from "@/context/UIContext";
@@ -14,26 +14,32 @@ type AuthStep = "LOGIN" | "REGISTER_CREDENTIALS" | "VERIFY_OTP" | "SETUP_PROFILE
 export default function AuthModal() {
   const { isAuthModalOpen, setIsAuthModalOpen } = useUI();
   
-  // Quản lý luồng (Wizard Steps)
   const [authMode, setAuthMode] = useState<AuthStep>("LOGIN");
   const [loginMethod, setLoginMethod] = useState<"EMAIL" | "PHONE">("EMAIL");
   
-  // Dữ liệu Form
   const [identifier, setIdentifier] = useState(""); 
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [otp, setOtp] = useState("");
   const [username, setUsername] = useState("");
   const [fullName, setFullName] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  
+  const [otpValues, setOtpValues] = useState<string[]>(Array(8).fill(""));
+  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
   
   const [loading, setLoading] = useState(false);
   const [pwdStrength, setPwdStrength] = useState(0);
+  const [countdown, setCountdown] = useState(0);
+
+  useEffect(() => {
+    if (countdown <= 0) return;
+    const timer = setInterval(() => setCountdown(prev => prev - 1), 1000);
+    return () => clearInterval(timer);
+  }, [countdown]);
 
   if (!isAuthModalOpen) return null;
 
-  // Thuật toán đo mật khẩu
   const evaluatePassword = (val: string) => {
     setPassword(val);
     let score = 0;
@@ -52,6 +58,49 @@ export default function AuthModal() {
     return { text: "Mạnh", color: "bg-[#80BF84]" };
   };
 
+  const handleOtpChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) return; 
+    const newOtp = [...otpValues];
+    newOtp[index] = value;
+    setOtpValues(newOtp);
+    if (value !== "" && index < 7) otpRefs.current[index + 1]?.focus();
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !otpValues[index] && index > 0) otpRefs.current[index - 1]?.focus();
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 8);
+    if (pastedData) {
+      const newOtp = [...otpValues];
+      for (let i = 0; i < pastedData.length; i++) newOtp[i] = pastedData[i];
+      setOtpValues(newOtp);
+      otpRefs.current[pastedData.length < 8 ? pastedData.length : 7]?.focus();
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (countdown > 0) return;
+    const toastId = toast.loading("Đang gửi lại mã OTP...");
+    try {
+      // FIX TYPESCRIPT: Chia tách rõ ràng cấu trúc payload
+      const resendPayload = loginMethod === "EMAIL" 
+        ? { email: email, type: 'signup' as const } 
+        : { phone: phone, type: 'sms' as const };
+
+      const { error } = await supabase.auth.resend(resendPayload);
+
+      if (error) throw error;
+      toast.success("Đã gửi lại mã OTP mới!", { id: toastId });
+      setCountdown(60);
+      setOtpValues(Array(8).fill("")); 
+    } catch (error: any) {
+      toast.error(error.message, { id: toastId });
+    }
+  };
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -59,7 +108,6 @@ export default function AuthModal() {
 
     try {
       if (authMode === "LOGIN") {
-        // --- LUỒNG ĐĂNG NHẬP ---
         const res = await fetch(`${API_URL}/auth/resolve`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -75,29 +123,29 @@ export default function AuthModal() {
         window.location.reload();
 
       } else if (authMode === "REGISTER_CREDENTIALS") {
-        // --- BƯỚC 1: TẠO MẬT KHẨU & GỬI OTP ---
         if (pwdStrength < 30) throw new Error("Mật khẩu quá yếu!");
         if (password !== confirmPassword) throw new Error("Mật khẩu xác nhận không khớp!");
 
-        const signUpPayload =
-          loginMethod === "EMAIL"
-            ? { email, password }
-            : { phone, password };
+        // FIX TYPESCRIPT: Tách biệt cấu trúc Đăng ký
+        const signUpPayload = loginMethod === "EMAIL"
+            ? { email: email, password }
+            : { phone: phone, password };
 
         const { error } = await supabase.auth.signUp(signUpPayload);
         
         if (error) throw error;
         toast.success("Mã xác nhận đã được gửi!", { id: toastId });
+        setCountdown(60); 
         setAuthMode("VERIFY_OTP");
 
       } else if (authMode === "VERIFY_OTP") {
-        // --- BƯỚC 2: XÁC THỰC OTP ---
-        if (otp.length < 6) throw new Error("Mã OTP không hợp lệ!");
+        const finalOtp = otpValues.join("");
+        if (finalOtp.length < 8) throw new Error("Vui lòng nhập đủ 8 số OTP!");
 
-        const verifyPayload =
-          loginMethod === "EMAIL"
-            ? { email, token: otp, type: "signup" as const }
-            : { phone, token: otp, type: "sms" as const };
+        // FIX TYPESCRIPT: Tách biệt cấu trúc Xác thực OTP
+        const verifyPayload = loginMethod === "EMAIL"
+            ? { email: email, token: finalOtp, type: 'signup' as const }
+            : { phone: phone, token: finalOtp, type: 'sms' as const };
 
         const { error } = await supabase.auth.verifyOtp(verifyPayload);
 
@@ -106,10 +154,8 @@ export default function AuthModal() {
         setAuthMode("SETUP_PROFILE");
 
       } else if (authMode === "SETUP_PROFILE") {
-        // --- BƯỚC 3: CẬP NHẬT HỒ SƠ ---
-        if (!username || !fullName) throw new Error("Vui lòng điền đủ thông tin!");
+        if (!username || !fullName) throw new Error("Vui lòng nhập đầy đủ thông tin!");
 
-        // Check Username từ Backend
         const checkRes = await fetch(`${API_URL}/auth/check-username`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -118,9 +164,8 @@ export default function AuthModal() {
         const checkData = await checkRes.json();
         if (!checkRes.ok) throw new Error(checkData.detail);
 
-        // Lưu thông tin vào phiên đăng nhập hiện tại
         const { error } = await supabase.auth.updateUser({
-            data: { username, full_name: fullName, phone: loginMethod === "PHONE" ? phone : "" }
+          data: { username, full_name: fullName, phone: loginMethod === "PHONE" ? phone : "" }
         });
 
         if (error) throw error;
@@ -128,7 +173,6 @@ export default function AuthModal() {
         setIsAuthModalOpen(false);
         window.location.reload();
       }
-
     } catch (error: any) {
       toast.error(error.message, { id: toastId });
     } finally { setLoading(false); }
@@ -143,7 +187,6 @@ export default function AuthModal() {
       <div className="absolute inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-xl animate-fade-in" onClick={() => setIsAuthModalOpen(false)} />
       
       <div className="relative w-full max-w-md bg-white/90 dark:bg-zinc-950/90 backdrop-blur-3xl rounded-[2.5rem] border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden animate-slide-up">
-        
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-1 bg-gradient-to-r from-transparent via-[#80BF84] to-transparent shadow-[0_0_20px_rgba(128,191,132,0.8)]" />
 
         <div className="p-8 md:p-10 flex flex-col max-h-[90vh] overflow-y-auto no-scrollbar">
@@ -164,9 +207,6 @@ export default function AuthModal() {
 
           <form onSubmit={handleAuth} className="space-y-4">
             
-            {/* =========================================
-                MÀN HÌNH ĐĂNG NHẬP
-            ========================================= */}
             {authMode === "LOGIN" && (
                 <div className="space-y-4 animate-fade-in">
                   <div className="relative group">
@@ -180,9 +220,6 @@ export default function AuthModal() {
                 </div>
             )}
 
-            {/* =========================================
-                BƯỚC 1: NHẬP EMAIL & MẬT KHẨU
-            ========================================= */}
             {authMode === "REGISTER_CREDENTIALS" && (
                 <div className="space-y-4 animate-fade-in">
                   {loginMethod === "EMAIL" ? (
@@ -201,7 +238,6 @@ export default function AuthModal() {
                     <Lock className="absolute left-4 top-4 text-slate-400 group-focus-within:text-[#80BF84] transition-colors" size={20} />
                     <input type="password" placeholder="Tạo mật khẩu (Tối thiểu 6 ký tự)" className="w-full pl-12 pr-5 pt-3 pb-6 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white font-medium focus:outline-none focus:border-[#80BF84] transition-all" value={password} onChange={e => evaluatePassword(e.target.value)} required />
                     
-                    {/* Thanh đo độ mạnh mật khẩu */}
                     <div className="absolute bottom-2 left-12 right-5 flex items-center gap-2">
                         <div className="flex-1 flex gap-1 h-1.5">
                             <div className={`flex-1 rounded-full transition-all duration-300 ${pwdStrength > 0 ? getStrengthLabel().color : 'bg-slate-200 dark:bg-zinc-800'}`}></div>
@@ -219,24 +255,41 @@ export default function AuthModal() {
                 </div>
             )}
 
-            {/* =========================================
-                BƯỚC 2: NHẬP MÃ OTP
-            ========================================= */}
             {authMode === "VERIFY_OTP" && (
-                <div className="space-y-4 animate-slide-up">
-                    <div className="p-4 rounded-2xl bg-[#80BF84]/10 border border-[#80BF84]/20 text-[#80BF84] text-sm font-medium mb-4">
-                        Mã xác thực gồm 6 chữ số đã được gửi tới <b>{loginMethod === "EMAIL" ? email : phone}</b>.
+                <div className="space-y-6 animate-slide-up">
+                    <div className="p-4 rounded-2xl bg-[#80BF84]/10 border border-[#80BF84]/20 text-slate-700 dark:text-zinc-300 text-sm font-medium text-center">
+                        Mã xác thực đã được gửi tới <br/><b className="text-[#80BF84] text-base">{loginMethod === "EMAIL" ? email : phone}</b>
                     </div>
-                    <div className="relative group">
-                        <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#80BF84] transition-colors" size={20} />
-                        <input type="text" placeholder="Nhập mã OTP (6 số)" maxLength={6} className="w-full pl-12 pr-5 py-4 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white font-black tracking-[0.5em] focus:outline-none focus:border-[#80BF84] transition-all" value={otp} onChange={e => setOtp(e.target.value)} required />
+                    
+                    <div className="flex justify-between gap-1 sm:gap-2" onPaste={handleOtpPaste}>
+                        {otpValues.map((value, index) => (
+                            <input
+                                key={index}
+                                ref={el => { otpRefs.current[index] = el; }}
+                                type="text"
+                                maxLength={1}
+                                className="w-9 h-12 md:w-11 md:h-14 text-center text-lg md:text-xl font-black bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-[#80BF84] focus:ring-1 focus:ring-[#80BF84]/50 transition-all"
+                                value={value}
+                                onChange={e => handleOtpChange(index, e.target.value)}
+                                onKeyDown={e => handleOtpKeyDown(index, e)}
+                            />
+                        ))}
+                    </div>
+
+                    <div className="flex justify-between items-center px-2">
+                        <span className="text-xs font-medium text-slate-500 dark:text-zinc-400">Chưa nhận được mã?</span>
+                        <button 
+                            type="button" 
+                            onClick={handleResendOtp}
+                            disabled={countdown > 0}
+                            className="text-xs font-bold text-[#80BF84] disabled:text-slate-400 dark:disabled:text-zinc-600 hover:underline transition-all"
+                        >
+                            {countdown > 0 ? `Gửi lại sau ${countdown}s` : "Gửi lại mã OTP"}
+                        </button>
                     </div>
                 </div>
             )}
 
-            {/* =========================================
-                BƯỚC 3: THIẾT LẬP HỒ SƠ 
-            ========================================= */}
             {authMode === "SETUP_PROFILE" && (
                 <div className="space-y-4 animate-slide-up">
                     <div className="relative group">
@@ -247,15 +300,13 @@ export default function AuthModal() {
                         <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#80BF84] transition-colors" size={20} />
                         <input type="text" placeholder="Tên hiển thị (Ví dụ: Nguyễn Văn A)" className="w-full pl-12 pr-5 py-4 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white font-medium focus:outline-none focus:border-[#80BF84] transition-all" value={fullName} onChange={e => setFullName(e.target.value)} required />
                     </div>
-                    {/* Placeholder cho tương lai */}
                     <div className="pt-2">
-                      <p className="text-[11px] text-slate-500 font-medium">* Các thông tin như Ngày sinh, Sở thích có thể bổ sung sau trong phần Cài đặt.</p>
+                      <p className="text-[11px] text-slate-500 font-medium">* Các thông tin như Ngày sinh, Giới tính có thể cập nhật sau.</p>
                     </div>
                 </div>
             )}
 
-            {/* NÚT SUBMIT ĐỘNG */}
-            <button type="submit" disabled={loading || (authMode === "REGISTER_CREDENTIALS" && pwdStrength < 30)} className="w-full py-4 mt-2 bg-slate-900 dark:bg-white text-white dark:text-zinc-950 font-black text-lg rounded-2xl disabled:opacity-50 active:scale-95 transition-all shadow-xl flex items-center justify-center gap-3">
+            <button type="submit" disabled={loading || (authMode === "REGISTER_CREDENTIALS" && pwdStrength < 30) || (authMode === "VERIFY_OTP" && otpValues.join("").length < 8)} className="w-full py-4 mt-2 bg-slate-900 dark:bg-white text-white dark:text-zinc-950 font-black text-lg rounded-2xl disabled:opacity-50 active:scale-95 transition-all shadow-xl flex items-center justify-center gap-3">
               {loading ? <div className="w-5 h-5 border-2 border-slate-400 border-t-white dark:border-zinc-300 dark:border-t-zinc-900 rounded-full animate-spin"/> : 
                 authMode === "LOGIN" ? <ShieldCheck size={20}/> :
                 authMode === "VERIFY_OTP" ? <CheckCircle2 size={20}/> :
@@ -268,7 +319,6 @@ export default function AuthModal() {
             </button>
           </form>
 
-          {/* CHỈ HIỆN CÁC TÙY CHỌN KHÁC Ở MÀN ĐẦU TIÊN */}
           {(authMode === "LOGIN" || authMode === "REGISTER_CREDENTIALS") && (
               <>
                 <div className="my-6 relative text-center">
@@ -283,6 +333,7 @@ export default function AuthModal() {
                   </button>
                   
                   <button 
+                    type="button"
                     onClick={() => {
                         setAuthMode("REGISTER_CREDENTIALS");
                         setLoginMethod(loginMethod === "EMAIL" ? "PHONE" : "EMAIL");
@@ -296,7 +347,7 @@ export default function AuthModal() {
 
                 <p className="mt-6 text-center text-sm font-medium text-slate-500 dark:text-zinc-400">
                   {authMode === "LOGIN" ? "Chưa có định danh?" : "Đã là thành viên?"}
-                  <button onClick={() => setAuthMode(authMode === "LOGIN" ? "REGISTER_CREDENTIALS" : "LOGIN")} className="ml-2 text-[#80BF84] font-black hover:underline underline-offset-4 transition-all">
+                  <button type="button" onClick={() => setAuthMode(authMode === "LOGIN" ? "REGISTER_CREDENTIALS" : "LOGIN")} className="ml-2 text-[#80BF84] font-black hover:underline underline-offset-4 transition-all">
                     {authMode === "LOGIN" ? "Đăng ký ngay" : "Đăng nhập tại đây"}
                   </button>
                 </p>
