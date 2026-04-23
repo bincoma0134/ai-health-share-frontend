@@ -29,21 +29,23 @@ export default function CreatorView({ profile, posts = [], likedPosts = [], save
               alt="avatar"
             />
           </div>
-          {/* Badge Role "Creator" */}
           <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-black rounded-full shadow-lg flex items-center gap-1 border border-white/20 whitespace-nowrap">
             <Sparkles size={10} fill="currentColor" /> CREATOR
           </div>
         </div>
 
         <div className="flex-1 pt-2">
+          {/* Cập nhật: Họ tên trên, Username dưới */}
           <div className="flex flex-col gap-1 mb-6 text-center md:text-left">
             <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-md">
-              {profile.username || "username"}
+              {profile.full_name}
             </h1>
-            <h2 className="text-xl font-bold text-[#80BF84] tracking-tight">{profile.full_name}</h2>
+            <h2 className="text-lg md:text-xl font-medium text-slate-500 dark:text-zinc-400 tracking-tight">
+              @{profile.username || "username"}
+            </h2>
           </div>
 
-          {/* Buttons: Glassmorphism Trau chuốt */}
+          {/* Buttons Group */}
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mb-8">
             <button className="px-10 py-3.5 bg-gradient-to-br from-[#80BF84] to-[#6da871] text-zinc-950 font-black rounded-2xl hover:shadow-[0_0_25px_rgba(128,191,132,0.4)] transition-all active:scale-95 flex items-center gap-2 shadow-lg">
               <UserPlus size={20} strokeWidth={3} /> <span>Kết bạn</span>
@@ -115,7 +117,6 @@ export default function CreatorView({ profile, posts = [], likedPosts = [], save
             <div key={item.id} className="relative aspect-[3/4] bg-zinc-800 rounded-[2rem] overflow-hidden group cursor-pointer shadow-2xl border border-white/5">
               <img src={item.image_url || `https://picsum.photos/seed/${item.id}/400/600`} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" alt="post" />
               
-              {/* Badge trạng thái video (Dành cho Creator quản lý) */}
               {activeTab === "videos" && (
                 <div className="absolute top-4 left-4 z-10">
                     <div className={`px-2 py-1 backdrop-blur-md rounded-lg text-[9px] font-black flex items-center gap-1 border ${
@@ -137,7 +138,6 @@ export default function CreatorView({ profile, posts = [], likedPosts = [], save
           ))}
         </div>
 
-        {/* Empty State cho Dịch vụ quan tâm */}
         {activeTab === "interests" && (
           <div className="text-center py-32 bg-white/40 dark:bg-white/5 backdrop-blur-2xl rounded-[4rem] mt-8 border-2 border-dashed border-slate-200 dark:border-white/10">
             <Sparkles size={32} className="mx-auto text-[#80BF84] opacity-50 mb-4" />
