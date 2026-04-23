@@ -2,17 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import Sidebar from "@/components/Sidebar"; 
+import { Sun, Moon, Bell } from "lucide-react";
 import NotificationModal from "@/components/NotificationModal";
 import RegularUserView from "@/components/profile/RegularUserView";
+import CreatorView from "@/components/profile/CreatorView";
 import { useUI } from "@/context/UIContext";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 export default function UserProfilePage() {
   const { username } = useParams();
-  const { isNotifOpen } = useUI();
+  const { isNotifOpen, setIsNotifOpen } = useUI();
   
+  // Quản lý Theme nội bộ để tránh lỗi Import từ Context
+  const [theme, setTheme] = useState<"light" | "dark">("light");
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -31,32 +34,74 @@ export default function UserProfilePage() {
     if (username) fetchProfileData();
   }, [username]);
 
-  if (loading) return <div className="h-screen flex items-center justify-center dark:bg-zinc-950 text-[#80BF84] font-black text-2xl animate-pulse">AI HEALTH IS LOADING...</div>;
-  if (!data) return <div className="h-screen flex items-center justify-center dark:bg-zinc-950 text-white">Người dùng không tồn tại!</div>;
+  // Đồng bộ trạng thái Theme với hệ thống khi trang load
+  useEffect(() => {
+    const isDark = document.documentElement.classList.contains("dark");
+    setTheme(isDark ? "dark" : "light");
+  }, []);
+
+  const handleToggleTheme = () => {
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    document.documentElement.classList.toggle("dark", nextTheme === "dark");
+    setTheme(nextTheme);
+  };
+
+  if (loading) return null; 
+
+  if (!data) return (
+    <div className="h-[100dvh] flex items-center justify-center bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-white font-black text-xl uppercase tracking-tighter">
+      NGƯỜI DÙNG KHÔNG TỒN TẠI!
+    </div>
+  );
 
   return (
-    <div className="flex h-screen bg-slate-50 dark:bg-zinc-950 overflow-hidden font-be-vietnam">
+    <div className="flex-1 relative h-[100dvh] flex flex-col bg-slate-50 dark:bg-zinc-950 transition-colors duration-500 overflow-hidden font-be-vietnam">
       
-      {/* 1. Sidebar Hệ thống */}
-      <Sidebar />
+      {/* --- TOP BAR ĐIỀU KHIỂN: Chuẩn Glassmorphism lấp lánh --- */}
+      <div className="absolute top-0 w-full z-40 p-6 flex justify-end items-center bg-gradient-to-b from-slate-50 dark:from-zinc-950 to-transparent pointer-events-none">
+          <div className="flex items-center gap-3 pointer-events-auto">
+              <button 
+                  onClick={handleToggleTheme} 
+                  className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-3xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:bg-white/80 dark:hover:bg-white/20 active:scale-95 transition-all shadow-lg shadow-black/5 group"
+              >
+                  {theme === "dark" ? <Sun size={20} className="group-hover:text-amber-300 transition-colors" /> : <Moon size={20} className="group-hover:text-blue-500 transition-colors" />}
+              </button>
 
-      {/* 2. Main Scroll Area */}
-      <main className="flex-1 overflow-y-auto no-scrollbar scroll-smooth relative">
-        
-        {/* Header ẩn/hiện Modal Thông báo nếu cần */}
-        {isNotifOpen && <NotificationModal />}
+              <button 
+                  onClick={() => setIsNotifOpen(true)} 
+                  className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-3xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 hover:text-[#80BF84] hover:bg-[#80BF84]/10 active:scale-95 transition-all shadow-lg shadow-black/5"
+              >
+                  <Bell size={20} />
+              </button>
+          </div>
+      </div>
 
-        <div className="max-w-4xl mx-auto p-6 md:p-12 pb-32">
-          {/* Render Giao diện USER */}
-          <RegularUserView 
-            profile={data.profile} 
-            posts={data.posts} 
-            // likedPosts={data.likedPosts} // Sau này truyền dữ liệu thật từ Backend
-            // savedPosts={data.savedPosts}
-          />
-        </div>
+      <main className="flex-1 overflow-y-auto no-scrollbar scroll-smooth">
+          {isNotifOpen && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 dark:bg-black/40 backdrop-blur-sm animate-fade-in">
+                <NotificationModal />
+            </div>
+          )}
+
+          <div className="max-w-4xl mx-auto p-6 md:p-12 pt-28 pb-32">
+            {/* LOGIC PHÂN LUỒNG: Creator vs User */}
+            {data.profile.role === "CREATOR" ? (
+              <CreatorView 
+                profile={data.profile} 
+                posts={data.posts} 
+                likedPosts={data.likedPosts || []}
+                savedPosts={data.savedPosts || []}
+              />
+            ) : (
+              <RegularUserView 
+                profile={data.profile} 
+                posts={data.posts} 
+                likedPosts={data.likedPosts || []}
+                savedPosts={data.savedPosts || []}
+              />
+            )}
+          </div>
       </main>
-
     </div>
   );
 }
