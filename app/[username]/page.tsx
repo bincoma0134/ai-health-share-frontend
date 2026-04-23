@@ -6,13 +6,14 @@ import { Sun, Moon, Bell } from "lucide-react";
 import NotificationModal from "@/components/NotificationModal";
 import RegularUserView from "@/components/profile/RegularUserView";
 import CreatorView from "@/components/profile/CreatorView";
-import PartnerView from "@/components/profile/PartnerView"; // <--- Bổ sung Import
+import PartnerView from "@/components/profile/PartnerView";
+import ModeratorView from "@/components/profile/ModeratorView"; // <--- Bổ sung Import
 import { useUI } from "@/context/UIContext";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 export default function UserProfilePage() {
-  // ... (Giữ nguyên các khai báo state và useEffect hiện tại)
+  // ... (Phần logic fetch data và Theme giữ nguyên)
   const { username } = useParams();
   const { isNotifOpen, setIsNotifOpen } = useUI();
   const [theme, setTheme] = useState<"light" | "dark">("light");
@@ -56,7 +57,7 @@ export default function UserProfilePage() {
   return (
     <div className="flex-1 relative h-[100dvh] flex flex-col bg-slate-50 dark:bg-zinc-950 transition-colors duration-500 overflow-hidden font-be-vietnam">
       
-      {/* Top Bar giữ nguyên */}
+      {/* Top Bar */}
       <div className="absolute top-0 w-full z-40 p-6 flex justify-end items-center bg-gradient-to-b from-slate-50 dark:from-zinc-950 to-transparent pointer-events-none">
           <div className="flex items-center gap-3 pointer-events-auto">
               <button onClick={handleToggleTheme} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-3xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:bg-white/80 dark:hover:bg-white/20 active:scale-95 transition-all shadow-lg shadow-black/5 group">
@@ -76,14 +77,13 @@ export default function UserProfilePage() {
           )}
 
           <div className="max-w-4xl mx-auto p-6 md:p-12 pt-28 pb-32">
-            {/* LOGIC RẼ NHÁNH TỔNG HỢP CHO 3 ROLE */}
+            {/* LOGIC RẼ NHÁNH TỔNG HỢP CHO 4 ROLE */}
             {data.profile.role === "PARTNER_ADMIN" ? (
               <PartnerView 
                 profile={data.profile} 
                 posts={data.posts} 
                 likedPosts={data.likedPosts || []}
                 savedPosts={data.savedPosts || []}
-                // Tạm thời truyền mock data xuống nếu API chưa trả về
                 services={data.services || []} 
                 reviews={data.reviews || []}
                 stats={data.stats || {}}
@@ -92,6 +92,12 @@ export default function UserProfilePage() {
               <CreatorView 
                 profile={data.profile} 
                 posts={data.posts} 
+                likedPosts={data.likedPosts || []}
+                savedPosts={data.savedPosts || []}
+              />
+            ) : data.profile.role === "MODERATOR" ? (
+              <ModeratorView 
+                profile={data.profile} 
                 likedPosts={data.likedPosts || []}
                 savedPosts={data.savedPosts || []}
               />
