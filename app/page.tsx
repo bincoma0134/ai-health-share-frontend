@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { 
-  CalendarPlus, X, User as UserIcon, ShieldCheck, Sparkles, Home, Compass, 
+  User as UserIcon, ShieldCheck, Sparkles, Home, Compass, 
   CalendarDays, Heart, MessageCircle, Bookmark, Share2, Plus,
-  Sun, Moon, Bell, LogOut, Send, CheckCircle
+  Sun, Moon, Bell, LogOut, CheckCircle, Video, X
 } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
@@ -17,35 +17,35 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error("Thiếu biến môi trường Supabase! Vui lòng kiểm tra file .env.local");
+  throw new Error("Thiếu biến môi trường Supabase!");
 }
-
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-interface Service {
+// ĐỒNG BỘ SCHEMA BÀI ĐĂNG CỘNG ĐỒNG (STUDIO)
+interface Post {
   id: string;
-  partner_id: string;
-  service_name: string;
-  description: string;
-  price: number;
+  author_id: string;
+  title: string;
+  content: string;
+  price?: number;
   video_url?: string;
   likes_count?: number;
   saves_count?: number;
   comments_count?: number;
   is_liked?: boolean;
   is_saved?: boolean;
-  users?: { avatar_url?: string; full_name?: string };
+  author?: { avatar_url?: string; full_name?: string; username?: string; role?: string };
 }
 
 export default function UserFeed() {
   const router = useRouter();
   
-  const [services, setServices] = useState<Service[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   // --- AUTH & ROLE STATE ---
   const [user, setUser] = useState<any>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(null); // State mới để chặn lỗi Lock
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string>("USER");
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isLoginMode, setIsLoginMode] = useState(true);
@@ -54,34 +54,15 @@ export default function UserFeed() {
   const [authLoading, setAuthLoading] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
-  // --- BOOKING STATE ---
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeService, setActiveService] = useState<Service | null>(null);
-  const [affiliateCode, setAffiliateCode] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  // 3 DÒNG MỚI THÊM VÀO:
-  const [bookingName, setBookingName] = useState("");
-  const [bookingPhone, setBookingPhone] = useState("");
-  const [bookingNote, setBookingNote] = useState("");
-  
   // --- COMMENT STATE ---
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
-  const [activeCommentServiceId, setActiveCommentServiceId] = useState<string | null>(null);
+  const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
 
   // --- NOTIFICATION STATE ---
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [activeNotifTab, setActiveNotifTab] = useState<'all' | 'unread'>('all');
   const [notifications, setNotifications] = useState([
-    { id: 1, type: 'system', title: 'Video của bạn đã được duyệt!', desc: 'Video "Massage Cổ Vai Gáy" đã chính thức xuất hiện trên Feed. Xin chúc mừng!', time: '10 phút trước', isRead: false, icon: ShieldCheck, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-    { id: 2, type: 'booking', title: 'Bạn có lịch hẹn sắp tới', desc: 'Lịch hẹn "Trị liệu Da Mặt" của bạn sẽ bắt đầu vào 15:00 ngày mai.', time: '2 giờ trước', isRead: false, icon: CalendarDays, color: 'text-[#80BF84]', bg: 'bg-[#80BF84]/10' },
-  ]);
-
-  // --- CHAT AI STATE ---
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [chatInput, setChatInput] = useState("");
-  const [isChatTyping, setIsChatTyping] = useState(false);
-  const [chatMessages, setChatMessages] = useState<{role: 'user' | 'bot', content: string}[]>([
-    { role: 'bot', content: 'Xin chào! Tôi là trợ lý AI Health. Bạn đang cảm thấy thế nào hôm nay?' }
+    { id: 1, type: 'system', title: 'Video của bạn đã được lên Feed!', desc: 'Video Studio của bạn đã tiếp cận được 100 người.', time: '10 phút trước', isRead: false, icon: ShieldCheck, color: 'text-blue-500', bg: 'bg-blue-500/10' },
   ]);
 
   // --- THEME & SYSTEM STATE ---
@@ -89,17 +70,16 @@ export default function UserFeed() {
   const [hasNotification, setHasNotification] = useState(true);
   const [isMounted, setIsMounted] = useState(false); 
 
-  // --- FETCH SERVICES ---
-  const fetchServices = async (currentUserId?: string) => {
+  // --- FETCH FEED POSTS (STUDIO) ---
+  const fetchPosts = async () => {
     try {
-      let url = "https://ai-health-share-backend.onrender.com/services";
-      if (currentUserId) url += `?user_id=${currentUserId}`;
-      const response = await fetch(url);
+      // GỌI ĐÚNG API CỘNG ĐỒNG (STUDIO FEED)
+      const response = await fetch("https://ai-health-share-backend.onrender.com/community/posts");
       if (!response.ok) throw new Error("Lỗi mạng: Backend không phản hồi");
       const result = await response.json();
-      if (result.status === "success") setServices(result.data);
+      if (result.status === "success") setPosts(result.data);
     } catch (error) {
-      toast.error("Máy chủ AI Health đang khởi động. Vui lòng đợi một lát nhé!");
+      toast.error("Máy chủ AI Health đang khởi động. Vui lòng đợi...");
     } finally {
       setIsLoading(false);
     }
@@ -108,7 +88,7 @@ export default function UserFeed() {
   useEffect(() => {
     setIsMounted(true); 
     let isSubscribed = true; 
-    let authListener: any = null; // Trình nghe thay đổi auth
+    let authListener: any = null; 
     
     const storedTheme = localStorage.getItem('theme');
     if (storedTheme === 'light') {
@@ -119,15 +99,14 @@ export default function UserFeed() {
       document.documentElement.classList.add('dark');
     }
 
-    // KỸ THUẬT DEBOUNCE: Chống lỗi Lock Supabase trong React Strict Mode
     const initAuth = () => {
       const { data } = supabase.auth.onAuthStateChange(async (_event, curSession) => {
         if (!isSubscribed) return; 
 
         if (curSession?.user) {
           setUser(curSession.user);
-          setAccessToken(curSession.access_token); // Lưu token cố định vào State
-          fetchServices(curSession.user.id); 
+          setAccessToken(curSession.access_token);
+          fetchPosts(); // Fetch lại khi đăng nhập
 
           const { data: userData } = await supabase.from("users").select("role, theme_preference").eq("id", curSession.user.id).single();
           if (userData && isSubscribed) {
@@ -142,21 +121,18 @@ export default function UserFeed() {
           setUser(null);
           setAccessToken(null);
           setUserRole("USER");
-          fetchServices(); 
+          fetchPosts(); 
         }
       });
       authListener = data;
     };
 
-    // Tạo độ trễ 100ms để triệt tiêu lần chạy ảo của Strict Mode
     const timeoutId = setTimeout(initAuth, 100);
 
     return () => {
       isSubscribed = false;
-      clearTimeout(timeoutId); // Xóa hàng đợi nếu component bị hủy
-      if (authListener) {
-        authListener.subscription.unsubscribe();
-      }
+      clearTimeout(timeoutId);
+      if (authListener) authListener.subscription.unsubscribe();
     };
   }, []);
 
@@ -173,7 +149,7 @@ export default function UserFeed() {
       } else {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        toast.success("Khởi tạo thành công! Hãy bắt đầu hành trình của bạn.", { id: toastId });
+        toast.success("Khởi tạo thành công!", { id: toastId });
       }
       setIsAuthModalOpen(false);
       setEmail(""); setPassword("");
@@ -182,13 +158,6 @@ export default function UserFeed() {
     } finally {
       setAuthLoading(false);
     }
-  };
-
-  const handleGoogleLogin = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}` } });
-      if (error) throw error;
-    } catch (error: any) { toast.error(`Lỗi đăng nhập Google: ${error.message}`); }
   };
 
   const handleUserAvatarClick = () => {
@@ -209,155 +178,42 @@ export default function UserFeed() {
     const toastId = toast.loading("Đang đăng xuất...");
     try {
       await supabase.auth.signOut();
-      setUser(null);
-      setAccessToken(null);
-      setUserRole("USER");
       toast.success("Đã đăng xuất thành công!", { id: toastId });
     } catch (error: any) { toast.error("Lỗi đăng xuất!", { id: toastId }); }
   };
 
-  // --- INTERACTION LOGIC ---
-  const handleInteraction = async (serviceId: string, action: 'like' | 'save') => {
+  // --- INTERACTION LOGIC (SỬA LẠI ĐÚNG API COMMUNITY) ---
+  const handleInteraction = async (postId: string, action: 'like' | 'save') => {
     if (!user || !accessToken) {
       toast.info(`Vui lòng đăng nhập để ${action === 'like' ? 'thích' : 'lưu'} video!`);
       setIsAuthModalOpen(true);
       return;
     }
 
-    setServices(prev => prev.map(s => {
-      if (s.id === serviceId) {
-        if (action === 'like') return { ...s, is_liked: !s.is_liked, likes_count: (s.likes_count || 0) + (s.is_liked ? -1 : 1) };
-        else return { ...s, is_saved: !s.is_saved, saves_count: (s.saves_count || 0) + (s.is_saved ? -1 : 1) };
+    // Cập nhật UI ngay lập tức
+    setPosts(prev => prev.map(p => {
+      if (p.id === postId) {
+        if (action === 'like') return { ...p, is_liked: !p.is_liked, likes_count: (p.likes_count || 0) + (p.is_liked ? -1 : 1) };
+        else return { ...p, is_saved: !p.is_saved, saves_count: (p.saves_count || 0) + (p.is_saved ? -1 : 1) };
       }
-      return s;
+      return p;
     }));
 
     try {
-      // Dùng luôn State accessToken, KHÔNG gọi lại getSession()
-      await fetch(`https://ai-health-share-backend.onrender.com/interactions/${action}`, {
-        method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${accessToken}` },
-        body: JSON.stringify({ service_id: serviceId })
+      await fetch(`https://ai-health-share-backend.onrender.com/community/posts/${postId}/${action}`, {
+        method: "POST", headers: { "Authorization": `Bearer ${accessToken}` }
       });
-    } catch (error) { fetchServices(user.id); }
+    } catch (error) { fetchPosts(); } // Lỗi thì fetch lại
   };
 
-  // --- COMMENT LOGIC ---
-  const handleOpenComments = (serviceId: string) => {
-    setActiveCommentServiceId(serviceId);
+  const handleOpenComments = (postId: string) => {
+    setActiveCommentPostId(postId);
     setIsCommentModalOpen(true);
   };
 
-  // --- UTILS & OTHERS ---
-  const handleShare = (serviceId: string) => {
-    navigator.clipboard.writeText(`${window.location.origin}/?service=${serviceId}`);
-    toast.success("Đã sao chép liên kết vào khay nhớ tạm!");
-  };
-
-  const handleSendChatMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatInput.trim() || isChatTyping) return;
-    
-    const userMessage = chatInput.trim();
-    // 1. Cập nhật giao diện ngay lập tức với tin nhắn của user
-    const newMessages = [...chatMessages, { role: 'user' as const, content: userMessage }];
-    setChatMessages(newMessages);
-    setChatInput("");
-    setIsChatTyping(true);
-
-    try {
-      // 2. Lấy token xác thực (dùng accessToken ở State hoặc fetch mới)
-      const { data: { session } } = await supabase.auth.getSession();
-      const currentToken = session?.access_token || accessToken;
-
-      // 3. Bắn API xuống Backend
-      const response = await fetch("https://ai-health-share-backend.onrender.com/ai/chat", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json", 
-          "Authorization": `Bearer ${currentToken}` 
-        },
-        body: JSON.stringify({ messages: newMessages })
-      });
-
-      if (!response.ok) {
-        throw new Error("Không thể kết nối đến Trạm trung chuyển AI.");
-      }
-
-      const result = await response.json();
-      
-      // 4. Nhận kết quả và hiển thị
-      if (result.status === "success" && result.data?.reply) {
-        setChatMessages(prev => [...prev, { role: 'bot', content: result.data.reply }]);
-      } else {
-        throw new Error("AI trả về dữ liệu không hợp lệ.");
-      }
-      
-    } catch (error: any) {
-      console.error("AI Chat Error:", error);
-      toast.error(error.message);
-      setChatMessages(prev => [...prev, { role: 'bot', content: "Xin lỗi, hệ thống AI đang gặp sự cố kết nối. Vui lòng thử lại sau nhé!" }]);
-    } finally {
-      setIsChatTyping(false);
-    }
-  };
-
-  const handleBooking = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!activeService || !user || !accessToken) return;
-    
-    // Validate form cơ bản
-    if (!bookingName.trim() || !bookingPhone.trim()) {
-      toast.error("Vui lòng nhập đầy đủ Họ tên và Số điện thoại!");
-      return;
-    }
-
-    setIsSubmitting(true);
-    const toastId = toast.loading("Đang thiết lập cổng bảo chứng Escrow...");
-    
-    try {
-      const code = affiliateCode.trim();
-
-      // 1. KIỂM TRA MÃ GIỚI THIỆU (NẾU NGƯỜI DÙNG CÓ NHẬP)
-      if (code !== "") {
-        const validateRes = await fetch(`https://ai-health-share-backend.onrender.com/affiliates/validate?code=${code}`, {
-          headers: { "Authorization": `Bearer ${accessToken}` }
-        });
-        
-        if (!validateRes.ok) {
-          throw new Error("Mã giới thiệu không hợp lệ hoặc không tồn tại trong hệ thống!");
-        }
-      }
-
-      // 2. GỌI API ĐẶT LỊCH (Gửi kèm Họ tên, SĐT, Lời nhắn)
-      const bookingRes = await fetch("https://ai-health-share-backend.onrender.com/bookings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${accessToken}` },
-        body: JSON.stringify({ 
-          user_id: user.id, 
-          service_id: activeService.id, 
-          affiliate_code: code || null, 
-          total_amount: activeService.price,
-          customer_name: bookingName.trim(),   // Truyền tên
-          customer_phone: bookingPhone.trim(), // Truyền SĐT
-          note: bookingNote.trim()             // Truyền Lời nhắn
-        })
-      });
-      
-      const bookingData = await bookingRes.json();
-      
-      if (!bookingRes.ok) throw new Error(bookingData.detail || "Lỗi ghi nhận giao dịch");
-      
-      if (bookingData.checkout_url) {
-        window.location.href = bookingData.checkout_url; 
-      } else {
-        toast.error("Hệ thống chưa tạo được link thanh toán.", { id: toastId });
-      }
-      
-    } catch (error: any) { 
-      toast.error(error.message, { id: toastId }); 
-    } finally { 
-      setIsSubmitting(false); 
-    } 
+  const handleShare = (postId: string) => {
+    navigator.clipboard.writeText(`${window.location.origin}/?post=${postId}`);
+    toast.success("Đã sao chép liên kết video!");
   };
 
   const handleThemeToggle = async () => {
@@ -371,7 +227,6 @@ export default function UserFeed() {
 
     if (user && accessToken) {
       try {
-        // Dùng luôn State accessToken, KHÔNG gọi lại getSession()
         await fetch("https://ai-health-share-backend.onrender.com/user/profile", {
           method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${accessToken}` },
           body: JSON.stringify({ theme_preference: themeStr })
@@ -380,97 +235,100 @@ export default function UserFeed() {
     }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-    setHasNotification(false);
-    toast.success("Đã đánh dấu tất cả là đã đọc");
-  };
-
-  const handleOpenNotification = () => {
-    setIsNotificationOpen(true);
-    setHasNotification(false);
-  };
-
-  // --- BẢO VỆ GIAO DIỆN (HYDRATION) ---
   if (isLoading || !isMounted) {
     return (
       <div className="h-[100dvh] w-full bg-slate-50 dark:bg-zinc-950 flex flex-col items-center justify-center gap-6 transition-colors duration-500">
         <div className="relative w-16 h-16"><div className="absolute inset-0 bg-emerald-200 rounded-full animate-ping opacity-70"></div><div className="absolute inset-2 bg-emerald-400 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30"><Sparkles className="text-white w-6 h-6 animate-pulse" /></div></div>
-        <p className="text-slate-500 dark:text-zinc-500 text-sm font-medium tracking-widest uppercase animate-pulse">Khơi nguồn sức sống...</p>
+        <p className="text-slate-500 dark:text-zinc-500 text-sm font-medium tracking-widest uppercase animate-pulse">Đang tải bảng tin...</p>
       </div>
     );
   }
 
-  const filteredNotifs = activeNotifTab === 'all' ? notifications : notifications.filter(n => !n.isRead);
-
   return (
     <div className="h-[100dvh] w-full bg-slate-50 dark:bg-black overflow-hidden flex relative transition-colors duration-500">
       
-      
-
-      {/* ================= MAIN FEED AREA ================= */}
+      {/* ================= TIKTOK FEED AREA ================= */}
       <div className="flex-1 relative h-[100dvh]">
-        <div className="md:hidden absolute top-0 w-full z-40 p-6 flex justify-between items-center pointer-events-none transition-all"><h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-lg flex items-center gap-1 transition-colors duration-500">AI<span className="text-[#80BF84]">HEALTH</span></h1></div>
+        
+        {/* LOGO */}
+        <div className="md:hidden absolute top-0 w-full z-40 p-6 flex justify-between items-center pointer-events-none transition-all">
+            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-lg flex items-center gap-1">AI<span className="text-[#80BF84]">HEALTH</span></h1>
+        </div>
 
-        {/* THEME & NOTIFICATION CONTROLS */}
+        {/* CONTROLS */}
         <div className="absolute top-6 right-6 md:top-8 md:right-8 z-[60] flex items-center gap-3 pointer-events-auto">
-          <button onClick={handleThemeToggle} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:bg-white/80 dark:hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg group">
-            {isDarkMode ? <Sun size={20} className="group-hover:text-amber-300 transition-colors"/> : <Moon size={20} className="group-hover:text-blue-500 transition-colors"/>}
+          <button onClick={handleThemeToggle} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:bg-white/80 dark:hover:bg-white/20 transition-all shadow-lg">
+            {isDarkMode ? <Sun size={20} className="text-amber-300"/> : <Moon size={20} className="text-blue-500"/>}
           </button>
-          <button onClick={handleOpenNotification} className="relative w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:bg-white/80 dark:hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg group">
-            <Bell size={20} className="group-hover:text-[#80BF84] transition-colors"/>
+          <button onClick={() => {setIsNotificationOpen(true); setHasNotification(false);}} className="relative w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:bg-white/80 dark:hover:bg-white/20 transition-all shadow-lg">
+            <Bell size={20} />
             {hasNotification && <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white dark:border-zinc-950 animate-pulse shadow-[0_0_10px_rgba(225,29,72,0.8)]"></span>}
           </button>
         </div>
 
         <div className="h-full w-full overflow-y-scroll snap-y snap-mandatory no-scrollbar relative">
-          {services.map((item, index) => {
-            const videoNumber = (index % 3) + 1;
+          
+          {posts.length === 0 && (
+             <div className="h-full w-full flex flex-col items-center justify-center text-slate-400">
+                 <Video size={48} className="mb-4 opacity-30"/>
+                 <p className="font-bold">Bảng tin đang trống. Hãy quay lại sau!</p>
+             </div>
+          )}
+
+          {posts.map((item, index) => {
+            const videoNumber = (index % 3) + 1; // Fallback video
             return (
               <div key={item.id} className="relative h-[100dvh] w-full snap-start snap-always bg-slate-100 dark:bg-black overflow-hidden flex items-center justify-center transition-colors duration-500">
                 <div className="hidden md:block absolute inset-0 w-full h-full"><video src={item.video_url || `/video-${videoNumber}.mp4`} className="w-full h-full object-cover opacity-10 dark:opacity-30 blur-[60px] scale-125 transition-opacity duration-500" loop autoPlay muted playsInline /></div>
+                
                 <div className="relative w-full h-full md:h-[94vh] md:w-auto md:aspect-[9/16] md:rounded-[2.5rem] overflow-hidden bg-black md:border border-slate-200 dark:border-white/10 md:shadow-[0_0_50px_rgba(0,0,0,0.1)] dark:md:shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-all duration-500">
                     <video src={item.video_url || `/video-${videoNumber}.mp4`} className="absolute inset-0 w-full h-full object-cover opacity-90" loop autoPlay muted playsInline />
                     <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none"></div>
                     
+                    {/* THÔNG TIN BÀI ĐĂNG (TRÁI) */}
                     <div className="absolute bottom-[100px] md:bottom-[40px] left-4 md:left-6 z-10 max-w-[75%] pointer-events-auto animate-slide-up">
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/20 dark:bg-white/10 backdrop-blur-md border border-white/30 dark:border-white/20 rounded-full text-[10px] font-bold text-[#80BF84] mb-3 uppercase tracking-wider shadow-sm"><ShieldCheck size={12} /> Dịch vụ xác thực</div>
-                        <h3 className="text-2xl md:text-3xl font-black text-white leading-tight drop-shadow-xl mb-1.5 text-balance">{item.service_name}</h3>
-                        <p className="text-zinc-200 dark:text-zinc-300 text-xs md:text-sm line-clamp-2 drop-shadow-md font-medium mb-4 pr-4">{item.description}</p>
-                        <button onClick={() => { if (!user) { setIsAuthModalOpen(true); return; } setActiveService(item); setIsModalOpen(true); }} className="group flex items-center gap-3 pl-2 pr-5 py-2 bg-white/20 dark:bg-white/10 backdrop-blur-xl border border-white/30 dark:border-white/20 text-white rounded-[2rem] hover:bg-white/30 dark:hover:bg-white/20 active:scale-95 transition-all shadow-xl shadow-black/20">
-                          <div className="w-10 h-10 bg-[#80BF84] rounded-full flex items-center justify-center text-zinc-950 shadow-sm group-hover:scale-110 transition-transform"><CalendarPlus size={20} strokeWidth={2.5} /></div>
-                          <div className="flex flex-col text-left"><span className="font-bold text-sm tracking-wide drop-shadow-sm leading-tight">Đặt gói này</span><span className="text-[10px] font-semibold text-[#80BF84] leading-tight">{item.price.toLocaleString()} VND</span></div>
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/20 dark:bg-white/10 backdrop-blur-md border border-white/30 dark:border-white/20 rounded-full text-[10px] font-bold text-amber-400 mb-3 uppercase tracking-wider shadow-sm"><Sparkles size={12} /> Studio Post</div>
+                        <h3 className="text-2xl md:text-3xl font-black text-white leading-tight drop-shadow-xl mb-1.5 text-balance">{item.title || "Video nổi bật"}</h3>
+                        <p className="text-zinc-200 dark:text-zinc-300 text-xs md:text-sm line-clamp-2 drop-shadow-md font-medium mb-4 pr-4">{item.content}</p>
+                        
+                        {/* NÚT XEM HỒ SƠ THAY VÌ ĐẶT LỊCH */}
+                        <button onClick={() => {
+                            if (!item.author?.username) return toast.info("Người dùng này chưa tạo username");
+                            router.push(`/${item.author.username}`);
+                        }} className="group flex items-center gap-3 pl-2 pr-5 py-2 bg-white/20 dark:bg-white/10 backdrop-blur-xl border border-white/30 dark:border-white/20 text-white rounded-[2rem] hover:bg-white/30 transition-all shadow-xl">
+                          <div className="w-10 h-10 bg-white/30 rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform"><UserIcon size={20} strokeWidth={2.5} /></div>
+                          <div className="flex flex-col text-left"><span className="font-bold text-sm tracking-wide drop-shadow-sm leading-tight">Xem hồ sơ</span><span className="text-[10px] font-semibold text-white/70 leading-tight">@{item.author?.username || "user"}</span></div>
                         </button>
                     </div>
 
+                    {/* THANH TƯƠNG TÁC (PHẢI) */}
                     <div className="absolute bottom-[100px] md:bottom-[40px] right-3 md:right-4 z-20 flex flex-col items-center gap-5 md:gap-6 pointer-events-auto">
                         <div className="relative mb-2 group cursor-pointer active:scale-90 transition-transform" onClick={() => {
-                           if (item.partner_id) router.push(`/partner/profile/${item.partner_id}`);
-                           else toast.error("Doanh nghiệp này chưa cập nhật hồ sơ công khai!");
+                           if (item.author?.username) router.push(`/${item.author.username}`);
                         }}>
                           <div className="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-zinc-800 flex items-center justify-center shadow-lg group-hover:border-[#80BF84] transition-colors">
-                             {item.users?.avatar_url ? <img src={item.users.avatar_url} className="w-full h-full object-cover"/> : <UserIcon size={24} className="text-zinc-400" />}
+                             {item.author?.avatar_url ? <img src={item.author.avatar_url} className="w-full h-full object-cover"/> : <UserIcon size={24} className="text-zinc-400" />}
                           </div>
-                          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-5 h-5 bg-[#80BF84] rounded-full flex items-center justify-center border-2 border-zinc-900 group-hover:scale-110 transition-transform"><Plus size={12} className="text-zinc-950" strokeWidth={4} /></div>
+                          {item.author?.role === 'PARTNER_ADMIN' && <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center border-2 border-zinc-900 group-hover:scale-110 transition-transform"><ShieldCheck size={12} className="text-white" strokeWidth={4} /></div>}
                         </div>
 
                         <button onClick={() => handleInteraction(item.id, 'like')} className="flex flex-col items-center gap-1 group">
-                          <div className={`p-3 rounded-full backdrop-blur-md transition-all ${item.is_liked ? 'bg-rose-500/20 text-rose-500 border border-rose-500/50' : 'bg-white/20 dark:bg-black/40 border border-white/30 dark:border-white/10 text-white group-hover:bg-rose-500/30 dark:group-hover:bg-rose-500/20 group-hover:text-rose-400 group-hover:border-rose-500/50'}`}><Heart size={24} strokeWidth={2} className={`group-active:scale-75 transition-transform ${item.is_liked ? 'fill-rose-500' : ''}`} /></div>
+                          <div className={`p-3 rounded-full backdrop-blur-md transition-all ${item.is_liked ? 'bg-rose-500/20 text-rose-500 border border-rose-500/50' : 'bg-white/20 border border-white/30 text-white'}`}><Heart size={24} strokeWidth={2} className={`${item.is_liked ? 'fill-rose-500' : ''}`} /></div>
                           <span className="text-xs font-bold text-white drop-shadow-md">{item.likes_count || 0}</span>
                         </button>
                         
                         <button onClick={() => handleOpenComments(item.id)} className="flex flex-col items-center gap-1 group">
-                          <div className="p-3 rounded-full bg-white/20 dark:bg-black/40 backdrop-blur-md border border-white/30 dark:border-white/10 text-white group-hover:bg-white/30 dark:group-hover:bg-white/20 transition-all"><MessageCircle size={24} strokeWidth={2} className="group-active:scale-75 transition-transform" /></div>
+                          <div className="p-3 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white transition-all"><MessageCircle size={24} strokeWidth={2}/></div>
                           <span className="text-xs font-bold text-white drop-shadow-md">{item.comments_count || 0}</span>
                         </button>
                         
                         <button onClick={() => handleInteraction(item.id, 'save')} className="flex flex-col items-center gap-1 group">
-                          <div className={`p-3 rounded-full backdrop-blur-md transition-all ${item.is_saved ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50' : 'bg-white/20 dark:bg-black/40 border border-white/30 dark:border-white/10 text-white group-hover:bg-amber-500/30 dark:group-hover:bg-amber-500/20 group-hover:text-amber-400 group-hover:border-amber-500/50'}`}><Bookmark size={24} strokeWidth={2} className={`group-active:scale-75 transition-transform ${item.is_saved ? 'fill-amber-400' : ''}`} /></div>
+                          <div className={`p-3 rounded-full backdrop-blur-md transition-all ${item.is_saved ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50' : 'bg-white/20 border border-white/30 text-white'}`}><Bookmark size={24} strokeWidth={2} className={`${item.is_saved ? 'fill-amber-400' : ''}`} /></div>
                           <span className="text-xs font-bold text-white drop-shadow-md">{item.saves_count || 0}</span>
                         </button>
                         
                         <button onClick={() => handleShare(item.id)} className="flex flex-col items-center gap-1 group">
-                          <div className="p-3 rounded-full bg-white/20 dark:bg-black/40 backdrop-blur-md border border-white/30 dark:border-white/10 text-white group-hover:bg-white/30 dark:group-hover:bg-white/20 transition-all"><Share2 size={24} strokeWidth={2} className="group-active:scale-75 transition-transform" /></div>
+                          <div className="p-3 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white transition-all"><Share2 size={24} strokeWidth={2}/></div>
                           <span className="text-xs font-bold text-white drop-shadow-md">Chia sẻ</span>
                         </button>
                     </div>
@@ -484,189 +342,75 @@ export default function UserFeed() {
         <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-max animate-slide-up pointer-events-auto">
           <div className="px-8 py-3.5 rounded-full flex items-center justify-center gap-8 sm:gap-10 shadow-2xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/60 backdrop-blur-2xl transition-colors duration-500">
             <button className="text-[#80BF84] transition-colors group"><Home size={26} strokeWidth={2.5} /></button>
-            <button onClick={() => router.push('/features/explore')} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Compass size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
+            <button onClick={() => router.push('/features/explore')} className="text-slate-500 hover:text-slate-900 dark:text-zinc-500 dark:hover:text-white transition-colors"><Compass size={26} strokeWidth={2.5} /></button>
             <button onClick={() => router.push('/features/AI')} className="relative -mt-10 group">
-              <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#80BF84] to-emerald-300 p-[2px] shadow-[0_0_20px_rgba(128,191,132,0.3)] group-hover:scale-105 transition-all duration-300"><div className="w-full h-full bg-white dark:bg-zinc-950 rounded-full flex items-center justify-center transition-colors duration-500"><Sparkles size={26} className="text-[#80BF84]" strokeWidth={2.5} /></div></div>
+              <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#80BF84] to-emerald-300 p-[2px] shadow-[0_0_20px_rgba(128,191,132,0.3)] group-hover:scale-105 transition-all"><div className="w-full h-full bg-white dark:bg-zinc-950 rounded-full flex items-center justify-center"><Sparkles size={26} className="text-[#80BF84]" strokeWidth={2.5} /></div></div>
             </button>
-            <button onClick={() => router.push('/features/favorite')} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Heart size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
+            <button onClick={() => router.push('/features/favorite')} className="text-slate-500 hover:text-slate-900 dark:text-zinc-500 dark:hover:text-white transition-colors"><Heart size={26} strokeWidth={2.5} /></button>
             
             <div className="relative">
               {isUserMenuOpen && user && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setIsUserMenuOpen(false)}></div>
                   <div className="absolute bottom-full mb-6 right-0 w-48 p-2 flex flex-col gap-1 z-50 animate-fade-in bg-white/90 dark:bg-black/80 backdrop-blur-3xl shadow-2xl border border-slate-200 dark:border-white/10 rounded-2xl">
-                      <button onClick={handleGoToProfile} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white font-bold transition-all text-sm w-full text-left"><UserIcon size={16} /> Trang cá nhân</button>
+                      <button onClick={handleGoToProfile} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 font-bold transition-all text-sm w-full text-left"><UserIcon size={16} /> Trang cá nhân</button>
                       <button onClick={handleLogout} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-rose-500/10 text-rose-500 font-bold transition-all text-sm w-full text-left"><LogOut size={16} /> Đăng xuất</button>
                   </div>
                 </>
               )}
-              <button onClick={handleUserAvatarClick} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group">
-                <UserIcon size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
+              <button onClick={handleUserAvatarClick} className="text-slate-500 hover:text-slate-900 dark:text-zinc-500 dark:hover:text-white transition-colors group">
+                <UserIcon size={26} strokeWidth={2.5} />
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ================= CÁC COMPONENTS MODAL CON ================= */}
+      {/* ================= MODALS ================= */}
       
-      {/* 1. Modal Bình Luận (Component Tách Biệt) */}
       <CommentModal 
         isOpen={isCommentModalOpen}
         onClose={() => setIsCommentModalOpen(false)}
-        serviceId={activeCommentServiceId || ""}
+        serviceId={activeCommentPostId || ""} // Note: Component CommentModal nên sửa prop thành postId sau này
         user={user}
         userRole={userRole}
       />
 
-      {/* 2. Modal Thông báo */}
+      {/* Notification Modal */}
       {isNotificationOpen && (
         <div className="fixed inset-0 z-[110] flex justify-center items-end md:items-center md:justify-end md:p-6 pointer-events-auto">
-          <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm transition-colors duration-500" onClick={() => setIsNotificationOpen(false)}></div>
-          <div className="relative w-full md:w-[420px] h-[85vh] md:h-[calc(100vh-48px)] bg-white/80 dark:bg-black/60 backdrop-blur-3xl rounded-t-[2.5rem] md:rounded-[2.5rem] border border-slate-200 dark:border-white/10 flex flex-col shadow-2xl transition-colors duration-500 animate-slide-up">
-             <div className="pt-8 pb-4 px-6 border-b border-slate-200 dark:border-white/10 flex justify-between items-center transition-colors duration-500">
-               <h3 className="text-xl font-black text-slate-900 dark:text-white transition-colors duration-500">Thông báo</h3>
-               <div className="flex items-center gap-3">
-                  <button onClick={markAllAsRead} className="text-xs font-bold text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white transition-colors flex items-center gap-1" title="Đánh dấu tất cả đã đọc"><CheckCircle size={18}/></button>
-                  <button onClick={() => setIsNotificationOpen(false)} className="text-slate-500 dark:text-white hover:text-slate-900 transition-colors"><X size={20}/></button>
-               </div>
+          <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm" onClick={() => setIsNotificationOpen(false)}></div>
+          <div className="relative w-full md:w-[420px] h-[85vh] md:h-[calc(100vh-48px)] bg-white/80 dark:bg-black/60 backdrop-blur-3xl rounded-t-[2.5rem] md:rounded-[2.5rem] border border-slate-200 dark:border-white/10 flex flex-col shadow-2xl animate-slide-up">
+             <div className="pt-8 pb-4 px-6 border-b border-slate-200 dark:border-white/10 flex justify-between items-center">
+               <h3 className="text-xl font-black text-slate-900 dark:text-white">Thông báo</h3>
+               <button onClick={() => setIsNotificationOpen(false)} className="text-slate-500 hover:text-slate-900"><X size={20}/></button>
              </div>
-             <div className="px-6 py-3 border-b border-slate-200 dark:border-white/10 flex gap-2">
-               <button onClick={() => setActiveNotifTab('all')} className={`px-4 py-2 rounded-xl font-bold text-xs transition-all ${activeNotifTab === 'all' ? 'bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}>Tất cả</button>
-               <button onClick={() => setActiveNotifTab('unread')} className={`px-4 py-2 rounded-xl font-bold text-xs transition-all flex items-center gap-2 ${activeNotifTab === 'unread' ? 'bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}>
-                  Chưa đọc
-                  {notifications.filter(n => !n.isRead).length > 0 && <span className="px-1.5 py-0.5 bg-rose-500 text-white rounded-md text-[10px] leading-none">{notifications.filter(n => !n.isRead).length}</span>}
-               </button>
-             </div>
-             <div className="flex-1 overflow-y-auto p-4 space-y-3 no-scrollbar">
-                {filteredNotifs.length === 0 ? (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-center px-4">
-                        <Bell size={40} className="text-slate-300 dark:text-zinc-700 mb-4" />
-                        <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2">Bạn đã xem hết thông báo!</h3>
-                        <p className="text-slate-500 dark:text-zinc-400 text-xs">Chưa có cập nhật mới nào trong thời gian này.</p>
-                    </div>
-                ) : (
-                    filteredNotifs.map((notif) => {
-                        const Icon = notif.icon;
-                        return (
-                            <div key={notif.id} className={`p-4 rounded-2xl flex gap-4 items-start transition-all cursor-pointer hover:bg-white dark:hover:bg-white/5 border border-transparent hover:border-slate-200 dark:hover:border-white/10 ${!notif.isRead ? 'bg-white/60 dark:bg-white/5' : 'opacity-70'}`}>
-                                <div className={`p-2.5 rounded-xl ${notif.bg} ${notif.color} shrink-0`}><Icon size={20} strokeWidth={2.5} /></div>
-                                <div className="flex-1">
-                                    <div className="flex justify-between items-start mb-1"><h4 className={`text-sm font-black leading-tight ${!notif.isRead ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-zinc-300'}`}>{notif.title}</h4></div>
-                                    <p className={`text-xs mt-1 mb-2 ${!notif.isRead ? 'text-slate-600 dark:text-zinc-400 font-medium' : 'text-slate-500 dark:text-zinc-500'}`}>{notif.desc}</p>
-                                    <span className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500">{notif.time}</span>
-                                </div>
-                                {!notif.isRead && <div className="w-2 h-2 rounded-full bg-[#80BF84] shrink-0 mt-2"></div>}
-                            </div>
-                        )
-                    })
-                )}
+             <div className="flex-1 overflow-y-auto p-4 flex flex-col items-center justify-center text-center">
+                <Bell size={40} className="text-slate-300 dark:text-zinc-700 mb-4" />
+                <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2">Bạn đã xem hết thông báo!</h3>
+                <p className="text-slate-500 text-xs">Chưa có cập nhật mới nào.</p>
              </div>
           </div>
         </div>
       )}
 
-      {/* 3. Modal Đặt Lịch - Premium Glass UI */}
-      {isModalOpen && activeService && user && (
-        <div className="fixed inset-0 z-[150] flex justify-center items-center p-4">
-          {/* Lớp nền mờ Blur */}
-          <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md transition-all duration-500" onClick={() => setIsModalOpen(false)}></div>
-          
-          {/* Box chính trôi nổi */}
-          <div className="relative w-full max-w-lg bg-white/70 dark:bg-zinc-950/70 backdrop-blur-3xl rounded-[2.5rem] p-8 md:p-10 z-10 shadow-[0_20px_60px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.8)] border border-white/50 dark:border-white/10 animate-slide-up">
-            
-            {/* Header Modal */}
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#80BF84]/10 border border-[#80BF84]/20 rounded-full text-[10px] font-bold text-[#80BF84] mb-3 uppercase tracking-wider">
-                  <Sparkles size={12} /> Đặt lịch dịch vụ
-                </div>
-                <h3 className="text-2xl font-black text-slate-900 dark:text-white leading-tight pr-4">{activeService.service_name}</h3>
-                <p className="text-[#80BF84] font-black text-lg mt-1">{activeService.price.toLocaleString()} VND</p>
-              </div>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 rounded-full bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-zinc-400 transition-colors shrink-0"><X size={20}/></button>
-            </div>
-
-            {/* Form Nhập Liệu */}
-            <form onSubmit={handleBooking} className="flex flex-col gap-4">
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-slate-500 dark:text-zinc-400 ml-1">Họ và tên</label>
-                      <input type="text" placeholder="Nhập tên của bạn..." className="w-full px-5 py-3.5 bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:border-[#80BF84] focus:ring-1 focus:ring-[#80BF84]/50 transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-600" required value={bookingName} onChange={e => setBookingName(e.target.value)} />
-                  </div>
-                  <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-slate-500 dark:text-zinc-400 ml-1">Số điện thoại</label>
-                      <input type="tel" placeholder="09xx..." className="w-full px-5 py-3.5 bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:border-[#80BF84] focus:ring-1 focus:ring-[#80BF84]/50 transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-600" required value={bookingPhone} onChange={e => setBookingPhone(e.target.value)} />
-                  </div>
-              </div>
-
-              <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 dark:text-zinc-400 ml-1">Lời nhắn nhủ (Tùy chọn)</label>
-                  <textarea placeholder="Bạn có yêu cầu đặc biệt gì cho buổi trị liệu không?" rows={2} className="w-full px-5 py-3.5 bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:border-[#80BF84] focus:ring-1 focus:ring-[#80BF84]/50 transition-all resize-none placeholder:text-slate-400 dark:placeholder:text-zinc-600" value={bookingNote} onChange={e => setBookingNote(e.target.value)} />
-              </div>
-
-              <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 dark:text-zinc-400 ml-1">Mã giới thiệu (Tùy chọn)</label>
-                  <input type="text" placeholder="Nhập mã ưu đãi..." className="w-full px-5 py-3.5 bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white font-medium uppercase focus:outline-none focus:border-[#80BF84] focus:ring-1 focus:ring-[#80BF84]/50 transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-600 placeholder:normal-case" value={affiliateCode} onChange={e => setAffiliateCode(e.target.value)} />
-              </div>
-
-              <div className="mt-4">
-                  <button type="submit" disabled={isSubmitting} className="relative w-full py-4 bg-gradient-to-tr from-[#80BF84] to-emerald-400 text-zinc-950 font-black text-lg rounded-2xl active:scale-95 transition-all shadow-[0_10px_20px_rgba(128,191,132,0.3)] overflow-hidden group">
-                    <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full skew-x-12 transition-transform duration-500"></div>
-                    {isSubmitting ? "Đang xử lý..." : "Bảo chứng thanh toán ngay"}
-                  </button>
-                  <p className="text-center text-[10px] text-slate-400 dark:text-zinc-500 mt-4 flex items-center justify-center gap-1"><ShieldCheck size={12}/> Giao dịch được bảo vệ 100% bởi AI Health Escrow</p>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* 4. Modal Đăng Nhập / Đăng Ký */}
+      {/* Auth Modal */}
       {isAuthModalOpen && (
         <div className="fixed inset-0 z-[100] flex justify-center items-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 dark:bg-slate-900/80 backdrop-blur-xl transition-colors duration-500" onClick={() => setIsAuthModalOpen(false)}></div>
-          <div className="relative w-full max-w-sm bg-white/90 dark:bg-zinc-900/90 backdrop-blur-3xl rounded-[3rem] p-8 z-10 shadow-2xl border border-slate-200 dark:border-white/10 transition-colors duration-500 animate-slide-up">
+          <div className="absolute inset-0 bg-slate-900/60 dark:bg-slate-900/80 backdrop-blur-xl" onClick={() => setIsAuthModalOpen(false)}></div>
+          <div className="relative w-full max-w-sm bg-white/90 dark:bg-zinc-900/90 backdrop-blur-3xl rounded-[3rem] p-8 z-10 shadow-2xl border border-slate-200 dark:border-white/10 animate-slide-up">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-black text-slate-900 dark:text-white transition-colors duration-500">{isLoginMode ? "Đăng nhập" : "Đăng ký"}</h3>
-              <button onClick={() => setIsAuthModalOpen(false)} className="text-slate-500 hover:text-slate-900 dark:text-zinc-500 dark:hover:text-white transition-colors"><X size={24}/></button>
+              <h3 className="text-2xl font-black text-slate-900 dark:text-white">{isLoginMode ? "Đăng nhập" : "Đăng ký"}</h3>
+              <button onClick={() => setIsAuthModalOpen(false)} className="text-slate-500 hover:text-slate-900"><X size={24}/></button>
             </div>
             
             <form onSubmit={handleAuth} className="space-y-4">
-              <input type="email" placeholder="Email" className="w-full px-5 py-4 bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:border-[#80BF84] transition-colors duration-500" value={email} onChange={e => setEmail(e.target.value)} required />
-              <input type="password" placeholder="Mật khẩu" className="w-full px-5 py-4 bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:border-[#80BF84] transition-colors duration-500" value={password} onChange={e => setPassword(e.target.value)} required />
-              <button type="submit" disabled={authLoading} className="w-full py-4 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-black rounded-2xl active:scale-95 transition-all flex justify-center items-center gap-2">
-                {authLoading ? <div className="w-5 h-5 border-2 border-white dark:border-zinc-900 border-t-transparent rounded-full animate-spin"/> : null}
+              <input type="email" placeholder="Email" className="w-full px-5 py-4 bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:border-[#80BF84]" value={email} onChange={e => setEmail(e.target.value)} required />
+              <input type="password" placeholder="Mật khẩu" className="w-full px-5 py-4 bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:border-[#80BF84]" value={password} onChange={e => setPassword(e.target.value)} required />
+              <button type="submit" disabled={authLoading} className="w-full py-4 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-black rounded-2xl active:scale-95 transition-all">
                 {isLoginMode ? "Đăng nhập" : "Tạo tài khoản"}
               </button>
             </form>
-
-            <div className="mt-6">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200 dark:border-white/10"></div></div>
-                <div className="relative flex justify-center text-sm"><span className="px-2 bg-white/90 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 transition-colors duration-500">Hoặc tiếp tục với</span></div>
-              </div>
-              
-              <button onClick={handleGoogleLogin} type="button" className="mt-4 w-full flex items-center justify-center gap-3 py-3.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl hover:bg-slate-50 dark:hover:bg-white/10 transition-all font-bold text-slate-700 dark:text-white group">
-                <svg className="w-5 h-5 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
-                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                </svg>
-                Google
-              </button>
-            </div>
-
-            <div className="mt-6 text-center">
-              <p className="text-sm text-slate-600 dark:text-zinc-400 transition-colors duration-500">
-                {isLoginMode ? "Chưa có tài khoản?" : "Đã có tài khoản?"}
-                <button type="button" onClick={() => setIsLoginMode(!isLoginMode)} className="ml-1 font-bold text-[#80BF84] hover:underline">
-                  {isLoginMode ? "Đăng ký ngay" : "Đăng nhập"}
-                </button>
-              </p>
-            </div>
           </div>
         </div>
       )}
