@@ -7,13 +7,13 @@ import NotificationModal from "@/components/NotificationModal";
 import RegularUserView from "@/components/profile/RegularUserView";
 import CreatorView from "@/components/profile/CreatorView";
 import PartnerView from "@/components/profile/PartnerView";
-import ModeratorView from "@/components/profile/ModeratorView"; // <--- Bổ sung Import
+import ModeratorView from "@/components/profile/ModeratorView";
+import AdminView from "@/components/profile/AdminView"; // <--- Bổ sung Import Admin
 import { useUI } from "@/context/UIContext";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 export default function UserProfilePage() {
-  // ... (Phần logic fetch data và Theme giữ nguyên)
   const { username } = useParams();
   const { isNotifOpen, setIsNotifOpen } = useUI();
   const [theme, setTheme] = useState<"light" | "dark">("light");
@@ -77,8 +77,14 @@ export default function UserProfilePage() {
           )}
 
           <div className="max-w-4xl mx-auto p-6 md:p-12 pt-28 pb-32">
-            {/* LOGIC RẼ NHÁNH TỔNG HỢP CHO 4 ROLE */}
-            {data.profile.role === "PARTNER_ADMIN" ? (
+            {/* LOGIC RẼ NHÁNH HOÀN CHỈNH CHO 5 ROLE */}
+            {data.profile.role === "SUPER_ADMIN" ? (
+              <AdminView 
+                profile={data.profile} 
+                posts={data.posts} 
+                savedPosts={data.savedPosts || []}
+              />
+            ) : data.profile.role === "PARTNER_ADMIN" ? (
               <PartnerView 
                 profile={data.profile} 
                 posts={data.posts} 

@@ -7,16 +7,28 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { createClient } from "@supabase/supabase-js";
 
-// Đồng bộ Interface chuẩn từ AI_STATE.md
+// --- KHỞI TẠO SUPABASE CLIENT & API ---
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+if (!supabaseUrl || !supabaseAnonKey) throw new Error("Thiếu biến môi trường Supabase!");
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
+// Đồng bộ Interface chuẩn từ Database mới cập nhật
 interface Booking {
   id: string;
   user_id: string;
-  service_id: string;
+  service_id: string | null;
+  video_id: string | null;
   affiliate_id: string | null;
   total_amount: number;
   payment_status: string;
   service_status: string;
+  partner_revenue?: number;
+  platform_fee?: number;
+  affiliate_revenue?: number;
 }
 
 export default function PartnerDashboard() {
@@ -30,7 +42,31 @@ export default function PartnerDashboard() {
   // --- STATE DỮ LIỆU ---
   const [bookings, setBookings] = useState<Booking[]>([]);
 
-  // Khởi tạo Theme & Fetch Dữ liệu
+  // Khởi tạo Theme & Fetch Dữ liệu an toàn
+  const fetchBookings = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push("/");
+        return;
+      }
+
+      // Gọi API mới chuẩn của hệ thống kèm xác thực
+      const response = await fetch(`${API_URL}/partner/bookings`, {
+        headers: { "Authorization": `Bearer ${session.access_token}` }
+      });
+      const result = await response.json();
+      
+      if (response.ok && result.status === "success") {
+        setBookings(result.data || []); 
+      }
+    } catch (error) {
+      toast.error("Không thể kết nối đến máy chủ Escrow an toàn.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     setIsMounted(true);
     
@@ -44,24 +80,8 @@ export default function PartnerDashboard() {
       document.documentElement.classList.add('dark');
     }
 
-    // Fetch Bookings
-    const fetchBookings = async () => {
-      try {
-        const response = await fetch("https://ai-health-share-backend.onrender.com/bookings");
-        const result = await response.json();
-        
-        if (result.status === "success" || Array.isArray(result)) {
-          setBookings(result.data || result); 
-        }
-      } catch (error) {
-        toast.error("Không thể kết nối đến máy chủ Escrow.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchBookings();
-  }, []);
+  }, [router]);
 
   const handleThemeToggle = () => {
     const newMode = !isDarkMode;
@@ -71,51 +91,62 @@ export default function PartnerDashboard() {
     localStorage.setItem('theme', newMode ? 'dark' : 'light');
   };
 
-  // --- HÀM XỬ LÝ: XÁC NHẬN HOÀN THÀNH ---
+  // --- HÀM XỬ LÝ: XÁC NHẬN HOÀN THÀNH (BẢO CHỨNG) ---
   const handleCompleteService = async (bookingId: string) => {
-    // Thay confirm() của trình duyệt bằng custom logic hoặc để user click thẳng rồi toast
-    const toastId = toast.loading("Đang xử lý giải ngân tự động...");
+    const toastId = toast.loading("Đang kết nối trung tâm đối soát Escrow...");
     
     try {
-      const res = await fetch(`https://ai-health-share-backend.onrender.com/bookings/${bookingId}/complete`, {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const res = await fetch(`${API_URL}/bookings/${bookingId}/complete`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" }
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session?.access_token}`
+        }
       });
+      
       const result = await res.json();
 
       if (res.ok && result.status === "success") {
         toast.success(
           <div className="flex flex-col gap-1">
-            <span className="font-bold">🎉 Giải ngân thành công!</span>
-            <span className="text-sm">Đối tác: +{result.distribution.partner_revenue.toLocaleString()} VND</span>
-            {result.distribution.affiliate_revenue > 0 && (
-                <span className="text-sm text-emerald-600">Affiliate: +{result.distribution.affiliate_revenue.toLocaleString()} VND</span>
+            <span className="font-bold text-emerald-600">🎉 Giải ngân thành công!</span>
+            <span className="text-xs font-medium text-slate-600 dark:text-zinc-300">Doanh thu của bạn: +{Number(result.distribution.partner_revenue).toLocaleString()} VND</span>
+            {Number(result.distribution.affiliate_revenue) > 0 && (
+                <span className="text-[10px] text-amber-600">Hoa hồng giới thiệu: {Number(result.distribution.affiliate_revenue).toLocaleString()} VND</span>
             )}
           </div>, 
           { id: toastId, duration: 5000 }
         );
-        // Cập nhật State nội bộ thay vì reload trang
-        setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, service_status: "completed" } : b));
+        // Tải lại danh sách để lấy số liệu doanh thu thực tế từ Backend
+        fetchBookings();
       } else {
-        toast.error(`Lỗi: ${result.detail || 'Không thể giải ngân'}`, { id: toastId });
+        toast.error(`Lỗi: ${result.detail || 'Từ chối giải ngân từ hệ thống'}`, { id: toastId });
       }
     } catch (error) {
-      toast.error("Lỗi kết nối đến server.", { id: toastId });
+      toast.error("Lỗi kết nối đến máy chủ bảo mật.", { id: toastId });
     }
   };
 
-  // --- TÍNH TOÁN THỐNG KÊ NHANH ---
-  const totalRevenue = bookings.filter(b => b.service_status === "completed").reduce((sum, b) => sum + b.total_amount * 0.7, 0);
-  const pendingEscrow = bookings.filter(b => b.service_status !== "completed").reduce((sum, b) => sum + b.total_amount * 0.7, 0);
+  // --- TÍNH TOÁN THỐNG KÊ (DỰA VÀO DỮ LIỆU DB CHUẨN) ---
+  // Tổng doanh thu thực tế đã giải ngân (Lấy từ cột partner_revenue của database)
+  const totalRevenue = bookings
+    .filter(b => b.service_status === "COMPLETED")
+    .reduce((sum, b) => sum + (Number(b.partner_revenue) || 0), 0);
+    
+  // Số tiền đang neo giữ chờ giải ngân (Ước tính 70% giá trị các đơn chưa hoàn thành)
+  const pendingEscrow = bookings
+    .filter(b => b.service_status !== "COMPLETED")
+    .reduce((sum, b) => sum + (Number(b.total_amount) * 0.7), 0); 
 
   // --- BẢO VỆ GIAO DIỆN KHI CHƯA MOUNT ---
   if (!isMounted) return <div className="h-[100dvh] bg-slate-50 dark:bg-zinc-950"></div>;
 
   return (
-    <div className="h-[100dvh] w-full bg-slate-50 dark:bg-zinc-950 overflow-hidden flex relative transition-colors duration-500">
+    <div className="h-[100dvh] w-full bg-slate-50 dark:bg-zinc-950 overflow-hidden flex relative transition-colors duration-500 font-be-vietnam">
       
-      
-      {/* ================= 2. MAIN DASHBOARD AREA ================= */}
+      {/* ================= MAIN DASHBOARD AREA ================= */}
       <div className="flex-1 relative h-[100dvh] overflow-y-auto no-scrollbar scroll-smooth">
         
         {/* Nút Theme Toggle */}
@@ -129,10 +160,10 @@ export default function PartnerDashboard() {
             
             {/* Header */}
             <div className="mb-8 animate-slide-up">
-                <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-2 flex items-center gap-3">
-                    <ShieldCheck className="text-[#80BF84]" size={36} /> Partner Escrow
+                <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-2 flex items-center gap-3 tracking-tight">
+                    <ShieldCheck className="text-[#80BF84]" size={36} /> Quản lý Dòng tiền Escrow
                 </h2>
-                <p className="text-slate-500 dark:text-zinc-400 font-medium">Quản lý dòng tiền, theo dõi lịch đặt và thực hiện giải ngân thông minh.</p>
+                <p className="text-slate-500 dark:text-zinc-400 font-medium text-sm">Theo dõi lịch đặt, kiểm soát dòng tiền an toàn và xác nhận giải ngân.</p>
             </div>
 
             {/* Loading State Skeleton */}
@@ -146,85 +177,97 @@ export default function PartnerDashboard() {
                     
                     {/* Mini Stats */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                        <div className="glass-panel p-6 rounded-[2rem] bg-white/70 dark:bg-black/40 border-slate-200 dark:border-white/10 flex flex-col gap-2">
-                            <span className="text-sm font-bold text-slate-500 dark:text-zinc-400 flex items-center gap-2"><Wallet size={16}/> TỔNG ĐƠN HÀNG</span>
-                            <span className="text-3xl font-black text-slate-800 dark:text-white">{bookings.length} <span className="text-lg font-medium text-slate-400">đơn</span></span>
+                        <div className="glass-panel p-6 rounded-[2rem] bg-white/70 dark:bg-black/40 border border-slate-200 dark:border-white/10 flex flex-col gap-2 shadow-sm">
+                            <span className="text-xs font-black text-slate-500 dark:text-zinc-400 flex items-center gap-2 tracking-widest uppercase"><Wallet size={16}/> TỔNG ĐƠN GIAO DỊCH</span>
+                            <span className="text-4xl font-black text-slate-800 dark:text-white">{bookings.length} <span className="text-base font-bold text-slate-400">đơn</span></span>
                         </div>
-                        <div className="glass-panel p-6 rounded-[2rem] bg-gradient-to-br from-amber-500/10 to-transparent border border-amber-500/20 flex flex-col gap-2">
-                            <span className="text-sm font-bold text-amber-600 dark:text-amber-500 flex items-center gap-2"><Clock size={16}/> ĐANG NEO GIỮ (ESCROW)</span>
-                            <span className="text-3xl font-black text-slate-800 dark:text-white">{pendingEscrow.toLocaleString()} <span className="text-lg font-medium text-slate-400">VND</span></span>
+                        <div className="glass-panel p-6 rounded-[2rem] bg-gradient-to-br from-amber-500/10 to-transparent border border-amber-500/20 flex flex-col gap-2 shadow-sm">
+                            <span className="text-xs font-black text-amber-600 dark:text-amber-500 flex items-center gap-2 tracking-widest uppercase"><Clock size={16}/> ĐANG NEO GIỮ (ƯỚC TÍNH 70%)</span>
+                            <span className="text-4xl font-black text-slate-800 dark:text-white">{pendingEscrow.toLocaleString()} <span className="text-base font-bold text-slate-400">VND</span></span>
                         </div>
-                        <div className="glass-panel p-6 rounded-[2rem] bg-gradient-to-br from-[#80BF84]/10 to-transparent border border-[#80BF84]/20 flex flex-col gap-2">
-                            <span className="text-sm font-bold text-emerald-600 dark:text-emerald-500 flex items-center gap-2"><TrendingUp size={16}/> ĐÃ GIẢI NGÂN (ƯỚC TÍNH)</span>
-                            <span className="text-3xl font-black text-slate-800 dark:text-white">{totalRevenue.toLocaleString()} <span className="text-lg font-medium text-slate-400">VND</span></span>
+                        <div className="glass-panel p-6 rounded-[2rem] bg-gradient-to-br from-[#80BF84]/10 to-transparent border border-[#80BF84]/20 flex flex-col gap-2 shadow-sm">
+                            <span className="text-xs font-black text-emerald-600 dark:text-emerald-500 flex items-center gap-2 tracking-widest uppercase"><TrendingUp size={16}/> DOANH THU THỰC NHẬN</span>
+                            <span className="text-4xl font-black text-slate-800 dark:text-white">{totalRevenue.toLocaleString()} <span className="text-base font-bold text-slate-400">VND</span></span>
                         </div>
                     </div>
 
                     {/* Glass Table */}
-                    <div className="glass-panel rounded-[2rem] bg-white/70 dark:bg-black/40 border-slate-200 dark:border-white/10 overflow-hidden shadow-2xl">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse min-w-[800px]">
+                    <div className="glass-panel rounded-[2.5rem] bg-white/70 dark:bg-black/40 border border-slate-200 dark:border-white/10 overflow-hidden shadow-xl">
+                        <div className="overflow-x-auto no-scrollbar">
+                            <table className="w-full text-left border-collapse min-w-[900px]">
                                 <thead>
-                                    <tr className="bg-slate-200/50 dark:bg-zinc-900/50 text-slate-500 dark:text-zinc-400 text-xs uppercase tracking-wider border-b border-slate-200 dark:border-white/10">
-                                        <th className="p-5 font-bold">Mã Đơn (ID)</th>
-                                        <th className="p-5 font-bold">Khách hàng (ID)</th>
-                                        <th className="p-5 font-bold">Tổng tiền</th>
-                                        <th className="p-5 font-bold">Thanh toán</th>
-                                        <th className="p-5 font-bold">Tiến độ Dịch vụ</th>
-                                        <th className="p-5 font-bold text-right">Hành động</th>
+                                    <tr className="bg-slate-100/50 dark:bg-zinc-900/50 text-slate-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest border-b border-slate-200 dark:border-white/10">
+                                        <th className="p-6 font-black">Mã Đơn</th>
+                                        <th className="p-6 font-black">Nguồn đơn</th>
+                                        <th className="p-6 font-black">Trạng thái Tiền</th>
+                                        <th className="p-6 font-black">Tiến độ Dịch vụ</th>
+                                        <th className="p-6 font-black text-right">Doanh thu dự kiến</th>
+                                        <th className="p-6 font-black text-center">Giải ngân</th>
                                     </tr>
                                 </thead>
-                                <tbody className="text-sm divide-y divide-slate-200 dark:divide-white/5">
+                                <tbody className="text-sm divide-y divide-slate-100 dark:divide-white/5">
                                     {bookings.length === 0 ? (
                                         <tr>
-                                            <td colSpan={6} className="p-10 text-center text-slate-500 dark:text-zinc-500 font-medium italic">
-                                                Chưa có dữ liệu Booking nào trong hệ thống.
+                                            <td colSpan={6} className="p-16 text-center text-slate-400 dark:text-zinc-600 font-bold flex flex-col items-center gap-3">
+                                                <ShieldCheck size={40} className="opacity-30" />
+                                                Chưa có giao dịch bảo chứng nào được ghi nhận.
                                             </td>
                                         </tr>
                                     ) : (
                                         bookings.map((booking) => (
-                                            <tr key={booking.id} className="hover:bg-slate-100/50 dark:hover:bg-white/5 transition-colors group">
-                                                <td className="p-5 font-mono text-xs text-slate-500 dark:text-zinc-500">
-                                                    {booking.id.substring(0, 8)}...
+                                            <tr key={booking.id} className="hover:bg-white dark:hover:bg-white/5 transition-colors group">
+                                                <td className="p-6 font-mono text-xs font-bold text-slate-500 dark:text-zinc-400">
+                                                    #{booking.id.substring(0, 8)}
                                                 </td>
-                                                <td className="p-5 font-medium text-slate-700 dark:text-zinc-300">
-                                                    <span className="truncate max-w-[120px] inline-block" title={booking.user_id}>
-                                                        {booking.user_id.substring(0, 8)}...
+                                                <td className="p-6">
+                                                    <span className="inline-block px-2.5 py-1 bg-slate-100 dark:bg-white/10 rounded-md text-[10px] font-black text-slate-600 dark:text-slate-300 tracking-wider">
+                                                        {booking.video_id ? 'TỪ TIKTOK FEED' : 'TỪ HỒ SƠ DỊCH VỤ'}
                                                     </span>
-                                                </td>
-                                                <td className="p-5 font-black text-slate-800 dark:text-white">
-                                                    {booking.total_amount.toLocaleString()} đ
                                                 </td>
                                                 
                                                 {/* Payment Status */}
-                                                <td className="p-5">
-                                                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-zinc-300 text-xs font-bold shadow-inner">
-                                                        <CreditCard size={14} />
-                                                        {booking.payment_status}
-                                                    </div>
-                                                </td>
-
-                                                {/* Service Status */}
-                                                <td className="p-5">
-                                                    {booking.service_status.toLowerCase() === "waiting" || booking.service_status.toLowerCase() === "pending" ? (
+                                                <td className="p-6">
+                                                    {booking.payment_status === "PAID" ? (
                                                         <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold border border-blue-500/20">
-                                                            <Clock size={14} /> Đang chờ
+                                                            <CreditCard size={14} /> Khách Đã Thanh Toán
                                                         </div>
                                                     ) : (
-                                                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#80BF84]/20 text-emerald-700 dark:text-[#80BF84] text-xs font-bold border border-[#80BF84]/30">
-                                                            <CheckCircle size={14} /> Đã hoàn thành
+                                                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-200 dark:bg-white/5 text-slate-500 dark:text-zinc-400 text-xs font-bold border border-slate-300 dark:border-white/10">
+                                                            <Clock size={14} /> Chờ Thanh Toán
                                                         </div>
                                                     )}
                                                 </td>
 
+                                                {/* Service Status */}
+                                                <td className="p-6">
+                                                    {booking.service_status === "COMPLETED" ? (
+                                                        <div className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-[#80BF84] text-xs font-black">
+                                                            <CheckCircle size={16} /> HOÀN TẤT
+                                                        </div>
+                                                    ) : (
+                                                        <div className="inline-flex items-center gap-1.5 text-amber-500 text-xs font-black">
+                                                            <Clock size={16} /> ĐANG NEO GIỮ
+                                                        </div>
+                                                    )}
+                                                </td>
+                                                
+                                                {/* Doanh thu */}
+                                                <td className="p-6 font-black text-slate-800 dark:text-white text-right">
+                                                    {booking.service_status === "COMPLETED" 
+                                                      ? <span className="text-[#80BF84]">{Number(booking.partner_revenue).toLocaleString()} đ</span>
+                                                      : <span>~{(Number(booking.total_amount) * 0.7).toLocaleString()} đ</span>
+                                                    }
+                                                </td>
+
                                                 {/* Action Button */}
-                                                <td className="p-5 text-right">
+                                                <td className="p-6 text-center">
                                                     <button
                                                         onClick={() => handleCompleteService(booking.id)}
-                                                        disabled={booking.service_status === "completed"}
-                                                        className="px-5 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-black text-xs font-black rounded-xl transition-all shadow-lg hover:scale-105 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:shadow-none"
+                                                        disabled={booking.service_status === "COMPLETED" || booking.payment_status !== "PAID"}
+                                                        title={booking.payment_status !== "PAID" ? "Chờ khách hàng thanh toán để có thể giải ngân" : "Bấm để xác nhận hoàn thành dịch vụ"}
+                                                        className="px-6 py-3 bg-slate-900 dark:bg-white text-white dark:text-black text-xs font-black tracking-widest uppercase rounded-xl transition-all shadow-lg hover:scale-105 active:scale-95 disabled:opacity-20 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:shadow-none"
                                                     >
-                                                        XÁC NHẬN
+                                                        Hoàn Thành
                                                     </button>
                                                 </td>
                                             </tr>
@@ -238,12 +281,12 @@ export default function PartnerDashboard() {
             )}
         </div>
 
-        {/* ================= 3. MOBILE BOTTOM DOCK (DÙNG CHUNG) ================= */}
+        {/* ================= MOBILE BOTTOM DOCK ================= */}
         <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-max pointer-events-auto">
           <div className="px-8 py-3.5 rounded-full flex items-center justify-center gap-8 sm:gap-10 shadow-2xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/60 backdrop-blur-2xl">
             <button onClick={() => router.push('/')} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Home size={26} strokeWidth={2.5} /></button>
             <button onClick={() => router.push('/partner/profile')} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><LayoutDashboard size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
-            <button className="text-[#80BF84] hover:text-emerald-500 transition-colors group"><DollarSign size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
+            <button className="text-[#80BF84] transition-colors group"><DollarSign size={26} strokeWidth={2.5} className="scale-110" /></button>
           </div>
         </div>
 

@@ -5,6 +5,9 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
+// 1. Thêm biến môi trường để trỏ về đúng Backend đang chạy
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
 interface AuthContextType {
   user: any;
   userRole: string;
@@ -24,14 +27,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (session?.user) {
       setUser(session.user);
       try {
-        const res = await fetch("https://ai-health-share-backend.onrender.com/user/profile", {
+        // 2. Sửa lại đường dẫn fetch để gọi về Backend Local
+        const res = await fetch(`${API_URL}/user/profile`, {
           headers: { "Authorization": `Bearer ${session.access_token}` }
         });
         const result = await res.json();
         if (result.status === "success") {
           setUserRole(result.data.profile.role);
+        } else {
+            console.error("Backend trả về lỗi:", result);
         }
-      } catch (e) { console.error("AuthContext: Lỗi fetch role"); }
+      } catch (e) { 
+          // Log rõ lỗi ra để dễ kiểm soát thay vì chỉ in string cứng
+          console.error("AuthContext: Lỗi fetch role", e); 
+      }
     }
     setIsLoading(false);
   };

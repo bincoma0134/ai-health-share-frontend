@@ -35,12 +35,12 @@ export default function CreatorView({ profile, posts = [], likedPosts = [], save
         </div>
 
         <div className="flex-1 pt-2">
-          {/* Cập nhật: Họ tên trên, Username dưới */}
+          {/* SỬA LỖI: Tên hiển thị (Bold) trên, Username (Small) dưới */}
           <div className="flex flex-col gap-1 mb-6 text-center md:text-left">
             <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-md">
-              {profile.full_name}
+              {profile.full_name || "Chưa có tên"}
             </h1>
-            <h2 className="text-lg md:text-xl font-medium text-slate-500 dark:text-zinc-400 tracking-tight">
+            <h2 className="text-base md:text-lg font-medium text-slate-500 dark:text-zinc-400 tracking-tight">
               @{profile.username || "username"}
             </h2>
           </div>
@@ -111,7 +111,6 @@ export default function CreatorView({ profile, posts = [], likedPosts = [], save
           ))}
         </div>
 
-        {/* Video Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4 mt-8 pb-20">
           {(activeTab === "videos" ? posts : activeTab === "liked" ? likedPosts : savedPosts).map((item: any) => (
             <div key={item.id} className="relative aspect-[3/4] bg-zinc-800 rounded-[2rem] overflow-hidden group cursor-pointer shadow-2xl border border-white/5">
@@ -137,14 +136,6 @@ export default function CreatorView({ profile, posts = [], likedPosts = [], save
             </div>
           ))}
         </div>
-
-        {activeTab === "interests" && (
-          <div className="text-center py-32 bg-white/40 dark:bg-white/5 backdrop-blur-2xl rounded-[4rem] mt-8 border-2 border-dashed border-slate-200 dark:border-white/10">
-            <Sparkles size={32} className="mx-auto text-[#80BF84] opacity-50 mb-4" />
-            <p className="text-slate-900 dark:text-white font-black text-lg uppercase tracking-widest">Tính năng đang phát triển</p>
-            <p className="text-slate-400 text-sm font-bold mt-2">Dịch vụ đang quan tâm sẽ sớm xuất hiện tại đây.</p>
-          </div>
-        )}
       </div>
     </div>
   );
