@@ -1,19 +1,11 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-  Dispatch,
-  SetStateAction,
-  useCallback,
-} from "react";
+import { createContext, useContext, useState, useEffect, ReactNode, Dispatch, SetStateAction, useCallback } from "react";
 
 export type UITheme = "light" | "dark";
 
-interface UIContextType {
+// Đảm bảo interface này được khai báo rõ ràng để Vercel không báo lỗi nữa
+export interface UIContextType {
   isNotifOpen: boolean;
   setIsNotifOpen: Dispatch<SetStateAction<boolean>>;
   isAuthModalOpen: boolean;
@@ -23,7 +15,6 @@ interface UIContextType {
 }
 
 const UIContext = createContext<UIContextType | undefined>(undefined);
-
 const THEME_STORAGE_KEY = "ai-health-share-theme";
 
 export function UIProvider({ children }: { children: ReactNode }) {
@@ -33,13 +24,8 @@ export function UIProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const stored = localStorage.getItem(THEME_STORAGE_KEY) as UITheme | null;
-    if (stored === "dark" || stored === "light") {
-      setTheme(stored);
-      return;
-    }
-    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      setTheme("dark");
-    }
+    if (stored === "dark" || stored === "light") { setTheme(stored); return; }
+    if (window.matchMedia("(prefers-color-scheme: dark)").matches) { setTheme("dark"); }
   }, []);
 
   useEffect(() => {
@@ -49,21 +35,10 @@ export function UIProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
 
-  const toggleTheme = useCallback(() => {
-    setTheme((t) => (t === "dark" ? "light" : "dark"));
-  }, []);
+  const toggleTheme = useCallback(() => { setTheme((t) => (t === "dark" ? "light" : "dark")); }, []);
 
   return (
-    <UIContext.Provider
-      value={{
-        isNotifOpen,
-        setIsNotifOpen,
-        isAuthModalOpen,
-        setIsAuthModalOpen,
-        theme,
-        toggleTheme,
-      }}
-    >
+    <UIContext.Provider value={{ isNotifOpen, setIsNotifOpen, isAuthModalOpen, setIsAuthModalOpen, theme, toggleTheme }}>
       {children}
     </UIContext.Provider>
   );
