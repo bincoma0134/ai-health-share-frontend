@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect, ReactNode, Dispatch, Se
 
 export type UITheme = "light" | "dark";
 
-// Đảm bảo interface này được khai báo rõ ràng để Vercel không báo lỗi nữa
+// Đảm bảo phải có từ khóa 'export' ở đây để các file khác nhận diện đúng thuộc tính
 export interface UIContextType {
   isNotifOpen: boolean;
   setIsNotifOpen: Dispatch<SetStateAction<boolean>>;
