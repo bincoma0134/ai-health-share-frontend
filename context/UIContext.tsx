@@ -1,22 +1,69 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+  Dispatch,
+  SetStateAction,
+  useCallback,
+} from "react";
+
+export type UITheme = "light" | "dark";
 
 interface UIContextType {
   isNotifOpen: boolean;
   setIsNotifOpen: Dispatch<SetStateAction<boolean>>;
   isAuthModalOpen: boolean;
   setIsAuthModalOpen: Dispatch<SetStateAction<boolean>>;
+  theme: UITheme;
+  toggleTheme: () => void;
 }
 
 const UIContext = createContext<UIContextType | undefined>(undefined);
 
+const THEME_STORAGE_KEY = "ai-health-share-theme";
+
 export function UIProvider({ children }: { children: ReactNode }) {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [theme, setTheme] = useState<UITheme>("light");
+
+  useEffect(() => {
+    const stored = localStorage.getItem(THEME_STORAGE_KEY) as UITheme | null;
+    if (stored === "dark" || stored === "light") {
+      setTheme(stored);
+      return;
+    }
+    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      setTheme("dark");
+    }
+  }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === "dark") root.classList.add("dark");
+    else root.classList.remove("dark");
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, [theme]);
+
+  const toggleTheme = useCallback(() => {
+    setTheme((t) => (t === "dark" ? "light" : "dark"));
+  }, []);
 
   return (
-    <UIContext.Provider value={{ isNotifOpen, setIsNotifOpen, isAuthModalOpen, setIsAuthModalOpen }}>
+    <UIContext.Provider
+      value={{
+        isNotifOpen,
+        setIsNotifOpen,
+        isAuthModalOpen,
+        setIsAuthModalOpen,
+        theme,
+        toggleTheme,
+      }}
+    >
       {children}
     </UIContext.Provider>
   );
