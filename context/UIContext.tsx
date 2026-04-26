@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect, ReactNode, Dispatch, Se
 
 export type UITheme = "light" | "dark";
 
-// Đảm bảo phải có từ khóa 'export' ở đây để các file khác nhận diện đúng thuộc tính
+// Ép buộc export rõ ràng Interface này
 export interface UIContextType {
   isNotifOpen: boolean;
   setIsNotifOpen: Dispatch<SetStateAction<boolean>>;

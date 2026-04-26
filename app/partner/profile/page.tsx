@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { 
   ShieldCheck, Bookmark, LogOut, Play, Clock, CheckCircle2, Edit3, Camera, X, Sun, Moon, 
   Bell, Eye, LayoutGrid, Video, Sparkles, DollarSign, UploadCloud, MapPin, FileText, 
-  Link2, Plus, Trash2, Package, Info, Tag, BadgeCheck, Star, ImageIcon
+  Link2, Plus, Trash2, Package, Info, Tag, BadgeCheck, Star, ImageIcon, Shield
 } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
@@ -25,7 +25,7 @@ interface SocialLink { platform: SocialPlatform; url: string; }
 
 export default function PartnerProfilePage() {
   const router = useRouter();
-  const { isNotifOpen, setIsNotifOpen, theme, toggleTheme } = useUI();
+  const { isNotifOpen, setIsNotifOpen, theme, toggleTheme } = useUI() as any;
   
   const [isLoading, setIsLoading] = useState(true);
   const [profileData, setProfileData] = useState<any>(null);
@@ -40,6 +40,7 @@ export default function PartnerProfilePage() {
   const [editForm, setEditForm] = useState({ username: "", full_name: "", bio: "", address: "" });
   const [socials, setSocials] = useState<SocialLink[]>([]);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // --- MODAL STATE DỊCH VỤ ---
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -62,7 +63,9 @@ export default function PartnerProfilePage() {
   const [studioPreview, setStudioPreview] = useState<string | null>(null);
   const [isStudioUploading, setIsStudioUploading] = useState(false);
 
+  // --- REFS ---
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
   const studioInputRef = useRef<HTMLInputElement>(null);
 
   const fetchData = async () => {
@@ -121,25 +124,33 @@ export default function PartnerProfilePage() {
     finally { setIsUpdating(false); }
   };
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
-    const tid = toast.loading(`Đang tải lên ảnh đại diện...`);
-    try {
-      const fileName = `${user.id}-avatar-${Date.now()}.${file.name.split('.').pop()}`;
-      const { error: upErr } = await supabase.storage.from('avatars').upload(fileName, file, { upsert: true });
-      if (upErr) throw new Error("Lỗi tải ảnh lên Storage");
-      
-      const publicUrl = supabase.storage.from('avatars').getPublicUrl(fileName).data.publicUrl;
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      const res = await fetch(`${API_URL}/user/profile`, { method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` }, body: JSON.stringify({ avatar_url: publicUrl }) });
-      const result = await res.json();
-      if (!res.ok || result.status !== "success") throw new Error("Lỗi lưu ảnh");
+  // HÀM UPLOAD ẢNH DÙNG CHUNG CHO AVATAR VÀ COVER
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'cover') => {
+      const file = e.target.files?.[0];
+      if (!file || !user) return;
+      if (!file.type.startsWith("image/")) return toast.error("Chỉ chấp nhận định dạng hình ảnh!");
 
-      setProfileData((prev: any) => ({ ...prev, profile: { ...prev.profile, avatar_url: publicUrl } }));
-      toast.success("Cập nhật ảnh thành công!", { id: tid });
-    } catch (e: any) { toast.error(e.message, { id: tid }); }
+      setIsUploadingImage(true);
+      const tid = toast.loading(`Đang tải ảnh ${type === 'avatar' ? 'đại diện' : 'bìa'}...`);
+      try {
+          const fileName = `${user.id}-${type}-${Date.now()}.${file.name.split('.').pop()}`;
+          const { error: upErr } = await supabase.storage.from('avatars').upload(fileName, file, { upsert: true });
+          if (upErr) throw new Error("Lỗi tải ảnh lên Storage");
+          
+          const publicUrl = supabase.storage.from('avatars').getPublicUrl(fileName).data.publicUrl;
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          const payload = type === 'avatar' ? { avatar_url: publicUrl } : { cover_url: publicUrl };
+          const res = await fetch(`${API_URL}/user/profile`, { 
+              method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` }, 
+              body: JSON.stringify(payload) 
+          });
+          
+          if (!res.ok) throw new Error("Lỗi lưu ảnh");
+          setProfileData((prev: any) => ({ ...prev, profile: { ...prev.profile, ...payload } }));
+          toast.success("Cập nhật ảnh thành công!", { id: tid });
+      } catch (e: any) { toast.error(e.message, { id: tid }); } 
+      finally { setIsUploadingImage(false); }
   };
 
   const addSocial = () => setSocials([...socials, { platform: 'facebook', url: '' }]);
@@ -291,7 +302,8 @@ export default function PartnerProfilePage() {
   return (
     <div className="flex-1 relative h-[100dvh] flex flex-col bg-slate-50 dark:bg-zinc-950 transition-colors duration-500 overflow-hidden font-be-vietnam">
       
-      <input type="file" accept="image/*" className="hidden" ref={avatarInputRef} onChange={handleAvatarUpload} />
+      <input type="file" accept="image/*" className="hidden" ref={avatarInputRef} onChange={e => handleImageUpload(e, 'avatar')} />
+      <input type="file" accept="image/*" className="hidden" ref={coverInputRef} onChange={e => handleImageUpload(e, 'cover')} />
 
       {/* TOP BAR */}
       <div className="absolute top-0 w-full z-40 p-6 flex justify-end items-center bg-gradient-to-b from-slate-50 dark:from-zinc-950 to-transparent pointer-events-none">
@@ -306,33 +318,48 @@ export default function PartnerProfilePage() {
       <main className="flex-1 overflow-y-auto no-scrollbar scroll-smooth">
           {isNotifOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-fade-in"><NotificationModal /></div>}
 
-          <div className="max-w-6xl mx-auto p-6 md:p-12 pt-28 pb-32 animate-slide-up">
-            
-            {/* HEADER */}
-            <div className="flex flex-col md:flex-row items-start gap-10 mb-10">
-                <div className="relative group shrink-0 cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
-                  <div className="absolute -inset-1.5 bg-gradient-to-tr from-blue-500 to-cyan-400 rounded-full blur-md opacity-20"></div>
-                  <div className="relative w-32 h-32 md:w-36 md:h-36 rounded-full overflow-hidden border-4 border-white dark:border-zinc-800 shadow-2xl backdrop-blur-md bg-white">
-                    <img src={profileData?.profile?.avatar_url || `https://ui-avatars.com/api/?name=${profileData?.profile?.full_name}&background=80BF84&color=fff`} className="w-full h-full object-cover group-hover:scale-110 transition-transform" alt="avatar" />
+          {/* COVER IMAGE - CHUẨN MỚI */}
+          <div className="relative w-full h-48 md:h-64 bg-slate-200 dark:bg-zinc-900 group cursor-pointer overflow-hidden" onClick={() => coverInputRef.current?.click()}>
+              {profileData?.profile?.cover_url ? (
+                  <img src={profileData.profile.cover_url} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt="cover" />
+              ) : (
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 flex items-center justify-center">
+                      <div className="flex flex-col items-center opacity-50"><ImageIcon size={32} className="mb-2 text-blue-600 dark:text-blue-400"/> <span className="text-sm font-bold text-blue-700 dark:text-blue-300">Tải lên ảnh bìa</span></div>
                   </div>
-                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-[10px] font-black rounded-full shadow-lg border border-white/20 whitespace-nowrap uppercase">
-                    <ShieldCheck size={10} className="inline mr-1"/> BUSINESS
+              )}
+              <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><Edit3 className="text-white"/></div>
+          </div>
+
+          <div className="max-w-6xl mx-auto px-6 md:px-12 pb-32 -mt-16 md:-mt-20 relative z-10">
+            
+            {/* HEADER INFO (Cấu trúc chuyên nghiệp) */}
+            <div className="flex flex-col md:flex-row items-start md:items-end gap-6 md:gap-10 mb-10">
+                <div className="relative group cursor-pointer shrink-0" onClick={() => avatarInputRef.current?.click()}>
+                  <div className="absolute -inset-1.5 bg-gradient-to-tr from-blue-500 to-cyan-400 rounded-full blur-md opacity-40"></div>
+                  <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white dark:border-zinc-950 shadow-2xl bg-white">
+                    <img src={profileData?.profile?.avatar_url || `https://ui-avatars.com/api/?name=${profileData?.profile?.full_name}&background=3b82f6&color=fff`} className="w-full h-full object-cover group-hover:scale-110 transition-transform" alt="avatar" />
+                  </div>
+                  <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center border-4 border-transparent"><Edit3 className="text-white"/></div>
+                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-[10px] font-black rounded-full shadow-lg border border-white/20 whitespace-nowrap uppercase flex items-center gap-1">
+                    <ShieldCheck size={10} fill="currentColor"/> BUSINESS
                   </div>
                 </div>
 
-                <div className="flex-1 pt-2">
-                  <div className="flex flex-col gap-1 mb-6 text-center md:text-left">
-                    <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-md flex items-center justify-center md:justify-start gap-2">
-                        {profileData?.profile?.full_name || "Doanh nghiệp"} <BadgeCheck size={24} className="text-blue-500" />
-                    </h1>
-                    <h2 className="text-base md:text-lg font-medium text-slate-500 dark:text-zinc-400 tracking-tight">@{profileData?.profile?.username}</h2>
-                  </div>
+                <div className="flex-1 pb-2 w-full">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                      <div className="flex flex-col gap-1 text-center md:text-left">
+                        <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-md flex items-center justify-center md:justify-start gap-2">
+                            {profileData?.profile?.full_name || "Doanh nghiệp"} <BadgeCheck size={24} className="text-blue-500" />
+                        </h1>
+                        <h2 className="text-base font-medium text-slate-500 dark:text-zinc-400 tracking-tight">@{profileData?.profile?.username || "business_account"}</h2>
+                      </div>
 
-                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
-                    <button onClick={() => router.push(`/${profileData?.profile?.username}`)} className="px-8 py-3.5 bg-gradient-to-br from-blue-500 to-cyan-500 text-white font-black rounded-2xl hover:shadow-xl transition-all flex items-center gap-2 active:scale-95 shadow-lg">
-                        <Eye size={20} strokeWidth={3} /> <span>Xem công khai</span>
-                    </button>
-                    <button onClick={handleLogout} className="p-3.5 bg-white/40 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-rose-500 rounded-xl hover:bg-rose-50 transition-all shadow-md active:scale-90"><LogOut size={20} /></button>
+                      <div className="flex flex-wrap items-center justify-center gap-3">
+                        <button onClick={() => router.push(`/${profileData?.profile?.username}`)} className="px-6 py-3.5 bg-gradient-to-br from-blue-500 to-cyan-500 text-white font-black rounded-2xl hover:shadow-lg hover:shadow-blue-500/30 transition-all flex items-center gap-2 active:scale-95 text-sm">
+                            <Eye size={18} strokeWidth={3} /> Xem công khai
+                        </button>
+                        <button onClick={handleLogout} className="p-3.5 bg-white/40 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-rose-500 rounded-xl hover:bg-rose-50 transition-all shadow-sm active:scale-90"><LogOut size={18} /></button>
+                      </div>
                   </div>
                 </div>
             </div>
@@ -345,13 +372,13 @@ export default function PartnerProfilePage() {
                             <Package size={16}/> QUẢN LÝ DỊCH VỤ
                         </button>
                         <button onClick={() => setActiveTab('studio')} className={`flex items-center gap-2 text-xs font-black transition-all whitespace-nowrap ${activeTab === 'studio' ? 'text-blue-500 border-b-2 border-blue-500 pb-4 -mb-5' : 'text-slate-400 hover:text-slate-600'}`}>
-                            <Video size={16}/> QUẢN LÝ VIDEO (STUDIO)
+                            <Video size={16}/> STUDIO
                         </button>
                         <button onClick={() => setActiveTab('reviews')} className={`flex items-center gap-2 text-xs font-black transition-all whitespace-nowrap ${activeTab === 'reviews' ? 'text-blue-500 border-b-2 border-blue-500 pb-4 -mb-5' : 'text-slate-400 hover:text-slate-600'}`}>
-                            <Star size={16}/> ĐÁNH GIÁ & PHẢN HỒI
+                            <Star size={16}/> ĐÁNH GIÁ
                         </button>
                         <button onClick={() => setActiveTab('info')} className={`flex items-center gap-2 text-xs font-black transition-all whitespace-nowrap ${activeTab === 'info' ? 'text-blue-500 border-b-2 border-blue-500 pb-4 -mb-5' : 'text-slate-400 hover:text-slate-600'}`}>
-                            <Edit3 size={16}/> HỒ SƠ & MẠNG XÃ HỘI
+                            <Edit3 size={16}/> HỒ SƠ
                         </button>
                     </div>
 
@@ -447,10 +474,60 @@ export default function PartnerProfilePage() {
                              </div>
                         )}
 
-                        {/* 3. HỒ SƠ & MẠNG XÃ HỘI */}
+                        {/* 3. ĐÁNH GIÁ & PHẢN HỒI */}
+                        {activeTab === 'reviews' && (
+                            <div className="animate-fade-in space-y-8">
+                                <div className="bg-white/60 dark:bg-zinc-900/50 backdrop-blur-2xl p-8 rounded-[3rem] border border-slate-200 dark:border-white/10 shadow-lg">
+                                    <div className="flex items-center gap-2 text-amber-500 font-black text-xs mb-6 uppercase tracking-widest">
+                                        <Star size={16} fill="currentColor" /> ĐÁNH GIÁ TRỰC TUYẾN
+                                    </div>
+
+                                    <div className="flex items-center gap-6 mb-10">
+                                        <span className="text-6xl font-black text-slate-900 dark:text-white">4.8</span>
+                                        <div>
+                                            <div className="flex gap-1 text-amber-400 mb-1">
+                                                {[1, 2, 3, 4, 5].map((s) => <Star key={s} size={20} fill="currentColor" />)}
+                                            </div>
+                                            <p className="text-xs font-bold text-slate-500 uppercase">Dựa trên 124 lượt đánh giá</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-6">
+                                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Phản hồi gần đây</h3>
+                                        
+                                        {[
+                                            { name: "Nguyễn V. A", stars: 5, comment: "Dịch vụ rất chuyên nghiệp, không gian thư giãn tuyệt đối." },
+                                            { name: "Trần T. B", stars: 5, comment: "Bác sĩ tư vấn rất tận tâm, sẽ quay lại vào tuần sau." },
+                                            { name: "Lê C.", stars: 4, comment: "Chất lượng tốt, máy móc hiện đại và sạch sẽ." }
+                                        ].map((fb, idx) => (
+                                            <div key={idx} className="p-5 bg-slate-50 dark:bg-white/5 rounded-[2rem] border border-slate-100 dark:border-white/5 transition-all hover:scale-[1.01]">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <h4 className="text-sm font-black text-slate-900 dark:text-white">{fb.name}</h4>
+                                                    <div className="flex gap-0.5 text-amber-400">
+                                                        {Array.from({ length: fb.stars }).map((_, i) => <Star key={i} size={12} fill="currentColor" />)}
+                                                    </div>
+                                                </div>
+                                                <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium italic leading-relaxed">"{fb.comment}"</p>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <button className="w-full mt-8 py-4 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-zinc-400 font-black text-[10px] uppercase tracking-widest rounded-2xl hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
+                                        Xem tất cả đánh giá
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 4. HỒ SƠ & MẠNG XÃ HỘI */}
                         {activeTab === 'info' && (
                             <div className="space-y-8 animate-fade-in">
-                                <div className="bg-white/60 dark:bg-zinc-900/50 backdrop-blur-2xl p-6 md:p-8 rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-lg space-y-6">
+                                <div className="bg-white/60 dark:bg-zinc-900/50 backdrop-blur-2xl p-6 md:p-8 rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-lg space-y-6 relative">
+                                    {isUploadingImage && (
+                                        <div className="absolute inset-0 bg-white/50 dark:bg-black/50 backdrop-blur-sm z-50 rounded-[2rem] flex items-center justify-center">
+                                            <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                        </div>
+                                    )}
                                     
                                     {/* Username */}
                                     <div className="flex flex-col gap-2">
@@ -503,54 +580,10 @@ export default function PartnerProfilePage() {
                                 </div>
                             </div>
                         )}
-                        {/* 4. ĐÁNH GIÁ & PHẢN HỒI (ĐỒNG BỘ 100% GIAO DIỆN PUBLIC) */}
-                        {activeTab === 'reviews' && (
-                            <div className="animate-fade-in space-y-8">
-                                <div className="bg-white/60 dark:bg-zinc-900/50 backdrop-blur-2xl p-8 rounded-[3rem] border border-slate-200 dark:border-white/10 shadow-lg">
-                                    <div className="flex items-center gap-2 text-amber-500 font-black text-xs mb-6 uppercase tracking-widest">
-                                        <Star size={16} fill="currentColor" /> ĐÁNH GIÁ TRỰC TUYẾN
-                                    </div>
-
-                                    <div className="flex items-center gap-6 mb-10">
-                                        <span className="text-6xl font-black text-slate-900 dark:text-white">4.8</span>
-                                        <div>
-                                            <div className="flex gap-1 text-amber-400 mb-1">
-                                                {[1, 2, 3, 4, 5].map((s) => <Star key={s} size={20} fill="currentColor" />)}
-                                            </div>
-                                            <p className="text-xs font-bold text-slate-500 uppercase">Dựa trên 124 lượt đánh giá</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-6">
-                                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Phản hồi gần đây</h3>
-                                        
-                                        {[
-                                            { name: "Nguyễn V. A", stars: 5, comment: "Dịch vụ rất chuyên nghiệp, không gian thư giãn tuyệt đối." },
-                                            { name: "Trần T. B", stars: 5, comment: "Bác sĩ tư vấn rất tận tâm, sẽ quay lại vào tuần sau." },
-                                            { name: "Lê C.", stars: 4, comment: "Chất lượng tốt, máy móc hiện đại và sạch sẽ." }
-                                        ].map((fb, idx) => (
-                                            <div key={idx} className="p-5 bg-slate-50 dark:bg-white/5 rounded-[2rem] border border-slate-100 dark:border-white/5 transition-all hover:scale-[1.01]">
-                                                <div className="flex justify-between items-center mb-2">
-                                                    <h4 className="text-sm font-black text-slate-900 dark:text-white">{fb.name}</h4>
-                                                    <div className="flex gap-0.5 text-amber-400">
-                                                        {Array.from({ length: fb.stars }).map((_, i) => <Star key={i} size={12} fill="currentColor" />)}
-                                                    </div>
-                                                </div>
-                                                <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium italic leading-relaxed">"{fb.comment}"</p>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    <button className="w-full mt-8 py-4 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-zinc-400 font-black text-[10px] uppercase tracking-widest rounded-2xl hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
-                                        Xem tất cả đánh giá
-                                    </button>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </div>
 
-                {/* SIDEBAR UY TÍN (Cột Phải) - ĐÃ ĐỒNG BỘ PUBLIC */}
+                {/* SIDEBAR UY TÍN (Cột Phải) */}
                 <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-8 lg:pt-[52px]">
                     <div className="bg-white/60 dark:bg-zinc-900/50 backdrop-blur-2xl rounded-[3rem] p-8 border border-slate-200 dark:border-white/10 relative overflow-hidden shadow-lg flex flex-col">
                         <div className="flex items-center gap-2 text-[#80BF84] font-black text-xs mb-4 uppercase tracking-widest">
