@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { 
   Home, ShieldCheck, Sun, Moon, CheckCircle, XCircle, 
   Clock, AlertTriangle, FileText, X, LayoutDashboard, Package, Video, 
-  Trash2, Search, History, ShieldAlert, TrendingUp, PieChart as PieChartIcon, Activity
+  Trash2, Search, History, ShieldAlert, TrendingUp, PieChart as PieChartIcon, Activity, Eye
 } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
@@ -21,7 +21,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 interface QueueItem {
     id: string; type: 'service' | 'video'; title: string; description?: string;
     price?: number; media_url?: string; image_url?: string; video_url?: string;
-    status: string; created_at: string; moderation_note?: string;
+    status: string; created_at: string; updated_at?: string; moderation_note?: string;
     author?: { full_name?: string; email?: string; avatar_url?: string };
 }
 
@@ -29,7 +29,7 @@ const CHART_COLORS = ['#8b5cf6', '#f43f5e'];
 
 export default function ModeratorDashboard() {
   const router = useRouter();
-  const { theme, toggleTheme } = useUI();
+  const { theme, toggleTheme } = useUI() as any;
   
   const [isLoading, setIsLoading] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
@@ -53,19 +53,16 @@ export default function ModeratorDashboard() {
           const { data: { session } } = await supabase.auth.getSession();
           if (!session) { router.push("/"); return; }
 
-          const [qRes, hRes, sRes] = await Promise.all([
-              fetch(`${API_URL}/moderation/queue`, { headers: { "Authorization": `Bearer ${session.access_token}` } }),
-              fetch(`${API_URL}/moderation/history`, { headers: { "Authorization": `Bearer ${session.access_token}` } }),
-              fetch(`${API_URL}/moderation/stats`, { headers: { "Authorization": `Bearer ${session.access_token}` } })
-          ]);
+          const fetchOpts = { headers: { "Authorization": `Bearer ${session.access_token}` } };
+          let qData = null, hData = null, sData = null;
+
+          try { qData = await (await fetch(`${API_URL}/moderation/queue`, fetchOpts)).json(); } catch(e) {}
+          try { hData = await (await fetch(`${API_URL}/moderation/history`, fetchOpts)).json(); } catch(e) {}
+          try { sData = await (await fetch(`${API_URL}/moderation/stats`, fetchOpts)).json(); } catch(e) {}
           
-          const qData = await qRes.json();
-          const hData = await hRes.json();
-          const sData = await sRes.json();
-          
-          if (qData.status === "success") setQueue(qData.data || []);
-          if (hData.status === "success") setHistory(hData.data || []);
-          if (sData.status === "success") setStats(sData.data || { total_processed: 0, approved_count: 0, rejected_count: 0, chart_data: [] });
+          if (qData && qData.status === "success") setQueue(qData.data || []);
+          if (hData && hData.status === "success") setHistory(hData.data || []);
+          if (sData && sData.status === "success") setStats(sData.data || { total_processed: 0, approved_count: 0, rejected_count: 0, chart_data: [] });
       } catch (error) { 
           toast.error("Lỗi đồng bộ dữ liệu hệ thống!"); 
       } finally { 
@@ -88,7 +85,7 @@ export default function ModeratorDashboard() {
           });
           if (!res.ok) throw new Error("Lỗi xử lý");
           toast.success("Xử lý thành công!", { id: tid });
-          fetchAllData(); // Bắt buộc Reload Data để vẽ lại Biểu đồ lập tức
+          fetchAllData(); 
           closeModal();
       } catch (e: any) { toast.error(e.message, { id: tid }); }
       finally { setIsProcessing(false); }
@@ -105,6 +102,8 @@ export default function ModeratorDashboard() {
   });
 
   const getMediaUrl = (item: QueueItem) => item.media_url || item.video_url || item.image_url;
+
+  const isReadonlyModal = selectedItem && ['APPROVED', 'REJECTED', 'DELETED'].includes(selectedItem.status);
 
   if (!isMounted) return null;
 
@@ -151,7 +150,7 @@ export default function ModeratorDashboard() {
               ) : (
                   <div className="animate-fade-in max-w-[1400px] mx-auto space-y-10">
                       
-                      {/* --- OVERVIEW VỚI DỮ LIỆU ĐÃ ĐỒNG BỘ --- */}
+                      {/* --- OVERVIEW THỐNG KÊ --- */}
                       {activeTab === 'overview' && (
                           <div className="space-y-10">
                               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -265,21 +264,60 @@ export default function ModeratorDashboard() {
                               <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-6">Lịch Sử Ra Quyết Định</h2>
                               <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm">
                                   <div className="overflow-x-auto no-scrollbar">
-                                      <table className="w-full text-left min-w-[800px]">
+                                      <table className="w-full text-left min-w-[1000px]">
                                           <thead className="bg-slate-50 dark:bg-black/50 border-b border-slate-200 dark:border-white/10">
-                                              <tr className="text-[10px] font-black text-slate-500 uppercase tracking-widest"><th className="p-5">Đối tượng</th><th className="p-5">Nội dung</th><th className="p-5">Trạng thái</th><th className="p-5">Ghi chú của bạn</th><th className="p-5 text-right">Ngày duyệt</th></tr>
+                                              <tr className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                                  <th className="p-5">STT</th>
+                                                  <th className="p-5">Thời gian</th>
+                                                  <th className="p-5">Người duyệt</th>
+                                                  <th className="p-5">Đối tác</th>
+                                                  <th className="p-5">Bản ghi</th>
+                                                  <th className="p-5">Trạng thái</th>
+                                                  <th className="p-5">Ghi chú</th>
+                                              </tr>
                                           </thead>
                                           <tbody className="text-sm divide-y divide-slate-100 dark:divide-white/5">
                                               {(history || []).length === 0 ? (
-                                                  <tr><td colSpan={5} className="p-10 text-center text-slate-400 font-bold uppercase tracking-widest text-xs">Chưa có lịch sử</td></tr>
+                                                  <tr><td colSpan={7} className="p-10 text-center text-slate-400 font-bold uppercase tracking-widest text-xs">Chưa có lịch sử</td></tr>
                                               ) : (
-                                                  history.map(item => (
+                                                  history.map((item, idx) => (
                                                       <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                                                          <td className="p-5 flex items-center gap-2"><img src={item.author?.avatar_url || `https://ui-avatars.com/api/?name=${item.author?.full_name}`} className="w-6 h-6 rounded-full"/><span className="font-bold text-slate-700 dark:text-zinc-300 text-xs">{item.author?.full_name}</span></td>
-                                                          <td className="p-5 font-bold text-slate-900 dark:text-white truncate max-w-[200px]">{item.title}</td>
-                                                          <td className="p-5"><span className={`px-2.5 py-1 rounded-md text-[9px] font-black uppercase border ${item.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/20' : 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/20'}`}>{item.status}</span></td>
-                                                          <td className="p-5 text-xs text-slate-500 italic max-w-[200px] truncate" title={item.moderation_note}>{item.moderation_note || '-'}</td>
-                                                          <td className="p-5 text-xs font-bold text-slate-400 text-right">{new Date(item.created_at).toLocaleDateString('vi-VN')}</td>
+                                                          <td className="p-5 font-black text-xs text-slate-400">{idx + 1}</td>
+                                                          
+                                                          <td className="p-5">
+                                                              <span className="font-bold text-slate-900 dark:text-white block">
+                                                                  {new Date(item.updated_at || item.created_at).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit', second:'2-digit'})}
+                                                              </span>
+                                                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                                                  {new Date(item.updated_at || item.created_at).toLocaleDateString('vi-VN', {day: '2-digit', month: '2-digit', year: 'numeric'})}
+                                                              </span>
+                                                          </td>
+
+                                                          <td className="p-5">
+                                                              <div className="flex items-center gap-2">
+                                                                  <div className="w-7 h-7 rounded-full bg-violet-500 text-white flex items-center justify-center shadow-lg"><ShieldCheck size={14}/></div>
+                                                                  <span className="font-bold text-slate-700 dark:text-zinc-300 text-xs">Bạn (Moderator)</span>
+                                                              </div>
+                                                          </td>
+
+                                                          <td className="p-5 flex items-center gap-2">
+                                                              <img src={item.author?.avatar_url || `https://ui-avatars.com/api/?name=${item.author?.full_name}`} className="w-7 h-7 rounded-full border border-slate-200 dark:border-white/10"/>
+                                                              <span className="font-bold text-slate-700 dark:text-zinc-300 text-xs truncate max-w-[120px]">{item.author?.full_name || 'Đang cập nhật'}</span>
+                                                          </td>
+
+                                                          <td className="p-5">
+                                                              <button onClick={() => setSelectedItem(item)} className="px-3 py-1.5 bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 rounded-lg text-[10px] font-black uppercase flex items-center gap-1 hover:bg-violet-100 dark:hover:bg-violet-500/20 transition-colors">
+                                                                  <Eye size={12}/> Xem bản ghi
+                                                              </button>
+                                                          </td>
+
+                                                          <td className="p-5">
+                                                              <span className={`px-2.5 py-1 rounded-md text-[9px] font-black uppercase border ${item.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/20' : item.status === 'DELETED' ? 'bg-slate-100 text-slate-600 border-slate-300 dark:bg-zinc-800 dark:text-zinc-400 dark:border-white/10' : 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/20'}`}>
+                                                                  {item.status}
+                                                              </span>
+                                                          </td>
+
+                                                          <td className="p-5 text-xs text-slate-500 italic max-w-[150px] truncate" title={item.moderation_note}>{item.moderation_note || '-'}</td>
                                                       </tr>
                                                   ))
                                               )}
@@ -295,7 +333,7 @@ export default function ModeratorDashboard() {
           </div>
       </div>
 
-      {/* --- MODAL XỬ LÝ CHUYÊN SÂU --- */}
+      {/* --- MODAL XỬ LÝ & XEM CHI TIẾT --- */}
       {selectedItem && (
         <div className="fixed inset-0 z-[100] flex justify-center items-center p-4 md:p-8">
             <div className="absolute inset-0 bg-black/90 backdrop-blur-xl" onClick={closeModal}></div>
@@ -315,6 +353,9 @@ export default function ModeratorDashboard() {
                     <div className="flex-1 bg-black relative flex flex-col items-center justify-center p-4">
                         {selectedItem.status === 'PENDING_UPDATE' && <div className="absolute top-4 left-4 z-10"><span className="px-2 py-1 bg-amber-500 text-white text-[10px] font-black rounded-md">BẢN CẬP NHẬT MỚI</span></div>}
                         {selectedItem.status === 'PENDING_DELETE' && <div className="absolute inset-0 bg-rose-500/20 z-10 pointer-events-none flex items-center justify-center"><ShieldAlert size={100} className="text-rose-500 opacity-50"/></div>}
+                        
+                        {isReadonlyModal && <div className="absolute top-4 right-4 z-10"><span className="px-3 py-1.5 bg-emerald-500 text-white text-[10px] font-black rounded-lg shadow-lg flex items-center gap-1"><CheckCircle size={14}/> ĐÃ HOÀN TẤT XỬ LÝ</span></div>}
+
                         <div className="w-full max-h-full overflow-hidden flex justify-center rounded-xl">
                             {getMediaUrl(selectedItem) ? (
                                 getMediaUrl(selectedItem)?.includes('.mp4') ? <video src={getMediaUrl(selectedItem)} className="max-w-full max-h-full object-contain" controls autoPlay loop /> : <img src={getMediaUrl(selectedItem)} className="max-w-full max-h-full object-contain" />
@@ -327,7 +368,7 @@ export default function ModeratorDashboard() {
                     <div className="flex justify-between items-center p-6 border-b border-slate-200 dark:border-white/5">
                         <div className="flex items-center gap-3">
                             <img src={selectedItem.author?.avatar_url || `https://ui-avatars.com/api/?name=${selectedItem.author?.full_name}`} className="w-10 h-10 rounded-full border border-slate-200"/>
-                            <div><p className="text-sm font-black text-slate-900 dark:text-white">{selectedItem.author?.full_name}</p><p className="text-[10px] text-slate-500">ID: {selectedItem.id.split('-')[0]}</p></div>
+                            <div><p className="text-sm font-black text-slate-900 dark:text-white">{selectedItem.author?.full_name || 'Đang cập nhật'}</p><p className="text-[10px] text-slate-500">ID: {selectedItem.id.split('-')[0]}</p></div>
                         </div>
                         <button onClick={closeModal} className="p-2 bg-slate-100 dark:bg-white/5 rounded-full text-slate-500"><X size={18}/></button>
                     </div>
@@ -335,7 +376,15 @@ export default function ModeratorDashboard() {
                         <h2 className="text-xl font-black text-slate-900 dark:text-white leading-snug">{selectedItem.title}</h2>
                         {selectedItem.price && <p className="text-lg font-black text-emerald-500">{selectedItem.price.toLocaleString()} VND</p>}
                         <div className="p-4 bg-slate-50 dark:bg-black/30 rounded-xl text-sm text-slate-700 dark:text-zinc-300 whitespace-pre-wrap border border-slate-200 dark:border-white/5">{selectedItem.description || "Nội dung này không có mô tả chi tiết."}</div>
-                        {showRejectInput && (
+                        
+                        {isReadonlyModal && selectedItem.moderation_note && (
+                            <div className="p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl">
+                                <label className="block text-[10px] font-black text-amber-600 dark:text-amber-400 mb-1 uppercase tracking-widest">Ghi chú của bạn:</label>
+                                <p className="text-sm text-slate-700 dark:text-zinc-300 italic">{selectedItem.moderation_note}</p>
+                            </div>
+                        )}
+
+                        {showRejectInput && !isReadonlyModal && (
                             <div className="p-4 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-xl animate-fade-in">
                                 <label className="block text-xs font-bold text-rose-600 dark:text-rose-400 mb-2 uppercase tracking-widest flex items-center gap-1"><AlertTriangle size={14}/> Nhập lý do (Bắt buộc):</label>
                                 <textarea rows={3} className="w-full p-3 bg-white dark:bg-black/50 border border-rose-200 dark:border-rose-500/30 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 resize-none" placeholder="Vd: Video mờ, giá không hợp lý..." value={rejectNote} onChange={e => setRejectNote(e.target.value)} />
@@ -343,7 +392,12 @@ export default function ModeratorDashboard() {
                         )}
                     </div>
                     <div className="p-6 border-t border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-black/20 flex flex-col gap-3">
-                        {selectedItem.status === 'PENDING_DELETE' ? (
+                        
+                        {isReadonlyModal ? (
+                            <button onClick={closeModal} className="w-full py-4 bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 font-black rounded-xl hover:bg-slate-300 dark:hover:bg-zinc-700 transition-all flex justify-center gap-2">
+                                ĐÓNG CỬA SỔ
+                            </button>
+                        ) : selectedItem.status === 'PENDING_DELETE' ? (
                             <><button onClick={() => handleModerate('DELETED')} disabled={isProcessing} className="w-full py-4 bg-rose-500 text-white font-black rounded-xl hover:bg-rose-600 transition-all flex justify-center gap-2 shadow-lg shadow-rose-500/20"><Trash2 size={20}/> DUYỆT CHO PHÉP XÓA</button><button onClick={() => handleModerate('APPROVED')} disabled={isProcessing} className="w-full py-4 bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 font-black rounded-xl hover:bg-slate-300 dark:hover:bg-zinc-700 transition-all flex justify-center gap-2"><XCircle size={20}/> TỪ CHỐI YÊU CẦU XÓA</button></>
                         ) : (
                             <>
