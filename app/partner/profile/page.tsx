@@ -4,13 +4,12 @@ import { useEffect, useState, useRef } from "react";
 import { 
   ShieldCheck, Bookmark, LogOut, Play, Clock, CheckCircle2, Edit3, Camera, X, Sun, Moon, 
   Bell, Eye, LayoutGrid, Video, Sparkles, DollarSign, UploadCloud, MapPin, FileText, 
-  Link2, Plus, Trash2, Package, Info, Tag, BadgeCheck, Star, ImageIcon, Shield
+  Link2, Plus, Trash2, Package, Info, Tag, BadgeCheck, Star, ImageIcon, Shield, Building2, Share2
 } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import NotificationModal from "@/components/NotificationModal";
-import Loading from "@/app/loading";
 import { useUI } from "@/context/UIContext";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -25,7 +24,6 @@ interface SocialLink { platform: SocialPlatform; url: string; }
 
 export default function PartnerProfilePage() {
   const router = useRouter();
-  // Vá lỗi TypeScript cho Vercel
   const { isNotifOpen, setIsNotifOpen, theme, toggleTheme } = useUI() as any;
   
   const [isLoading, setIsLoading] = useState(true);
@@ -72,7 +70,7 @@ export default function PartnerProfilePage() {
       const [resP, resS, resV] = await Promise.all([
         fetch(`${API_URL}/user/profile`, { headers: { "Authorization": `Bearer ${session.access_token}` } }),
         fetch(`${API_URL}/partner/my-services`, { headers: { "Authorization": `Bearer ${session.access_token}` } }),
-        fetch(`${API_URL}/partner/my-videos`, { headers: { "Authorization": `Bearer ${session.access_token}` } })
+        fetch(`${API_URL}/partner/my-tiktok-feeds`, { headers: { "Authorization": `Bearer ${session.access_token}` } })
       ]);
       
       const [dataP, dataS, dataV] = await Promise.all([resP.json(), resS.json(), resV.json()]);
@@ -101,6 +99,12 @@ export default function PartnerProfilePage() {
   useEffect(() => { fetchData(); }, [router]);
 
   const handleLogout = async () => { await supabase.auth.signOut(); router.push("/"); };
+
+  const handleShareProfile = () => {
+      const url = `${window.location.origin}/${profileData?.profile?.username}`;
+      navigator.clipboard.writeText(url);
+      toast.success("Đã sao chép liên kết Hồ sơ Doanh nghiệp!");
+  };
 
   const handleUpdateProfile = async () => {
     setIsUpdating(true);
@@ -214,7 +218,7 @@ export default function PartnerProfilePage() {
         const videoUrl = supabase.storage.from('media').getPublicUrl(fileName).data.publicUrl;
         const { data: { session } } = await supabase.auth.getSession();
         const payload = { title: studioData.title, content: studioData.content, price: studioData.price ? parseFloat(studioData.price) : null, video_url: videoUrl };
-        const res = await fetch(`${API_URL}/studio/videos`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` }, body: JSON.stringify(payload) });
+        const res = await fetch(`${API_URL}/tiktok/feeds`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` }, body: JSON.stringify(payload) });
         if (!res.ok) throw new Error("Lỗi đăng bài");
         toast.success("Video đã được gửi đi chờ duyệt!", { id: tid });
         setStudioData({ title: "", content: "", price: "" }); setStudioFile(null); setStudioPreview(null);
@@ -230,7 +234,7 @@ export default function PartnerProfilePage() {
     try {
         const { data: { session } } = await supabase.auth.getSession();
         const payload = { title: editingVideo.title, content: editingVideo.content, price: editingVideo.price ? parseFloat(editingVideo.price) : null };
-        const res = await fetch(`${API_URL}/partner/my-videos/${editingVideo.id}`, { method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` }, body: JSON.stringify(payload) });
+        const res = await fetch(`${API_URL}/partner/my-tiktok-feeds/${editingVideo.id}`, { method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` }, body: JSON.stringify(payload) });
         if (!res.ok) throw new Error("Lỗi chỉnh sửa video");
         toast.success("Bản sửa đổi video đã được gửi đi chờ duyệt!", { id: tid });
         setIsEditVideoModalOpen(false); fetchData();
@@ -243,7 +247,7 @@ export default function PartnerProfilePage() {
     const tid = toast.loading("Đang gửi yêu cầu gỡ...");
     try {
         const { data: { session } } = await supabase.auth.getSession();
-        const res = await fetch(`${API_URL}/partner/my-videos/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${session?.access_token}` } });
+        const res = await fetch(`${API_URL}/partner/my-tiktok-feeds/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${session?.access_token}` } });
         if (!res.ok) throw new Error("Lỗi gỡ video");
         toast.success("Yêu cầu gỡ video đã được gửi chờ duyệt!", { id: tid }); fetchData();
     } catch (e: any) { toast.error(e.message, { id: tid }); }
@@ -261,13 +265,19 @@ export default function PartnerProfilePage() {
           'PENDING': { label: 'Chờ xét duyệt', class: 'bg-amber-500 text-white' },
           'REJECTED': { label: 'Cần điều chỉnh', class: 'bg-rose-500 text-white' },
           'PENDING_DELETE': { label: 'Đang chờ gỡ', class: 'bg-rose-500 text-white' },
-          'DELETED': { label: 'Đã gỡ', class: 'bg-slate-500 text-white' } // Fix lỗi nhãn
+          'DELETED': { label: 'Đã gỡ', class: 'bg-slate-500 text-white' } 
       };
       const c = config[status] || config['PENDING'];
       return <span className={`px-2 py-1 text-[9px] font-black rounded-md uppercase border backdrop-blur-md ${c.class}`}>{c.label}</span>;
   };
 
-  if (isLoading) return <Loading />;
+  // Thay thế Loading cũ bằng chuẩn mới của Hệ thống Role
+  if (isLoading) return (
+      <div className="h-[100dvh] w-full bg-slate-50 dark:bg-zinc-950 flex flex-col items-center justify-center transition-colors duration-500">
+          <Building2 className="text-blue-500 w-10 h-10 animate-pulse" />
+          <p className="text-slate-500 mt-4 text-xs font-black tracking-widest uppercase">Đang nạp không gian doanh nghiệp...</p>
+      </div>
+  );
 
   return (
     <div className="flex-1 relative h-[100dvh] flex flex-col bg-slate-50 dark:bg-zinc-950 transition-colors duration-500 overflow-hidden font-be-vietnam">
@@ -280,92 +290,105 @@ export default function PartnerProfilePage() {
             <button onClick={toggleTheme} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-3xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white shadow-lg group transition-all">
               {theme === "dark" ? <Sun size={20} className="group-hover:text-amber-300" /> : <Moon size={20} className="group-hover:text-blue-500" />}
             </button>
-            <button onClick={() => setIsNotifOpen(true)} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-3xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 hover:text-[#80BF84] shadow-lg transition-all"><Bell size={20} /></button>
+            <button onClick={() => setIsNotifOpen(true)} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-3xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 hover:text-blue-500 shadow-lg transition-all"><Bell size={20} /></button>
           </div>
       </div>
 
       <main className="flex-1 overflow-y-auto no-scrollbar scroll-smooth">
           {isNotifOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-fade-in"><NotificationModal /></div>}
 
-          <div className="relative w-full h-48 md:h-64 bg-slate-200 dark:bg-zinc-900 group cursor-pointer overflow-hidden" onClick={() => coverInputRef.current?.click()}>
+          {/* CHUẨN HOÁ COVER IMAGE */}
+          <div className="relative w-full h-48 md:h-64 bg-slate-200 dark:bg-zinc-900 group cursor-pointer overflow-hidden border-b border-slate-200 dark:border-white/5" onClick={() => coverInputRef.current?.click()}>
               {profileData?.profile?.cover_url ? (
                   <img src={profileData.profile.cover_url} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt="cover" />
               ) : (
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 flex items-center justify-center">
-                      <div className="flex flex-col items-center opacity-50"><ImageIcon size={32} className="mb-2 text-blue-600 dark:text-blue-400"/> <span className="text-sm font-bold text-blue-700 dark:text-blue-300">Tải lên ảnh bìa</span></div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-900/40 to-cyan-900/40 flex items-center justify-center">
+                      <div className="flex flex-col items-center opacity-50"><Building2 size={40} className="mb-2 text-blue-500 dark:text-blue-400"/> <span className="text-sm font-bold text-blue-700 dark:text-blue-300">Tải lên ảnh bìa cơ sở</span></div>
                   </div>
               )}
               <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><Edit3 className="text-white"/></div>
           </div>
 
-          {/* FIX GIAO DIỆN: Đã gỡ -mt khỏi thẻ container bao ngoài */}
           <div className="max-w-6xl mx-auto px-6 md:px-12 pb-32 relative z-10">
             
-            {/* FIX GIAO DIỆN: Dùng items-start để cụm tên không bao giờ lọt lên Cover */}
-            <div className="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-10 mb-10">
+            {/* CHUẨN HOÁ HEADER THEO MASTER ADMIN */}
+            <div className="flex flex-col md:flex-row items-center md:items-start gap-8 md:gap-12 mb-10 animate-fade-in">
                 
-                {/* FIX GIAO DIỆN: Chỉ dùng -mt cho riêng cụm Avatar (Đúng chuẩn Public View) */}
-                <div className="relative group cursor-pointer shrink-0 -mt-16 md:-mt-20" onClick={() => avatarInputRef.current?.click()}>
-                  <div className="absolute -inset-1.5 bg-gradient-to-tr from-blue-500 to-cyan-400 rounded-full blur-md opacity-40"></div>
-                  <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white dark:border-zinc-950 shadow-2xl bg-white">
-                    <img src={profileData?.profile?.avatar_url || `https://ui-avatars.com/api/?name=${profileData?.profile?.full_name}&background=3b82f6&color=fff`} className="w-full h-full object-cover group-hover:scale-110 transition-transform" alt="avatar" />
+                {/* Avatar lồi lên */}
+                <div className="relative shrink-0 -mt-16 md:-mt-20 group cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
+                  <div className="absolute -inset-1.5 bg-gradient-to-tr from-blue-400 to-cyan-500 rounded-full blur-md opacity-40 group-hover:opacity-60 transition duration-1000"></div>
+                  <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white dark:border-zinc-950 shadow-2xl bg-white p-1.5">
+                    <img src={profileData?.profile?.avatar_url || `https://ui-avatars.com/api/?name=${profileData?.profile?.full_name}&background=3b82f6&color=fff`} className="w-full h-full object-cover rounded-full" alt="avatar" />
                   </div>
-                  <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center border-4 border-transparent"><Edit3 className="text-white"/></div>
-                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-[10px] font-black rounded-full shadow-lg border border-white/20 whitespace-nowrap uppercase flex items-center gap-1">
-                    <ShieldCheck size={10} fill="currentColor"/> BUSINESS
+                  <div className="absolute inset-1.5 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><Edit3 className="text-white"/></div>
+                  <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-[10px] font-black rounded-full shadow-xl border border-white/20 whitespace-nowrap uppercase flex items-center gap-1.5 tracking-widest z-20">
+                    <Building2 size={12} className="fill-white/20"/> BUSINESS
                   </div>
                 </div>
 
-                {/* Vùng chứa Tên và Thống kê - Cách một khoảng nhỏ an toàn phía dưới Cover */}
-                <div className="flex-1 w-full pt-4 md:pt-6">
-                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-                      <div className="flex flex-col gap-1 text-center md:text-left">
-                        <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-md flex items-center justify-center md:justify-start gap-2">
-                            {profileData?.profile?.full_name || "Doanh nghiệp"} <BadgeCheck size={24} className="text-blue-500" />
-                        </h1>
-                        <h2 className="text-base font-medium text-slate-500 dark:text-zinc-400 tracking-tight">@{profileData?.profile?.username || "business_account"}</h2>
-
-                        {/* THỐNG KÊ PHONG CÁCH TIKTOK - Dòng 234 */}
-                        <div className="flex items-center justify-center md:justify-start gap-6 mt-5">
-                            <div className="flex items-center gap-1.5 group cursor-pointer">
-                                <span className="text-lg font-black text-slate-900 dark:text-white transition-colors">{profileData?.profile?.following_count || 0}</span>
-                                <span className="text-sm font-medium text-slate-500 dark:text-zinc-400 tracking-tight group-hover:underline decoration-slate-400">Đang quan tâm</span>
-                            </div>
-                            <div className="flex items-center gap-1.5 group cursor-pointer">
-                                <span className="text-lg font-black text-slate-900 dark:text-white transition-colors">{profileData?.profile?.followers_count || 0}</span>
-                                <span className="text-sm font-medium text-slate-500 dark:text-zinc-400 tracking-tight group-hover:underline decoration-slate-400">Người quan tâm</span>
-                            </div>
-                            <div className="flex items-center gap-1.5 group cursor-pointer">
-                                <span className="text-lg font-black text-slate-900 dark:text-white transition-colors">{profileData?.profile?.total_likes || 0}</span>
-                                <span className="text-sm font-medium text-slate-500 dark:text-zinc-400 tracking-tight group-hover:underline decoration-slate-400">Lượt thích</span>
-                            </div>
-                        </div>
+                {/* Thông tin & Các nút (Ngang hàng) */}
+                <div className="flex-1 w-full pt-4 md:pt-6 text-center md:text-left">
+                  
+                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-6">
+                      <div>
+                          <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter flex items-center justify-center md:justify-start gap-2 mb-1 drop-shadow-md">
+                              {profileData?.profile?.full_name || "Doanh nghiệp"} <BadgeCheck size={24} className="text-blue-500" />
+                          </h1>
+                          <h2 className="text-base font-medium text-slate-500 dark:text-zinc-400 tracking-tight">@{profileData?.profile?.username || "business_account"}</h2>
                       </div>
-
-                      <div className="flex flex-wrap items-center justify-center gap-3 mt-4 md:mt-0">
-                        <button onClick={() => router.push(`/${profileData?.profile?.username}`)} className="px-6 py-3.5 bg-gradient-to-br from-blue-500 to-cyan-500 text-white font-black rounded-2xl hover:shadow-lg hover:shadow-blue-500/30 transition-all flex items-center gap-2 active:scale-95 text-sm">
-                            <Eye size={18} strokeWidth={3} /> Xem công khai
-                        </button>
-                        <button onClick={handleLogout} className="p-3.5 bg-white/40 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-rose-500 rounded-xl hover:bg-rose-50 transition-all shadow-sm active:scale-90"><LogOut size={18} /></button>
+                      
+                      <div className="flex items-center justify-center md:justify-end gap-3 mt-2 md:mt-0">
+                          <button onClick={() => router.push(`/${profileData?.profile?.username}`)} className="px-6 py-3.5 bg-gradient-to-br from-blue-500 to-cyan-500 text-white font-black rounded-2xl hover:shadow-lg hover:shadow-blue-500/30 transition-all flex items-center gap-2 active:scale-95 text-sm uppercase tracking-widest">
+                              <Eye size={18} strokeWidth={3} /> Xem công khai
+                          </button>
+                          <button onClick={handleShareProfile} className="p-3.5 bg-white/40 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white rounded-xl hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:text-blue-500 transition-all shadow-sm active:scale-90">
+                              <Share2 size={18} />
+                          </button>
+                          <button onClick={handleLogout} className="p-3.5 bg-white/40 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-rose-500 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all shadow-sm active:scale-90">
+                              <LogOut size={18} />
+                          </button>
                       </div>
                   </div>
+
+                  {/* THỐNG KÊ (Chuẩn Admin) */}
+                  <div className="flex items-center justify-center md:justify-start gap-8 mb-6">
+                      <div className="flex items-center gap-2 group cursor-pointer">
+                          <span className="text-xl md:text-2xl font-black text-slate-900 dark:text-white transition-colors">{profileData?.profile?.followers_count || 0}</span>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-tight">Người quan<br/>tâm</span>
+                      </div>
+                      <div className="w-[1px] h-8 bg-slate-200 dark:bg-white/10"></div>
+                      <div className="flex items-center gap-2 group cursor-pointer">
+                          <span className="text-xl md:text-2xl font-black text-slate-900 dark:text-white transition-colors">{myServices.length || 0}</span>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-tight">Dịch vụ<br/>Active</span>
+                      </div>
+                      <div className="w-[1px] h-8 bg-slate-200 dark:bg-white/10"></div>
+                      <div className="flex items-center gap-2 group cursor-pointer">
+                          <span className="text-xl md:text-2xl font-black text-blue-500 transition-colors">{profileData?.profile?.reputation_points || 92}</span>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-tight">Điểm<br/>Uy tín</span>
+                      </div>
+                  </div>
+
+                  <p className="text-sm font-medium text-slate-600 dark:text-zinc-400 max-w-2xl mx-auto md:mx-0 leading-relaxed">
+                      {profileData?.profile?.bio || "Đối tác y tế chính thức của AI Health. Cung cấp dịch vụ chăm sóc sức khỏe chủ động và chuyên nghiệp."}
+                  </p>
                 </div>
             </div>
 
+            {/* TABS GRID */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 relative items-start border-t border-slate-200 dark:border-white/10 pt-10">
                 <div className="lg:col-span-8">
                     <div className="flex justify-start gap-8 border-b border-slate-200 dark:border-white/10 pb-4 overflow-x-auto no-scrollbar">
-                        <button onClick={() => setActiveTab('services')} className={`flex items-center gap-2 text-xs font-black transition-all whitespace-nowrap ${activeTab === 'services' ? 'text-blue-500 border-b-2 border-blue-500 pb-4 -mb-5' : 'text-slate-400 hover:text-slate-600'}`}>
+                        <button onClick={() => setActiveTab('services')} className={`flex items-center gap-2 text-xs font-black transition-all whitespace-nowrap ${activeTab === 'services' ? 'text-blue-500 border-b-2 border-blue-500 pb-4 -mb-5' : 'text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300'}`}>
                             <Package size={16}/> QUẢN LÝ DỊCH VỤ
                         </button>
-                        <button onClick={() => setActiveTab('studio')} className={`flex items-center gap-2 text-xs font-black transition-all whitespace-nowrap ${activeTab === 'studio' ? 'text-blue-500 border-b-2 border-blue-500 pb-4 -mb-5' : 'text-slate-400 hover:text-slate-600'}`}>
-                            <Video size={16}/> STUDIO
+                        <button onClick={() => setActiveTab('studio')} className={`flex items-center gap-2 text-xs font-black transition-all whitespace-nowrap ${activeTab === 'studio' ? 'text-blue-500 border-b-2 border-blue-500 pb-4 -mb-5' : 'text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300'}`}>
+                            <Video size={16}/> STUDIO VIDEO
                         </button>
-                        <button onClick={() => setActiveTab('reviews')} className={`flex items-center gap-2 text-xs font-black transition-all whitespace-nowrap ${activeTab === 'reviews' ? 'text-blue-500 border-b-2 border-blue-500 pb-4 -mb-5' : 'text-slate-400 hover:text-slate-600'}`}>
-                            <Star size={16}/> ĐÁNH GIÁ
+                        <button onClick={() => setActiveTab('reviews')} className={`flex items-center gap-2 text-xs font-black transition-all whitespace-nowrap ${activeTab === 'reviews' ? 'text-blue-500 border-b-2 border-blue-500 pb-4 -mb-5' : 'text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300'}`}>
+                            <Star size={16}/> LỊCH SỬ ĐÁNH GIÁ
                         </button>
-                        <button onClick={() => setActiveTab('info')} className={`flex items-center gap-2 text-xs font-black transition-all whitespace-nowrap ${activeTab === 'info' ? 'text-blue-500 border-b-2 border-blue-500 pb-4 -mb-5' : 'text-slate-400 hover:text-slate-600'}`}>
-                            <Edit3 size={16}/> HỒ SƠ
+                        <button onClick={() => setActiveTab('info')} className={`flex items-center gap-2 text-xs font-black transition-all whitespace-nowrap ${activeTab === 'info' ? 'text-blue-500 border-b-2 border-blue-500 pb-4 -mb-5' : 'text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300'}`}>
+                            <Edit3 size={16}/> HỒ SƠ DOANH NGHIỆP
                         </button>
                     </div>
 
@@ -545,28 +568,26 @@ export default function PartnerProfilePage() {
                     </div>
                 </div>
 
+                {/* CỘT PHẢI: ĐIỂM UY TÍN (Theo form mẫu Master) */}
                 <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-8 lg:pt-[52px]">
                     <div className="bg-white/60 dark:bg-zinc-900/50 backdrop-blur-2xl rounded-[3rem] p-8 border border-slate-200 dark:border-white/10 relative overflow-hidden shadow-lg flex flex-col">
-                        <div className="flex items-center gap-2 text-[#80BF84] font-black text-xs mb-4 uppercase tracking-widest">
-                            <CheckCircle2 size={16} /> ĐIỂM UY TÍN
+                        <div className="flex items-center gap-2 text-blue-500 font-black text-xs mb-4 uppercase tracking-widest">
+                            <ShieldCheck size={16} strokeWidth={3} /> ĐIỂM UY TÍN
                         </div>
                         <div className="flex items-baseline gap-1 mb-2">
                             <span className="text-5xl font-black text-slate-800 dark:text-white tracking-tighter">{profileData?.profile?.reputation_points || 92}</span>
                             <span className="text-xl font-bold text-slate-400">/100</span>
                         </div>
-                        <p className="text-[11px] text-slate-500 dark:text-zinc-500 font-medium leading-relaxed">
+                        <p className="text-[11px] text-slate-500 dark:text-zinc-500 font-medium leading-relaxed mt-2 border-t border-slate-200 dark:border-white/10 pt-4">
                             Hoạt động tốt và phản hồi tích cực giúp tăng điểm.
                         </p>
-                        <div className="absolute -right-4 -top-4 opacity-5">
-                            <ShieldCheck size={120} className="text-[#80BF84]" />
-                        </div>
                     </div>
                 </div>      
             </div>
           </div>
       </main>
 
-      {/* ================= MODAL: THÊM DỊCH VỤ (819 dòng không cắt) ================= */}
+      {/* ================= MODAL: THÊM DỊCH VỤ ================= */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-[100] flex justify-center items-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsAddModalOpen(false)}></div>

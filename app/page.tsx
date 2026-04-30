@@ -68,6 +68,21 @@ export default function UserFeed() {
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
   const [activeCommentVideoId, setActiveCommentVideoId] = useState<string | null>(null);
 
+  // Biến này để lấy ra dữ liệu của video đang được mở
+  const activeVideoData = videos.find(v => v.id === activeCommentVideoId);
+
+  const handleCommentSuccess = () => {
+    if (!activeCommentVideoId) return;
+    setVideos(prev => prev.map(v => v.id === activeCommentVideoId ? { ...v, comments_count: (v.comments_count || 0) + 1 } : v));
+  };
+
+  // THÊM MỚI HÀM NÀY ĐỂ TRỪ SỐ KHI XÓA
+  const handleCommentDeleted = () => {
+    if (!activeCommentVideoId) return;
+    setVideos(prev => prev.map(v => v.id === activeCommentVideoId ? { ...v, comments_count: Math.max((v.comments_count || 0) - 1, 0) } : v));
+  };
+
+
   // --- NOTIFICATION STATE ---
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [activeNotifTab, setActiveNotifTab] = useState<'all' | 'unread'>('all');
@@ -81,14 +96,15 @@ export default function UserFeed() {
   const [isMounted, setIsMounted] = useState(false); 
 
   // --- FETCH VIDEOS TỪ API STUDIO MỚI ---
-  const fetchVideos = async () => {
+  const fetchVideos = async (userId?: string) => {
     try {
-      const response = await fetch(`${API_URL}/studio/videos`);
-      if (!response.ok) throw new Error("Lỗi mạng: Backend không phản hồi");
+      const url = userId ? `${API_URL}/tiktok/feeds?user_id=${userId}` : `${API_URL}/tiktok/feeds`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Backend error");
       const result = await response.json();
       if (result.status === "success") setVideos(result.data);
     } catch (error) {
-      toast.error("Máy chủ AI Health đang khởi động. Vui lòng đợi một lát nhé!");
+      toast.error("Máy chủ đang đồng bộ dữ liệu...");
     } finally {
       setIsLoading(false);
     }
@@ -96,10 +112,9 @@ export default function UserFeed() {
 
   useEffect(() => {
     setIsMounted(true); 
-    let isSubscribed = true; 
-    let authListener: any = null;
+    let isSubscribed = true;
     
-    const storedTheme = localStorage.getItem('theme');
+    const storedTheme = localStorage.getItem('theme') || 'dark';
     if (storedTheme === 'light') {
       setIsDarkMode(false);
       document.documentElement.classList.remove('dark');
@@ -108,42 +123,35 @@ export default function UserFeed() {
       document.documentElement.classList.add('dark');
     }
 
-    const initAuth = () => {
-      const { data } = supabase.auth.onAuthStateChange(async (_event, curSession) => {
-        if (!isSubscribed) return; 
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, curSession) => {
+      if (!isSubscribed) return;
 
-        if (curSession?.user) {
-          setUser(curSession.user);
-          setAccessToken(curSession.access_token);
-          fetchVideos(); 
+      if (curSession?.user) {
+        setUser(curSession.user);
+        setAccessToken(curSession.access_token);
+        // GỌI VIDEO KÈM USER ID ĐỂ HIỆN TIM/SAVE
+        fetchVideos(curSession.user.id); 
 
-          const { data: userData } = await supabase.from("users").select("role, theme_preference").eq("id", curSession.user.id).single();
-          if (userData && isSubscribed) {
-             setUserRole(userData.role);
-             if (userData.theme_preference === 'light') {
-                setIsDarkMode(false);
-                document.documentElement.classList.remove('dark');
-                localStorage.setItem('theme', 'light');
-             }
-          }
-        } else {
-          setUser(null);
-          setAccessToken(null);
-          setUserRole("USER");
-          fetchVideos(); 
+        const { data: userData } = await supabase.from("users").select("role, theme_preference").eq("id", curSession.user.id).single();
+        if (userData && isSubscribed) {
+           setUserRole(userData.role);
+           if (userData.theme_preference === 'light') {
+              setIsDarkMode(false);
+              document.documentElement.classList.remove('dark');
+              localStorage.setItem('theme', 'light');
+           }
         }
-      });
-      authListener = data;
-    };
-
-    const timeoutId = setTimeout(initAuth, 100);
+      } else {
+        setUser(null);
+        setAccessToken(null);
+        setUserRole("USER");
+        fetchVideos(); 
+      }
+    });
 
     return () => {
       isSubscribed = false;
-      clearTimeout(timeoutId);
-      if (authListener) {
-        authListener.subscription.unsubscribe();
-      }
+      authListener.subscription.unsubscribe();
     };
   }, []);
 
@@ -204,39 +212,45 @@ export default function UserFeed() {
   };
 
   // --- INTERACTION LOGIC (Gọi API Studio) ---
-  const handleInteraction = async (videoId: string, action: 'like' | 'save') => {
+  const handleInteraction = async (videoId: string, action: 'like' | 'save' | 'share') => {
     if (!user || !accessToken) {
-      toast.info(`Vui lòng đăng nhập để ${action === 'like' ? 'thích' : 'lưu'} video!`);
+      toast.info(`Vui lòng đăng nhập để thao tác!`);
       setIsAuthModalOpen(true);
       return;
     }
 
-    setVideos(prev => prev.map(v => {
-      if (v.id === videoId) {
-        if (action === 'like') return { ...v, is_liked: !v.is_liked, likes_count: (v.likes_count || 0) + (v.is_liked ? -1 : 1) };
-        else return { ...v, is_saved: !v.is_saved, saves_count: (v.saves_count || 0) + (v.is_saved ? -1 : 1) };
-      }
-      return v;
-    }));
+    // Chỉ cập nhật giao diện Like/Save ngay lập tức (Share không cần đổi màu icon)
+    if (action !== 'share') {
+      setVideos(prev => prev.map(v => {
+        if (v.id === videoId) {
+          if (action === 'like') return { ...v, is_liked: !v.is_liked, likes_count: (v.likes_count || 0) + (v.is_liked ? -1 : 1) };
+          if (action === 'save') return { ...v, is_saved: !v.is_saved, saves_count: (v.saves_count || 0) + (v.is_saved ? -1 : 1) };
+        }
+        return v;
+      }));
+    }
 
     try {
-      await fetch(`${API_URL}/studio/videos/${videoId}/${action}`, {
+      await fetch(`${API_URL}/tiktok/feeds/${videoId}/${action}`, {
         method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${accessToken}` }
       });
     } catch (error) { fetchVideos(); }
   };
 
   const handleOpenComments = (videoId: string) => {
-    setActiveCommentVideoId(videoId);
+    setActiveCommentVideoId(videoId); // Sửa từ setActiveVideoId thành setActiveCommentVideoId
     setIsCommentModalOpen(true);
   };
 
-  const handleShare = (videoId: string) => {
+  const handleShare = async (videoId: string) => {
     navigator.clipboard.writeText(`${window.location.origin}/?video=${videoId}`);
     toast.success("Đã sao chép liên kết vào khay nhớ tạm!");
+    if (user && accessToken) {
+      await handleInteraction(videoId, 'share');
+    }
   };
 
-  // --- BOOKING LOGIC (Gọi API Đặt lịch với video_id) ---
+  // --- LUỒNG BOOKING MỚI: GỬI YÊU CẦU ĐẶT LỊCH (CHƯA THANH TOÁN) ---
   const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeVideo || !user || !accessToken) return;
@@ -247,7 +261,7 @@ export default function UserFeed() {
     }
 
     setIsSubmitting(true);
-    const toastId = toast.loading("Đang thiết lập cổng bảo chứng Escrow...");
+    const toastId = toast.loading("Đang gửi yêu cầu đến cơ sở...");
     
     try {
       const code = affiliateCode.trim();
@@ -259,15 +273,15 @@ export default function UserFeed() {
         if (!validateRes.ok) throw new Error("Mã giới thiệu không hợp lệ hoặc không tồn tại!");
       }
 
-      // TRUYỀN video_id THAY VÌ service_id
-      const bookingRes = await fetch(`${API_URL}/bookings`, {
+      // GỌI API MỚI: Gửi request đến Partner (Status sẽ là WAITING_PARTNER)
+      const bookingRes = await fetch(`${API_URL}/appointments/request`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${accessToken}` },
         body: JSON.stringify({ 
-          user_id: user.id, 
+          partner_id: activeVideo.author_id, // Lấy ID chủ video làm partner_id
           video_id: activeVideo.id, 
           affiliate_code: code || null, 
-          total_amount: activeVideo.price,
+          total_amount: activeVideo.price || 0,
           customer_name: bookingName.trim(),
           customer_phone: bookingPhone.trim(),
           note: bookingNote.trim()
@@ -276,13 +290,17 @@ export default function UserFeed() {
       
       const bookingData = await bookingRes.json();
       
-      if (!bookingRes.ok) throw new Error(bookingData.detail || "Lỗi ghi nhận giao dịch");
+      if (!bookingRes.ok) throw new Error(bookingData.detail || "Lỗi gửi yêu cầu");
       
-      if (bookingData.checkout_url) {
-        window.location.href = bookingData.checkout_url; 
-      } else {
-        toast.error("Hệ thống chưa tạo được link thanh toán.", { id: toastId });
-      }
+      // Hiển thị thông báo thành công và không chuyển hướng PayOS
+      toast.success(bookingData.message || "Yêu cầu đã được gửi! Vui lòng theo dõi tại tab 'Lịch hẹn'.", { id: toastId, duration: 5000 });
+      
+      // Đóng modal & dọn dẹp form
+      setIsModalOpen(false);
+      setBookingName("");
+      setBookingPhone("");
+      setBookingNote("");
+      setAffiliateCode("");
       
     } catch (error: any) { 
       toast.error(error.message, { id: toastId }); 
@@ -401,9 +419,16 @@ export default function UserFeed() {
                           <span className="text-xs font-bold text-white drop-shadow-md">{item.likes_count || 0}</span>
                         </button>
                         
-                        <button onClick={() => handleOpenComments(item.id)} className="flex flex-col items-center gap-1 group">
-                          <div className="p-3 rounded-full bg-white/20 dark:bg-black/40 backdrop-blur-md border border-white/30 dark:border-white/10 text-white group-hover:bg-white/30 dark:group-hover:bg-white/20 transition-all"><MessageCircle size={24} strokeWidth={2} className="group-active:scale-75 transition-transform" /></div>
-                          <span className="text-xs font-bold text-white drop-shadow-md">{item.comments_count || 0}</span>
+                        <button 
+                          onClick={() => handleOpenComments(item.id)} // "item.id" chính là videoId
+                          className="flex flex-col items-center gap-1 group"
+                        >
+                          <div className="p-3 rounded-full bg-white/20 dark:bg-black/40 backdrop-blur-md border border-white/30 dark:border-white/10 text-white group-hover:bg-white/30 transition-all">
+                            <MessageCircle size={24} />
+                          </div>
+                          <span className="text-xs font-bold text-white drop-shadow-md">
+                            {item.comments_count || 0}
+                          </span>
                         </button>
                         
                         <button onClick={() => handleInteraction(item.id, 'save')} className="flex flex-col items-center gap-1 group">
@@ -453,13 +478,16 @@ export default function UserFeed() {
       {/* ================= CÁC COMPONENTS MODAL CON ================= */}
       
       <CommentModal 
-        isOpen={isCommentModalOpen}
-        onClose={() => setIsCommentModalOpen(false)}
-        serviceId={activeCommentVideoId || ""} // Note: Component CommentModal dùng chung nên giữ tên prop serviceId
-        user={user}
-        userRole={userRole}
+        isOpen={isCommentModalOpen} 
+        onClose={() => setIsCommentModalOpen(false)} 
+        videoId={activeCommentVideoId || ""} 
+        videoAuthorId={activeVideoData?.author_id || ""} 
+        user={user} 
+        userRole={userRole} 
+        onCommentAdded={handleCommentSuccess} 
+        onCommentDeleted={handleCommentDeleted} 
       />
-
+      
       {/* Modal Thông báo */}
       {isNotificationOpen && (
         <div className="fixed inset-0 z-[110] flex justify-center items-end md:items-center md:justify-end md:p-6 pointer-events-auto">
@@ -546,12 +574,19 @@ export default function UserFeed() {
                   <input type="text" placeholder="Nhập mã ưu đãi..." className="w-full px-5 py-3.5 bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white font-medium uppercase focus:outline-none focus:border-[#80BF84] focus:ring-1 focus:ring-[#80BF84]/50 transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-600 placeholder:normal-case" value={affiliateCode} onChange={e => setAffiliateCode(e.target.value)} />
               </div>
 
-              <div className="mt-4">
-                  <button type="submit" disabled={isSubmitting} className="relative w-full py-4 bg-gradient-to-tr from-[#80BF84] to-emerald-400 text-zinc-950 font-black text-lg rounded-2xl active:scale-95 transition-all shadow-[0_10px_20px_rgba(128,191,132,0.3)] overflow-hidden group">
+              <div className="mt-6">
+                  {/* Hộp thông báo tiền xử lý giá tiền / Escrow */}
+                  <div className="p-4 mb-5 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-xl flex items-start gap-3">
+                      <ShieldCheck size={20} className="text-blue-500 shrink-0 mt-0.5" />
+                      <p className="text-[13px] leading-relaxed text-blue-800 dark:text-blue-300 font-medium">
+                          Bạn <strong>chưa cần thanh toán lúc này</strong>. Tổng tiền <strong className="text-blue-600 dark:text-blue-400">{activeVideo.price?.toLocaleString()} VND</strong> sẽ được hệ thống bảo chứng an toàn <strong>sau khi cơ sở xác nhận có lịch trống</strong> dành cho bạn.
+                      </p>
+                  </div>
+                  
+                  <button type="submit" disabled={isSubmitting} className="relative w-full py-4 bg-gradient-to-tr from-slate-800 to-slate-900 dark:from-white dark:to-slate-200 text-white dark:text-zinc-950 font-black text-lg rounded-2xl active:scale-95 transition-all shadow-xl overflow-hidden group">
                     <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full skew-x-12 transition-transform duration-500"></div>
-                    {isSubmitting ? "Đang xử lý..." : "Bảo chứng thanh toán ngay"}
+                    {isSubmitting ? "Đang gửi yêu cầu..." : "Gửi yêu cầu đặt lịch"}
                   </button>
-                  <p className="text-center text-[10px] text-slate-400 dark:text-zinc-500 mt-4 flex items-center justify-center gap-1"><ShieldCheck size={12}/> Giao dịch được bảo vệ 100% bởi AI Health Escrow</p>
               </div>
             </form>
           </div>

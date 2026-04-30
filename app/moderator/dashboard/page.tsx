@@ -53,16 +53,19 @@ export default function ModeratorDashboard() {
           const { data: { session } } = await supabase.auth.getSession();
           if (!session) { router.push("/"); return; }
 
-          const fetchOpts = { headers: { "Authorization": `Bearer ${session.access_token}` } };
-          let qData = null, hData = null, sData = null;
-
-          try { qData = await (await fetch(`${API_URL}/moderation/queue`, fetchOpts)).json(); } catch(e) {}
-          try { hData = await (await fetch(`${API_URL}/moderation/history`, fetchOpts)).json(); } catch(e) {}
-          try { sData = await (await fetch(`${API_URL}/moderation/stats`, fetchOpts)).json(); } catch(e) {}
+          const [qRes, hRes, sRes] = await Promise.all([
+              fetch(`${API_URL}/moderation/queue`, { headers: { "Authorization": `Bearer ${session.access_token}` } }),
+              fetch(`${API_URL}/moderation/history`, { headers: { "Authorization": `Bearer ${session.access_token}` } }),
+              fetch(`${API_URL}/moderation/stats`, { headers: { "Authorization": `Bearer ${session.access_token}` } })
+          ]);
           
-          if (qData && qData.status === "success") setQueue(qData.data || []);
-          if (hData && hData.status === "success") setHistory(hData.data || []);
-          if (sData && sData.status === "success") setStats(sData.data || { total_processed: 0, approved_count: 0, rejected_count: 0, chart_data: [] });
+          const qData = await qRes.json();
+          const hData = await hRes.json();
+          const sData = await sRes.json();
+          
+          if (qData.status === "success") setQueue(qData.data || []);
+          if (hData.status === "success") setHistory(hData.data || []);
+          if (sData.status === "success") setStats(sData.data || { total_processed: 0, approved_count: 0, rejected_count: 0, chart_data: [] });
       } catch (error) { 
           toast.error("Lỗi đồng bộ dữ liệu hệ thống!"); 
       } finally { 
@@ -85,7 +88,7 @@ export default function ModeratorDashboard() {
           });
           if (!res.ok) throw new Error("Lỗi xử lý");
           toast.success("Xử lý thành công!", { id: tid });
-          fetchAllData(); 
+          fetchAllData(); // Lập tức tải lại biểu đồ & danh sách
           closeModal();
       } catch (e: any) { toast.error(e.message, { id: tid }); }
       finally { setIsProcessing(false); }
@@ -103,6 +106,7 @@ export default function ModeratorDashboard() {
 
   const getMediaUrl = (item: QueueItem) => item.media_url || item.video_url || item.image_url;
 
+  // Xác định xem item đang mở trong Modal là để "Xem lại" (History) hay "Ra quyết định" (Queue)
   const isReadonlyModal = selectedItem && ['APPROVED', 'REJECTED', 'DELETED'].includes(selectedItem.status);
 
   if (!isMounted) return null;
@@ -150,7 +154,7 @@ export default function ModeratorDashboard() {
               ) : (
                   <div className="animate-fade-in max-w-[1400px] mx-auto space-y-10">
                       
-                      {/* --- OVERVIEW THỐNG KÊ --- */}
+                      {/* --- OVERVIEW THỐNG KÊ THỰC TẾ --- */}
                       {activeTab === 'overview' && (
                           <div className="space-y-10">
                               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -258,7 +262,7 @@ export default function ModeratorDashboard() {
                           </div>
                       )}
 
-                      {/* --- HISTORY TABLE --- */}
+                      {/* --- HISTORY TABLE MỚI --- */}
                       {activeTab === 'history' && (
                           <div className="space-y-6">
                               <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-6">Lịch Sử Ra Quyết Định</h2>
@@ -289,7 +293,7 @@ export default function ModeratorDashboard() {
                                                                   {new Date(item.updated_at || item.created_at).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit', second:'2-digit'})}
                                                               </span>
                                                               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                                                  {new Date(item.updated_at || item.created_at).toLocaleDateString('vi-VN', {day: '2-digit', month: '2-digit', year: 'numeric'})}
+                                                                  {new Date(item.updated_at || item.created_at).toLocaleDateString('vi-VN')}
                                                               </span>
                                                           </td>
 
@@ -302,12 +306,12 @@ export default function ModeratorDashboard() {
 
                                                           <td className="p-5 flex items-center gap-2">
                                                               <img src={item.author?.avatar_url || `https://ui-avatars.com/api/?name=${item.author?.full_name}`} className="w-7 h-7 rounded-full border border-slate-200 dark:border-white/10"/>
-                                                              <span className="font-bold text-slate-700 dark:text-zinc-300 text-xs truncate max-w-[120px]">{item.author?.full_name || 'Đang cập nhật'}</span>
+                                                              <span className="font-bold text-slate-700 dark:text-zinc-300 text-xs truncate max-w-[120px]">{item.author?.full_name}</span>
                                                           </td>
 
                                                           <td className="p-5">
                                                               <button onClick={() => setSelectedItem(item)} className="px-3 py-1.5 bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 rounded-lg text-[10px] font-black uppercase flex items-center gap-1 hover:bg-violet-100 dark:hover:bg-violet-500/20 transition-colors">
-                                                                  <Eye size={12}/> Xem bản ghi
+                                                                  <Eye size={12}/> Xem
                                                               </button>
                                                           </td>
 
@@ -333,7 +337,7 @@ export default function ModeratorDashboard() {
           </div>
       </div>
 
-      {/* --- MODAL XỬ LÝ & XEM CHI TIẾT --- */}
+      {/* --- MODAL XỬ LÝ & XEM CHI TIẾT (DÙNG CHUNG THÔNG MINH) --- */}
       {selectedItem && (
         <div className="fixed inset-0 z-[100] flex justify-center items-center p-4 md:p-8">
             <div className="absolute inset-0 bg-black/90 backdrop-blur-xl" onClick={closeModal}></div>
@@ -354,6 +358,7 @@ export default function ModeratorDashboard() {
                         {selectedItem.status === 'PENDING_UPDATE' && <div className="absolute top-4 left-4 z-10"><span className="px-2 py-1 bg-amber-500 text-white text-[10px] font-black rounded-md">BẢN CẬP NHẬT MỚI</span></div>}
                         {selectedItem.status === 'PENDING_DELETE' && <div className="absolute inset-0 bg-rose-500/20 z-10 pointer-events-none flex items-center justify-center"><ShieldAlert size={100} className="text-rose-500 opacity-50"/></div>}
                         
+                        {/* THÔNG BÁO DÀNH CHO TAB LỊCH SỬ (ĐÃ XỬ LÝ) */}
                         {isReadonlyModal && <div className="absolute top-4 right-4 z-10"><span className="px-3 py-1.5 bg-emerald-500 text-white text-[10px] font-black rounded-lg shadow-lg flex items-center gap-1"><CheckCircle size={14}/> ĐÃ HOÀN TẤT XỬ LÝ</span></div>}
 
                         <div className="w-full max-h-full overflow-hidden flex justify-center rounded-xl">
@@ -368,7 +373,7 @@ export default function ModeratorDashboard() {
                     <div className="flex justify-between items-center p-6 border-b border-slate-200 dark:border-white/5">
                         <div className="flex items-center gap-3">
                             <img src={selectedItem.author?.avatar_url || `https://ui-avatars.com/api/?name=${selectedItem.author?.full_name}`} className="w-10 h-10 rounded-full border border-slate-200"/>
-                            <div><p className="text-sm font-black text-slate-900 dark:text-white">{selectedItem.author?.full_name || 'Đang cập nhật'}</p><p className="text-[10px] text-slate-500">ID: {selectedItem.id.split('-')[0]}</p></div>
+                            <div><p className="text-sm font-black text-slate-900 dark:text-white">{selectedItem.author?.full_name}</p><p className="text-[10px] text-slate-500">ID: {selectedItem.id.split('-')[0]}</p></div>
                         </div>
                         <button onClick={closeModal} className="p-2 bg-slate-100 dark:bg-white/5 rounded-full text-slate-500"><X size={18}/></button>
                     </div>
@@ -377,6 +382,7 @@ export default function ModeratorDashboard() {
                         {selectedItem.price && <p className="text-lg font-black text-emerald-500">{selectedItem.price.toLocaleString()} VND</p>}
                         <div className="p-4 bg-slate-50 dark:bg-black/30 rounded-xl text-sm text-slate-700 dark:text-zinc-300 whitespace-pre-wrap border border-slate-200 dark:border-white/5">{selectedItem.description || "Nội dung này không có mô tả chi tiết."}</div>
                         
+                        {/* Hiện Ghi chú cũ nếu xem trong Lịch sử */}
                         {isReadonlyModal && selectedItem.moderation_note && (
                             <div className="p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl">
                                 <label className="block text-[10px] font-black text-amber-600 dark:text-amber-400 mb-1 uppercase tracking-widest">Ghi chú của bạn:</label>

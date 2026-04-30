@@ -8,14 +8,14 @@ import RegularUserView from "@/components/profile/RegularUserView";
 import CreatorView from "@/components/profile/CreatorView";
 import PartnerView from "@/components/profile/PartnerView";
 import ModeratorView from "@/components/profile/ModeratorView";
-import AdminView from "@/components/profile/AdminView"; // <--- Bổ sung Import Admin
+import AdminView from "@/components/profile/AdminView"; 
 import { useUI } from "@/context/UIContext";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 export default function UserProfilePage() {
   const { username } = useParams();
-  const { isNotifOpen, setIsNotifOpen } = useUI();
+  const { isNotifOpen, setIsNotifOpen } = useUI() as any;
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -77,17 +77,19 @@ export default function UserProfilePage() {
           )}
 
           <div className="max-w-4xl mx-auto p-6 md:p-12 pt-28 pb-32">
-            {/* LOGIC RẼ NHÁNH HOÀN CHỈNH CHO 5 ROLE */}
-            {data.profile.role === "SUPER_ADMIN" ? (
+            {/* BẮT BUỘC TRUYỀN CẢ VIDEOS VÀ POSTS VÀO COMPONENTS */}
+            {data.profile.role === "SUPER_ADMIN" || data.profile.role === "ADMIN" ? (
               <AdminView 
                 profile={data.profile} 
-                posts={data.posts} 
+                videos={data.videos || []} 
+                posts={data.community_posts || []} 
                 savedPosts={data.savedPosts || []}
               />
-            ) : data.profile.role === "PARTNER_ADMIN" ? (
+            ) : data.profile.role === "PARTNER_ADMIN" || data.profile.role === "PARTNER" ? (
               <PartnerView 
                 profile={data.profile} 
-                posts={data.posts} 
+                videos={data.videos || []}
+                posts={data.community_posts || []} 
                 likedPosts={data.likedPosts || []}
                 savedPosts={data.savedPosts || []}
                 services={data.services || []} 
@@ -97,7 +99,8 @@ export default function UserProfilePage() {
             ) : data.profile.role === "CREATOR" ? (
               <CreatorView 
                 profile={data.profile} 
-                posts={data.posts} 
+                videos={data.videos || []}
+                posts={data.community_posts || []} 
                 likedPosts={data.likedPosts || []}
                 savedPosts={data.savedPosts || []}
               />
@@ -110,7 +113,7 @@ export default function UserProfilePage() {
             ) : (
               <RegularUserView 
                 profile={data.profile} 
-                posts={data.posts} 
+                posts={data.community_posts || []} 
                 likedPosts={data.likedPosts || []}
                 savedPosts={data.savedPosts || []}
               />

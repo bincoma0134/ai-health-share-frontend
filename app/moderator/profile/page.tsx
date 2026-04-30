@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { 
   Home, User as UserIcon, ShieldCheck, CheckCircle, Clock, 
   Save, Sun, Moon, Bell, Edit3, ShieldAlert, Sparkles, Image as ImageIcon, 
-  Eye, LogOut, LayoutDashboard, Link2, Plus, Trash2, Shield
+  Eye, LogOut, LayoutDashboard, Link2, Plus, Trash2, Shield, Share2
 } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
@@ -12,7 +12,6 @@ import { useRouter } from "next/navigation";
 import NotificationModal from "@/components/NotificationModal";
 import { useUI } from "@/context/UIContext";
 
-// --- KHỞI TẠO SUPABASE CLIENT ---
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 if (!supabaseUrl || !supabaseAnonKey) throw new Error("Thiếu biến môi trường Supabase!");
@@ -20,29 +19,32 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
+interface LocalUIContext {
+  isNotifOpen: boolean;
+  setIsNotifOpen: (val: boolean) => void;
+  theme: string;
+  toggleTheme: () => void;
+}
+
 type SocialPlatform = 'facebook' | 'tiktok' | 'instagram' | 'youtube' | 'website';
 interface SocialLink { platform: SocialPlatform; url: string; }
 
 export default function ModeratorProfilePage() {
   const router = useRouter();
-  const { isNotifOpen, setIsNotifOpen, theme, toggleTheme } = useUI();
+  const { isNotifOpen, setIsNotifOpen, theme, toggleTheme } = useUI() as unknown as LocalUIContext;
   
-  // --- STATE HỆ THỐNG ---
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'info'>('overview');
 
-  // --- STATE DỮ LIỆU ---
   const [profileData, setProfileData] = useState<any>(null);
-  const [stats, setStats] = useState({ pendingTotal: 0, approvedByMe: 0 });
+  const [stats, setStats] = useState({ pendingTotal: 0, approvedByMe: 0, totalProcessed: 0 });
 
-  // --- STATE FORM HỒ SƠ ---
   const [editForm, setEditForm] = useState({ username: "", full_name: "", bio: "", address: "" });
   const [socials, setSocials] = useState<SocialLink[]>([]);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
-  // --- REFS ---
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
@@ -59,6 +61,7 @@ export default function ModeratorProfilePage() {
       
       if (result.status === "success" && result.data.profile) {
           const p = result.data.profile;
+          const s = result.data.stats;
           
           if (p.role !== "MODERATOR" && p.role !== "SUPER_ADMIN") {
               toast.error("Truy cập trái phép! Bạn không phải Kiểm duyệt viên.");
@@ -67,6 +70,12 @@ export default function ModeratorProfilePage() {
           }
           
           setProfileData(p);
+          setStats({
+              pendingTotal: s?.pending_total || 0,
+              approvedByMe: s?.approved_count || 0,
+              totalProcessed: s?.total_processed || 0
+          });
+
           setEditForm({
               username: p.username || "",
               full_name: p.full_name || "",
@@ -78,23 +87,21 @@ export default function ModeratorProfilePage() {
               const parsed = p.social_links ? JSON.parse(p.social_links) : [];
               setSocials(Array.isArray(parsed) ? parsed : []);
           } catch { setSocials([]); }
-
-          // Tạm lấy dữ liệu thống kê (nếu Backend đã hỗ trợ, hoặc để 0 chờ ghép API)
-          if (result.data.stats) {
-              setStats({ 
-                  pendingTotal: result.data.stats.pendingTotal || 0, 
-                  approvedByMe: result.data.stats.approvedByMe || 0 
-              });
-          }
       }
+
     } catch (error) { toast.error("Không thể tải thông tin hồ sơ."); } 
     finally { setIsLoading(false); }
   };
 
   useEffect(() => { fetchData(); }, [router]);
 
-  // ================= API HÀNH ĐỘNG HỒ SƠ =================
   const handleLogout = async () => { await supabase.auth.signOut(); router.push("/"); };
+
+  const handleShareProfile = () => {
+      const url = `${window.location.origin}/${profileData?.username}`;
+      navigator.clipboard.writeText(url);
+      toast.success("Đã sao chép liên kết Hồ sơ Kiểm duyệt!");
+  };
 
   const handleUpdateProfile = async () => {
     setIsUpdating(true);
@@ -154,7 +161,7 @@ export default function ModeratorProfilePage() {
               <div className="absolute inset-0 bg-violet-400 rounded-full animate-ping opacity-70"></div>
               <div className="absolute inset-2 bg-violet-500 rounded-full flex items-center justify-center shadow-lg"><Shield className="text-white w-6 h-6 animate-pulse" /></div>
           </div>
-          <p className="text-slate-500 dark:text-zinc-500 text-sm font-black tracking-widest uppercase animate-pulse">Đang thiết lập không gian...</p>
+          <p className="text-violet-500 text-sm font-black tracking-widest uppercase animate-pulse">Đang nạp không gian làm việc...</p>
       </div>
   );
 
@@ -168,7 +175,7 @@ export default function ModeratorProfilePage() {
       <div className="absolute top-0 w-full z-40 p-6 flex justify-end items-center bg-gradient-to-b from-slate-50 dark:from-zinc-950 to-transparent pointer-events-none">
           <div className="flex items-center gap-3 pointer-events-auto">
             <button onClick={toggleTheme} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-3xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white shadow-lg group transition-all">
-              {theme === "dark" ? <Sun size={20} className="group-hover:text-amber-300" /> : <Moon size={20} className="group-hover:text-blue-500" />}
+              {theme === "dark" ? <Sun size={20} className="group-hover:text-amber-300" /> : <Moon size={20} className="group-hover:text-violet-500" />}
             </button>
             <button onClick={() => setIsNotifOpen(true)} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-3xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 hover:text-violet-500 shadow-lg transition-all"><Bell size={20} /></button>
           </div>
@@ -177,49 +184,79 @@ export default function ModeratorProfilePage() {
       <main className="flex-1 overflow-y-auto no-scrollbar scroll-smooth">
           {isNotifOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-fade-in"><NotificationModal /></div>}
 
-          {/* COVER IMAGE */}
-          <div className="relative w-full h-48 md:h-64 bg-slate-200 dark:bg-zinc-900 group cursor-pointer overflow-hidden" onClick={() => coverInputRef.current?.click()}>
+          {/* CHUẨN HÓA COVER IMAGE */}
+          <div className="relative w-full h-48 md:h-64 bg-slate-200 dark:bg-zinc-900 group cursor-pointer overflow-hidden border-b border-slate-200 dark:border-white/5" onClick={() => coverInputRef.current?.click()}>
               {profileData?.cover_url ? (
                   <img src={profileData.cover_url} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt="cover" />
               ) : (
-                  <div className="absolute inset-0 bg-gradient-to-r from-violet-600/20 to-fuchsia-600/20 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-gradient-to-br from-violet-600/30 to-fuchsia-600/30 flex items-center justify-center">
                       <div className="flex flex-col items-center opacity-50"><ImageIcon size={32} className="mb-2 text-violet-600 dark:text-violet-400"/> <span className="text-sm font-bold text-violet-700 dark:text-violet-300">Tải lên ảnh bìa</span></div>
                   </div>
               )}
               <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><Edit3 className="text-white"/></div>
           </div>
 
-          <div className="max-w-6xl mx-auto px-6 md:px-12 pb-32 -mt-16 md:-mt-20 relative z-10">
+          <div className="max-w-6xl mx-auto px-6 md:px-12 pb-32 relative z-10">
             
-            {/* HEADER INFO (Đồng bộ cấu trúc Partner) */}
-            <div className="flex flex-col md:flex-row items-start md:items-end gap-6 md:gap-10 mb-10">
-                <div className="relative group cursor-pointer shrink-0" onClick={() => avatarInputRef.current?.click()}>
+            {/* HEADER INFO CHUẨN MASTER LAYOUT */}
+            <div className="flex flex-col md:flex-row items-center md:items-start gap-8 md:gap-12 mb-10">
+                {/* Avatar lồi lên */}
+                <div className="relative group cursor-pointer shrink-0 -mt-16 md:-mt-20" onClick={() => avatarInputRef.current?.click()}>
                   <div className="absolute -inset-1.5 bg-gradient-to-tr from-violet-500 to-fuchsia-400 rounded-full blur-md opacity-40"></div>
-                  <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white dark:border-zinc-950 shadow-2xl bg-white">
-                    <img src={profileData?.avatar_url || `https://ui-avatars.com/api/?name=${profileData?.full_name}&background=8b5cf6&color=fff`} className="w-full h-full object-cover group-hover:scale-110 transition-transform" alt="avatar" />
+                  <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white dark:border-zinc-950 shadow-2xl bg-white p-1.5">
+                    <img src={profileData?.avatar_url || `https://ui-avatars.com/api/?name=${profileData?.full_name}&background=8b5cf6&color=fff`} className="w-full h-full object-cover group-hover:scale-105 transition-transform rounded-full" alt="avatar" />
                   </div>
-                  <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center border-4 border-transparent"><Edit3 className="text-white"/></div>
-                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white text-[10px] font-black rounded-full shadow-lg border border-white/20 whitespace-nowrap uppercase flex items-center gap-1">
+                  <div className="absolute inset-1.5 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><Edit3 className="text-white"/></div>
+                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white text-[10px] font-black rounded-full shadow-lg border border-white/20 whitespace-nowrap uppercase flex items-center gap-1 z-20 tracking-widest">
                     <Shield size={10} fill="currentColor"/> MODERATOR
                   </div>
                 </div>
 
-                <div className="flex-1 pb-2 w-full">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                      <div className="flex flex-col gap-1 text-center md:text-left">
+                <div className="flex-1 w-full pt-4 md:pt-6">
+                  {/* Row 1: Tên và Nút chức năng ngang hàng */}
+                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-6 text-center md:text-left">
+                      <div className="flex flex-col gap-1">
                         <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-md flex items-center justify-center md:justify-start gap-2">
                             {profileData?.full_name || "Kiểm duyệt viên"} <ShieldCheck size={24} className="text-violet-500" />
                         </h1>
                         <h2 className="text-base font-medium text-slate-500 dark:text-zinc-400 tracking-tight">@{profileData?.username || "moderator"}</h2>
                       </div>
 
-                      <div className="flex flex-wrap items-center justify-center gap-3">
-                        <button onClick={() => router.push(`/${profileData?.username}`)} className="px-6 py-3.5 bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white font-black rounded-2xl hover:shadow-lg hover:shadow-violet-500/30 transition-all flex items-center gap-2 active:scale-95 text-sm">
+                      <div className="flex items-center justify-center md:justify-end gap-3 mt-2 md:mt-0">
+                        <button onClick={() => router.push(`/${profileData?.username}`)} className="px-6 py-3.5 bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white font-black rounded-2xl hover:shadow-lg hover:shadow-violet-500/30 transition-all flex items-center gap-2 active:scale-95 text-sm uppercase tracking-widest">
                             <Eye size={18} strokeWidth={3} /> Xem công khai
                         </button>
-                        <button onClick={handleLogout} className="p-3.5 bg-white/40 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-rose-500 rounded-xl hover:bg-rose-50 transition-all shadow-sm active:scale-90"><LogOut size={18} /></button>
+                        <button onClick={handleShareProfile} className="p-3.5 bg-white/40 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white rounded-xl hover:bg-violet-50 dark:hover:bg-violet-500/10 hover:text-violet-500 transition-all shadow-sm active:scale-90">
+                            <Share2 size={18} />
+                        </button>
+                        <button onClick={handleLogout} className="p-3.5 bg-white/40 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-rose-500 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all shadow-sm active:scale-90">
+                            <LogOut size={18} />
+                        </button>
                       </div>
                   </div>
+
+                  {/* Row 2: THỐNG KÊ */}
+                  <div className="flex items-center justify-center md:justify-start gap-8 mb-6">
+                      <div className="flex items-center gap-2 group cursor-pointer">
+                          <span className="text-xl md:text-2xl font-black text-slate-900 dark:text-white">{profileData?.following_count || "0"}</span>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-tight">Đang quan<br/>tâm</span>
+                      </div>
+                      <div className="w-[1px] h-8 bg-slate-200 dark:bg-white/10"></div>
+                      <div className="flex items-center gap-2 group cursor-pointer">
+                          <span className="text-xl md:text-2xl font-black text-slate-900 dark:text-white">{profileData?.followers_count || "0"}</span>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-tight">Người quan<br/>tâm</span>
+                      </div>
+                      <div className="w-[1px] h-8 bg-slate-200 dark:bg-white/10"></div>
+                      <div className="flex items-center gap-2 group cursor-pointer">
+                          <span className="text-xl md:text-2xl font-black text-violet-500">{stats.totalProcessed}</span>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-tight">Đã kiểm<br/>duyệt</span>
+                      </div>
+                  </div>
+
+                  {/* Row 3: Bio */}
+                  <p className="text-sm font-medium text-slate-600 dark:text-zinc-300 max-w-2xl mx-auto md:mx-0 text-center md:text-left leading-relaxed">
+                      {profileData?.bio || "Thành viên Ban quản trị nội dung. Đóng góp duy trì một môi trường nền tảng an toàn, minh bạch."}
+                  </p>
                 </div>
             </div>
 
@@ -231,12 +268,12 @@ export default function ModeratorProfilePage() {
                             <LayoutDashboard size={16}/> BẢNG ĐIỀU KHIỂN
                         </button>
                         <button onClick={() => setActiveTab('info')} className={`flex items-center gap-2 text-xs font-black transition-all whitespace-nowrap ${activeTab === 'info' ? 'text-violet-500 border-b-2 border-violet-500 pb-4 -mb-5' : 'text-slate-400 hover:text-slate-600'}`}>
-                            <Edit3 size={16}/> HỒ SƠ & MẠNG XÃ HỘI
+                            <Edit3 size={16}/> HỒ SƠ CÁ NHÂN
                         </button>
                     </div>
 
                     <div className="mt-10">
-                        {/* 1. TAB BẢNG ĐIỀU KHIỂN (OVERVIEW) */}
+                        {/* 1. TAB BẢNG ĐIỀU KHIỂN */}
                         {activeTab === 'overview' && (
                              <div className="animate-fade-in space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -277,27 +314,23 @@ export default function ModeratorProfilePage() {
                                         </div>
                                     )}
                                     
-                                    {/* Username */}
                                     <div className="flex flex-col gap-2">
                                         <label className="text-[11px] font-black text-slate-800 dark:text-white uppercase tracking-widest ml-1">Username định danh</label>
                                         <input type="text" className="w-full bg-slate-100/50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 shadow-inner" value={editForm.username} onChange={e => setEditForm({...editForm, username: e.target.value})} />
                                         <p className="text-[10px] text-slate-500 dark:text-zinc-500 font-medium ml-1">Tên định danh dùng để hiển thị trên URL hồ sơ công khai.</p>
                                     </div>
                                     
-                                    {/* Tên hiển thị */}
                                     <div className="flex flex-col gap-2">
                                         <label className="text-[11px] font-black text-slate-800 dark:text-white uppercase tracking-widest ml-1">Họ tên / Bí danh kiểm duyệt</label>
                                         <input type="text" className="w-full bg-slate-100/50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 shadow-inner" value={editForm.full_name} onChange={e => setEditForm({...editForm, full_name: e.target.value})} />
                                         <p className="text-[10px] text-slate-500 dark:text-zinc-500 font-medium ml-1">Tên hiển thị công khai trên các quyết định và hoạt động của bạn.</p>
                                     </div>
 
-                                    {/* Tiểu sử */}
                                     <div className="flex flex-col gap-2">
                                         <label className="text-[11px] font-black text-slate-800 dark:text-white uppercase tracking-widest ml-1">Giới thiệu chuyên môn</label>
                                         <textarea rows={3} className="w-full bg-slate-100/50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 shadow-inner" value={editForm.bio} onChange={e => setEditForm({...editForm, bio: e.target.value})} />
                                     </div>
                                     
-                                    {/* Mạng xã hội */}
                                     <div className="pt-4 border-t border-slate-200 dark:border-white/10">
                                         <div className="flex items-center justify-between mb-4">
                                             <label className="text-[11px] font-black text-slate-800 dark:text-white uppercase tracking-widest flex items-center gap-2"><Link2 size={16}/> Mạng xã hội</label>
@@ -325,7 +358,7 @@ export default function ModeratorProfilePage() {
                     </div>
                 </div>
 
-                {/* CỘT PHẢI: HIỆU SUẤT KIỂM DUYỆT (Đồng bộ vị trí Box Uy tín của Partner) */}
+                {/* CỘT PHẢI: HIỆU SUẤT KIỂM DUYỆT */}
                 <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-8 lg:pt-[52px]">
                     <div className="bg-white/60 dark:bg-zinc-900/50 backdrop-blur-2xl rounded-[3rem] p-8 border border-slate-200 dark:border-white/10 relative overflow-hidden shadow-lg flex flex-col">
                         <div className="flex items-center gap-2 text-violet-500 font-black text-xs mb-4 uppercase tracking-widest">
