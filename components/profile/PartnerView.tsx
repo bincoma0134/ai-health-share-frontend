@@ -15,7 +15,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null;
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
-export default function PartnerView({ profile, posts = [], likedPosts = [], savedPosts = [], services = [], reviews = [], stats = {} }: any) {
+export default function PartnerView({ profile, community_posts = [], likedPosts = [], savedPosts = [], services = [], reviews = [], stats = {} }: any) {
   const [activeTab, setActiveTab] = useState("services");
   const [sortOrder, setSortOrder] = useState("newest");
 
@@ -262,7 +262,7 @@ export default function PartnerView({ profile, posts = [], likedPosts = [], save
             {/* TAB: VIDEOS / LIKED / SAVED */}
             {(activeTab === "videos" || activeTab === "liked" || activeTab === "saved") && (
                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 md:gap-6 animate-fade-in">
-               {(activeTab === "videos" ? posts : activeTab === "liked" ? likedPosts : savedPosts).map((item: any) => (
+               {(activeTab === "videos" ? community_posts : activeTab === "liked" ? likedPosts : savedPosts).map((item: any) => (
                  <div key={item.id} className="relative aspect-[9/16] bg-zinc-800 rounded-[2rem] overflow-hidden group cursor-pointer shadow-2xl border border-white/5">
                    <video src={item.video_url || item.image_url} className="w-full h-full object-cover opacity-90 transition-transform duration-1000 group-hover:scale-110 group-hover:opacity-100" muted playsInline />
                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-transparent flex flex-col justify-end p-4 pt-12 opacity-0 group-hover:opacity-100 transition-all duration-300">
@@ -276,7 +276,7 @@ export default function PartnerView({ profile, posts = [], likedPosts = [], save
                    </div>
                  </div>
                ))}
-               {posts.length === 0 && activeTab === "videos" && (
+               {community_posts.length === 0 && activeTab === "videos" && (
                   <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-[2rem]">
                       <LayoutGrid size={48} className="mx-auto text-slate-300 dark:text-zinc-700 mb-4" />
                       <p className="text-slate-500 font-bold">Doanh nghiệp chưa đăng tải video nào.</p>

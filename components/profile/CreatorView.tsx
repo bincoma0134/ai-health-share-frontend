@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-export default function CreatorView({ profile, videos = [], posts = [], likedPosts = [], savedPosts = [] }: any) {
+export default function CreatorView({ profile, videos = [], community_posts = [], likedPosts = [], savedPosts = [] }: any) {
   const [activeTab, setActiveTab] = useState("videos");
 
   const handleShare = () => {
@@ -158,7 +158,7 @@ export default function CreatorView({ profile, videos = [], posts = [], likedPos
         {/* TAB NỘI DUNG: BÀI ĐĂNG CỘNG ĐỒNG */}
         {activeTab === "posts" && (
             <div className="max-w-2xl mx-auto space-y-6 mt-8 pb-20">
-                {posts.map((post: any) => (
+                {community_posts.map((post: any) => (
                     <div key={post.id} className="bg-white dark:bg-zinc-900 rounded-[2rem] p-6 border border-slate-200 dark:border-white/10 shadow-sm">
                         <div className="flex items-center gap-3 mb-4">
                             <img src={profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.full_name}&background=f43f5e&color=fff`} className="w-10 h-10 rounded-full border border-slate-200 dark:border-white/10" />
@@ -180,7 +180,7 @@ export default function CreatorView({ profile, videos = [], posts = [], likedPos
                     </div>
                 ))}
 
-                {posts.length === 0 && (
+                {community_posts.length === 0 && (
                     <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-[2rem]">
                         <MessageCircle size={48} className="mx-auto text-slate-300 dark:text-zinc-700 mb-4" />
                         <p className="text-slate-500 font-bold">Chưa có bài viết nào trên cộng đồng.</p>
