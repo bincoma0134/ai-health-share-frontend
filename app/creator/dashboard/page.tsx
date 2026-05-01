@@ -5,16 +5,12 @@ import {
   Sun, Moon, Bell, PlaySquare, Eye, Heart, MessageCircle, 
   TrendingUp, Star, Film, ChevronRight, BarChart2, ShieldCheck, Video, LayoutGrid, Sparkles
 } from "lucide-react";
-import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useUI } from "@/context/UIContext";
+import { supabase } from "@/lib/supabase";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-if (!supabaseUrl || !supabaseAnonKey) throw new Error("Thiếu biến môi trường Supabase!");
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 

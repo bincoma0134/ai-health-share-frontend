@@ -7,16 +7,11 @@ import {
   QrCode, AlertCircle, CreditCard, XCircle,
   Phone, MessageCircle, FileText, Activity, Receipt
 } from "lucide-react";
-import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useUI } from "@/context/UIContext";
+import { supabase } from "@/lib/supabase";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) throw new Error("Thiếu biến môi trường Supabase!");
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 export default function CalendarFeature() {
@@ -156,8 +151,8 @@ export default function CalendarFeature() {
           const result = await res.json();
           if (res.ok) {
               toast.success(result.message, { id: tid });
-              setAppointments(prev => prev.map(a => a.id === appointmentId ? { ...a, status: 'COMPLETED' } : a));
-              setActiveTab('history');
+              setAppointments(prev => prev.map(a => a.id === appointmentId ? { ...a, status: 'SERVED' } : a));
+              setActiveTab('upcoming'); // Vẫn giữ ở Tab Sắp tới để hiển thị trạng thái Đã Check-in
           } else throw new Error(result.detail);
       } catch (e: any) { toast.error(e.message || "Mã không hợp lệ", { id: tid }); }
   };
@@ -168,7 +163,7 @@ export default function CalendarFeature() {
       const status = a.status.toUpperCase();
       if (activeTab === 'waiting') return status === 'WAITING_PARTNER';
       if (activeTab === 'payment') return status === 'PENDING_PAYMENT';
-      if (activeTab === 'upcoming') return status === 'CONFIRMED';
+      if (activeTab === 'upcoming') return status === 'CONFIRMED' || status === 'SERVED';
       if (activeTab === 'history') return status === 'COMPLETED' || status === 'CANCELLED';
       return false;
   });
@@ -331,17 +326,47 @@ export default function CalendarFeature() {
                                                 </div>
                                             )}  
 
-                                            {!isMyClient && currentStatus === 'CONFIRMED' && (
-                                                <div className="text-center p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border-2 border-dashed border-emerald-300 dark:border-emerald-500/30">
-                                                    <QrCode size={32} className="mx-auto text-emerald-600 mb-2" />
-                                                    <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold uppercase mb-1">Mã xác nhận tại quầy</p>
-                                                    <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400 tracking-[0.2em]">{appt.check_in_code || "------"}</p>
-                                                </div>
-                                            )}
+{!isMyClient && currentStatus === 'CONFIRMED' && (
+    <div className="text-center p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border-2 border-dashed border-emerald-300 dark:border-emerald-500/30">
+        <QrCode size={32} className="mx-auto text-emerald-600 mb-2" />
+        <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold uppercase mb-1">Mã xác nhận tại quầy</p>
+        <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400 tracking-[0.2em]">{appt.check_in_code || "------"}</p>
+    </div>
+)}
 
-                                            {/* Giao diện Partner */}
-                                            {isMyClient && currentStatus === 'CONFIRMED' && (
-                                                <>
+                        {/* Nút để User chốt đơn sau khi làm dịch vụ xong */}
+                        {!isMyClient && currentStatus === 'SERVED' && (
+                            <div className="flex flex-col gap-3">
+                                <div className="text-center p-3 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20">
+                                    <p className="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase mb-1">Cơ sở đã phục vụ</p>
+                                    <p className="text-sm font-black text-blue-700 dark:text-blue-300">Vui lòng xác nhận để giải ngân</p>
+                                </div>
+                                <button 
+                                    onClick={async () => {
+                                        const tid = toast.loading("Đang xác nhận hoàn thành...");
+                                        try {
+                                            const { data: { session } } = await supabase.auth.getSession();
+                                            const res = await fetch(`${API_URL}/appointments/${appt.id}/user-confirm`, {
+                                                method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` },
+                                                body: JSON.stringify({ is_satisfied: true })
+                                            });
+                                            if (res.ok) {
+                                                toast.success("Cảm ơn bạn! Lịch hẹn đã chuyển vào Lịch sử.", { id: tid });
+                                                setAppointments(prev => prev.map(a => a.id === appt.id ? { ...a, status: 'COMPLETED' } : a));
+                                                setActiveTab('history');
+                                            } else throw new Error();
+                                        } catch { toast.error("Lỗi xác nhận", { id: tid }); }
+                                    }} 
+                                    className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20"
+                                >
+                                    <CheckCircle size={16} className="inline mr-1" /> Xác nhận hài lòng
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Giao diện Partner */}
+                        {isMyClient && currentStatus === 'CONFIRMED' && (
+                            <>
                                                     <div className="text-center">
                                                         <p className="text-xs font-bold text-slate-500 mb-2 uppercase">Xác nhận khách đến</p>
                                                         <input 

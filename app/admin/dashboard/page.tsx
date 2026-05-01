@@ -6,16 +6,13 @@ import {
   Home, ShieldCheck, BarChart3, Sparkles, Compass, User as UserIcon, 
   Sun, Moon, Bell, Crown, Settings, Landmark, FileText, CheckCircle, XCircle, X, Search
 } from "lucide-react";
-import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useUI } from "@/context/UIContext"; 
 import NotificationModal from "@/components/NotificationModal";
+import { supabase } from "@/lib/supabase";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 interface WithdrawalItem {
@@ -331,21 +328,40 @@ export default function AdminDashboardOverview() {
                           <p className="text-3xl font-black text-rose-600 dark:text-rose-400">{selectedWithdrawal.amount.toLocaleString()} VND</p>
                       </div>
 
-                      <div className="p-4 bg-slate-50 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/5">
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Thông tin nhận tiền (Bank/Ví)</p>
-                          <pre className="text-sm font-medium text-slate-700 dark:text-zinc-300 whitespace-pre-wrap font-sans">
+                      <div className="p-4 bg-slate-50 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/5 relative group">
+                          <div className="flex justify-between items-center mb-2">
+                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Thông tin nhận tiền (Bank/Ví)</p>
+                              <button 
+                                  onClick={() => {
+                                      navigator.clipboard.writeText(JSON.stringify(selectedWithdrawal.payout_info, null, 2));
+                                      toast.success("Đã sao chép thông tin ngân hàng!");
+                                  }}
+                                  className="text-[10px] bg-white dark:bg-zinc-800 px-3 py-1.5 rounded-lg text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 border border-slate-200 dark:border-white/10 transition-all shadow-sm font-bold active:scale-95"
+                              >
+                                  Sao chép nhanh
+                              </button>
+                          </div>
+                          <pre className="text-sm font-bold text-slate-700 dark:text-zinc-300 whitespace-pre-wrap font-mono bg-white dark:bg-black/50 p-3 rounded-xl border border-slate-100 dark:border-white/5 overflow-x-auto shadow-inner">
                               {JSON.stringify(selectedWithdrawal.payout_info, null, 2)}
                           </pre>
                       </div>
 
                       {selectedWithdrawal.status === 'PENDING' ? (
-                          <>
-                              <textarea rows={2} className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-amber-500 resize-none" placeholder="Nhập mã giao dịch ngân hàng hoặc lý do từ chối..." value={adminNote} onChange={e => setAdminNote(e.target.value)} />
-                              <div className="grid grid-cols-2 gap-3 pt-2">
-                                  <button onClick={() => handleProcessWithdrawal('REJECTED')} disabled={isProcessing} className="py-4 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 font-black rounded-xl text-[10px] uppercase tracking-widest border border-rose-200 dark:border-rose-500/20 active:scale-95 transition-all">Từ chối lệnh</button>
-                                  <button onClick={() => handleProcessWithdrawal('COMPLETED')} disabled={isProcessing} className="py-4 bg-emerald-500 text-white font-black rounded-xl text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-500/20 active:scale-95 transition-all">Đã chuyển tiền (Duyệt)</button>
+                          <div className="flex flex-col gap-3">
+                              <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl">
+                                  <ShieldCheck size={16} className="text-amber-500 shrink-0 mt-0.5" />
+                                  <p className="text-[11px] text-amber-700 dark:text-amber-400 font-medium">
+                                      <strong>Lưu ý quan trọng:</strong> Hệ thống <span className="underline">không tự động chuyển tiền</span>. Bạn phải thực hiện chuyển khoản thủ công cho đối tác trước khi bấm Duyệt.
+                                  </p>
                               </div>
-                          </>
+                              <textarea rows={2} className="w-full bg-white dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 resize-none shadow-inner" placeholder="Nhập mã giao dịch ngân hàng (Bắt buộc nếu duyệt) hoặc lý do từ chối..." value={adminNote} onChange={e => setAdminNote(e.target.value)} />
+                              <div className="grid grid-cols-2 gap-3 pt-2">
+                                  <button onClick={() => handleProcessWithdrawal('REJECTED')} disabled={isProcessing} className="py-3.5 bg-white dark:bg-transparent text-rose-600 dark:text-rose-400 font-black rounded-xl text-xs uppercase tracking-widest border border-rose-200 dark:border-rose-500/30 hover:bg-rose-50 dark:hover:bg-rose-500/10 active:scale-95 transition-all">Từ chối lệnh</button>
+                                  <button onClick={() => handleProcessWithdrawal('COMPLETED')} disabled={isProcessing} className="py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-xl text-xs uppercase tracking-widest shadow-lg shadow-emerald-500/30 active:scale-95 transition-all flex justify-center items-center gap-2">
+                                      <CheckCircle size={16} /> Đã chuyển tiền
+                                  </button>
+                              </div>
+                          </div>
                       ) : (
                           <div className="p-4 bg-slate-100 dark:bg-white/5 rounded-2xl text-center"><p className="text-sm font-bold text-slate-500">Lệnh này đã được xử lý ({selectedWithdrawal.status})</p></div>
                       )}

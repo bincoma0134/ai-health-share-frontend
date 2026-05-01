@@ -5,19 +5,12 @@ import {
   Home, Compass, CalendarDays, Heart, Sparkles, User as UserIcon, 
   Sun, Moon, Bell, LogOut, Send, Bot, User as UserAvatar, Trash2
 } from "lucide-react";
-import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import ReactMarkdown from 'react-markdown';
 import { useUI } from "@/context/UIContext";
+import { supabase } from "@/lib/supabase";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error("Thiếu biến môi trường Supabase!");
-}
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 interface ChatMessage {
   id: string;

@@ -4,17 +4,14 @@ import { useEffect, useState } from "react";
 import { 
   Home, LayoutDashboard, DollarSign, Sun, Moon, 
   CheckCircle, Clock, CreditCard, Wallet, TrendingUp, ShieldCheck,
-  CalendarDays, CalendarClock, Check, X
+  CalendarDays, CalendarClock, Check, X, History, FileText, Building2, XCircle
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 
 // --- KHỞI TẠO SUPABASE CLIENT & API ---
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-if (!supabaseUrl || !supabaseAnonKey) throw new Error("Thiếu biến môi trường Supabase!");
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 interface Booking {
@@ -40,10 +37,11 @@ export default function PartnerDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   
   // --- STATE DỮ LIỆU ---
-  const [activeTab, setActiveTab] = useState<'escrow' | 'appointments' | 'wallet'>('escrow');
+  const [activeTab, setActiveTab] = useState<'escrow' | 'appointments' | 'wallet' | 'withdrawals'>('escrow');
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [appointments, setAppointments] = useState<any[]>([]);
   const [walletInfo, setWalletInfo] = useState({ balance: 0, total_earned: 0 });
+  const [myWithdrawals, setMyWithdrawals] = useState<any[]>([]);
   
   // State lưu form & Check-in
   const [respondForms, setRespondForms] = useState<Record<string, { start: string, end: string, reason: string }>>({});
@@ -69,6 +67,11 @@ export default function PartnerDashboard() {
       // 3. Lấy dữ liệu Ví nội bộ của Partner
       const resWallet = await supabase.from("wallets").select("*").eq("user_id", session.user.id).single();
       if (resWallet.data) setWalletInfo({ balance: Number(resWallet.data.balance), total_earned: Number(resWallet.data.total_earned) });
+
+      // 4. Lấy lịch sử rút tiền
+      const resWith = await fetch(`${API_URL}/partner/withdrawals`, { headers: { "Authorization": `Bearer ${session.access_token}` } });
+      const dataWith = await resWith.json();
+      if (resWith.ok && dataWith.status === "success") setMyWithdrawals(dataWith.data || []);
 
     } catch (error) {
       toast.error("Không thể kết nối đến máy chủ.");
@@ -130,28 +133,26 @@ export default function PartnerDashboard() {
   };
 
   const handleWithdrawal = async () => {
-      if (!withdrawalForm.amount || !withdrawalForm.bank_name || !withdrawalForm.account_number || !withdrawalForm.account_name) {
-          return toast.error("Vui lòng điền đầy đủ thông tin ngân hàng!");
-      }
-      if (Number(withdrawalForm.amount) > walletInfo.balance) return toast.error("Số dư không đủ!");
-      if (Number(withdrawalForm.amount) < 50000) return toast.error("Số tiền rút tối thiểu là 50.000 VND!");
-
-      const tid = toast.loading("Đang gửi yêu cầu giải ngân...");
-      try {
-          const { data: { session } } = await supabase.auth.getSession();
-          const payload = {
-              user_id: session?.user.id, amount: Number(withdrawalForm.amount), status: "PENDING",
-              payout_info: { bank_name: withdrawalForm.bank_name, account_number: withdrawalForm.account_number, account_name: withdrawalForm.account_name }
-          };
-          const res = await supabase.from("withdrawal_requests").insert(payload);
-          if (res.error) throw res.error;
-          
-          await supabase.from("wallets").update({ balance: walletInfo.balance - Number(withdrawalForm.amount) }).eq("user_id", session?.user.id);
-          
-          toast.success("Đã gửi yêu cầu rút tiền thành công!", { id: tid });
-          setWithdrawalForm({ amount: '', bank_name: '', account_number: '', account_name: '' });
-          fetchData();
-      } catch (e: any) { toast.error("Lỗi gửi yêu cầu: " + e.message, { id: tid }); }
+    const tid = toast.loading("Đang gửi yêu cầu giải ngân...");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`${API_URL}/partner/withdraw`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` },
+        body: JSON.stringify({
+          amount: Number(withdrawalForm.amount),
+          bank_name: withdrawalForm.bank_name,
+          account_number: withdrawalForm.account_number,
+          account_name: withdrawalForm.account_name
+        })
+      });
+      const result = await res.json();
+      if (res.ok) {
+        toast.success(result.message, { id: tid });
+        setWithdrawalForm({ amount: '', bank_name: '', account_number: '', account_name: '' });
+        fetchData(); // Load lại số dư mới từ DB
+      } else throw new Error(result.detail);
+    } catch (e: any) { toast.error(e.message, { id: tid }); }
   };
 
   // --- HÀM XỬ LÝ: DUYỆT LỊCH HẸN (MỚI THÊM) ---
@@ -214,7 +215,7 @@ export default function PartnerDashboard() {
                     <p className="text-slate-500 dark:text-zinc-400 font-medium text-sm">Theo dõi lịch đặt, kiểm soát dòng tiền an toàn và xác nhận giải ngân.</p>
                 </div>
 
-                <div className="flex p-1.5 bg-white dark:bg-white/5 shadow-sm rounded-2xl w-full md:w-max border border-slate-200 dark:border-white/10">
+                <div className="flex p-1.5 bg-white dark:bg-white/5 shadow-sm rounded-2xl w-full md:w-max border border-slate-200 dark:border-white/10 overflow-x-auto no-scrollbar">
                     <button onClick={() => setActiveTab('escrow')} className={`px-5 py-2.5 rounded-xl font-bold text-sm flex-1 md:flex-none transition-all flex items-center justify-center gap-2 ${activeTab === 'escrow' ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
                         <Wallet size={16} /> Escrow
                     </button>
@@ -222,8 +223,11 @@ export default function PartnerDashboard() {
                         <CalendarClock size={16} /> Lịch hẹn
                         {pendingAppointments.length > 0 && <span className="absolute -top-2 -right-2 bg-rose-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-black animate-bounce">{pendingAppointments.length}</span>}
                     </button>
-                    <button onClick={() => setActiveTab('wallet')} className={`px-5 py-2.5 rounded-xl font-bold text-sm flex-1 md:flex-none transition-all flex items-center justify-center gap-2 ${activeTab === 'wallet' ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
+                    <button onClick={() => setActiveTab('wallet')} className={`px-5 py-2.5 rounded-xl font-bold text-sm flex-shrink-0 transition-all flex items-center justify-center gap-2 ${activeTab === 'wallet' ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
                         <CreditCard size={16} /> Ví & Rút tiền
+                    </button>
+                    <button onClick={() => setActiveTab('withdrawals')} className={`px-5 py-2.5 rounded-xl font-bold text-sm flex-shrink-0 transition-all flex items-center justify-center gap-2 ${activeTab === 'withdrawals' ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
+                        <History size={16} /> Lịch sử rút tiền
                     </button>
                 </div>
             </div>
@@ -441,6 +445,68 @@ export default function PartnerDashboard() {
                                 </button>
                                 <p className="text-xs text-center text-slate-500 mt-4">Yêu cầu sẽ được Super Admin kiểm duyệt và chuyển khoản trong vòng 24h làm việc.</p>
                             </div>
+                        </div>
+                    )}
+
+                    {/* ================= TAB 4: LỊCH SỬ RÚT TIỀN (MỚI THÊM) ================= */}
+                    {activeTab === 'withdrawals' && (
+                        <div className="flex flex-col gap-4 animate-slide-up max-w-4xl mx-auto">
+                            {myWithdrawals.length === 0 ? (
+                                <div className="glass-panel p-16 text-center text-slate-400 dark:text-zinc-500 font-bold flex flex-col items-center gap-4 rounded-[2.5rem] bg-white/70 dark:bg-black/40 border border-slate-200 dark:border-white/10">
+                                    <FileText size={48} className="opacity-20" />
+                                    <p className="text-lg">Bạn chưa có yêu cầu rút tiền nào.</p>
+                                </div>
+                            ) : (
+                                myWithdrawals.map(req => (
+                                    <div key={req.id} className="p-6 rounded-[2rem] bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 shadow-sm flex flex-col md:flex-row justify-between md:items-center gap-4 hover:-translate-y-1 transition-transform">
+                                        
+                                        <div className="flex flex-col gap-1.5">
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-mono text-[10px] font-black uppercase text-slate-400 dark:text-zinc-500 tracking-widest">#{req.id.split('-')[0]}</span>
+                                                <span className="text-xs font-bold text-slate-500">{new Date(req.created_at).toLocaleString('vi-VN')}</span>
+                                            </div>
+                                            <h4 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                                                {Number(req.amount).toLocaleString()} <span className="text-sm font-bold text-slate-400">VND</span>
+                                            </h4>
+                                            <div className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-zinc-400 bg-slate-50 dark:bg-black/50 w-max px-3 py-1.5 rounded-lg border border-slate-100 dark:border-white/5 mt-1">
+                                                <Building2 size={14}/> {req.payout_info?.bank_name} <span className="text-slate-300 dark:text-zinc-600">|</span> <span className="font-mono">{req.payout_info?.account_number}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex flex-col items-start md:items-end gap-2">
+                                            {req.status === 'PENDING' && (
+                                                <span className="px-3 py-1.5 bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 text-[10px] font-black uppercase tracking-widest rounded-lg border border-amber-200 dark:border-amber-500/20 flex items-center gap-1.5">
+                                                    <Clock size={14} className="animate-pulse"/> Đang chờ duyệt
+                                                </span>
+                                            )}
+                                            {req.status === 'COMPLETED' && (
+                                                <span className="px-3 py-1.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 text-[10px] font-black uppercase tracking-widest rounded-lg border border-emerald-200 dark:border-emerald-500/20 flex items-center gap-1.5">
+                                                    <CheckCircle size={14}/> Đã giải ngân
+                                                </span>
+                                            )}
+                                            {req.status === 'REJECTED' && (
+                                                <span className="px-3 py-1.5 bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400 text-[10px] font-black uppercase tracking-widest rounded-lg border border-rose-200 dark:border-rose-500/20 flex items-center gap-1.5">
+                                                    <XCircle size={14}/> Bị từ chối
+                                                </span>
+                                            )}
+                                            
+                                            {/* Ghi chú của Admin */}
+                                            {req.admin_note && req.status === 'REJECTED' && (
+                                                <div className="text-right">
+                                                    <p className="text-[11px] font-bold text-rose-500 max-w-xs leading-snug">Lý do: {req.admin_note}</p>
+                                                    <p className="text-[10px] font-black text-rose-400 mt-0.5 opacity-80 uppercase tracking-wider">Tiền đã được hoàn lại vào ví</p>
+                                                </div>
+                                            )}
+                                            {req.admin_note && req.status === 'COMPLETED' && (
+                                                <p className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 max-w-xs text-left md:text-right mt-1">
+                                                    Mã GD: {req.admin_note}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                    </div>
+                                ))
+                            )}
                         </div>
                     )}
                 </div>

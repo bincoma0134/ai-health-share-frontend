@@ -1,9 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+import { supabase } from "@/lib/supabase";
 
 // 1. Thêm biến môi trường để trỏ về đúng Backend đang chạy
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";

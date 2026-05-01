@@ -5,8 +5,7 @@ import { X, Bell, CheckCircle, ShieldCheck, CalendarDays } from "lucide-react";
 import { useUI } from "@/context/UIContext";
 import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
-
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+import { supabase } from "@/lib/supabase";
 
 export default function NotificationModal() {
   const { isNotifOpen, setIsNotifOpen } = useUI();

@@ -6,20 +6,12 @@ import {
   Heart, MessageCircle, Bookmark, Share2, Plus,
   Sun, Moon, Bell, LogOut, CheckCircle, Video
 } from "lucide-react";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import CommentModal from "@/components/CommentModal";   
 
-// --- KHỞI TẠO SUPABASE CLIENT ---
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error("Thiếu biến môi trường Supabase! Vui lòng kiểm tra file .env.local");
-}
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 // --- SCHEMA MỚI DÀNH CHO STUDIO VIDEO TRANG CHỦ ---

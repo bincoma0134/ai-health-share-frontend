@@ -6,16 +6,14 @@ import {
   Clock, AlertTriangle, FileText, X, LayoutDashboard, Package, Video, 
   Trash2, Search, History, ShieldAlert, TrendingUp, PieChart as PieChartIcon, Activity, Eye
 } from "lucide-react";
-import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useUI } from "@/context/UIContext";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { supabase } from "@/lib/supabase";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-if (!supabaseUrl || !supabaseAnonKey) throw new Error("Thiếu cấu hình!");
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 interface QueueItem {

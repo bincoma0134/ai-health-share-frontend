@@ -7,16 +7,12 @@ import {
   MoreHorizontal, Share2, Clock, CheckCircle, Plus, FileText, 
   Eye, LogOut, UploadCloud, X, Trash2, Crown, Activity, Database, Server, ShieldCheck, Lock
 } from "lucide-react";
-import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import NotificationModal from "@/components/NotificationModal";
 import { useUI } from "@/context/UIContext";
+import { supabase } from "@/lib/supabase";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-if (!supabaseUrl || !supabaseAnonKey) throw new Error("Thiếu biến môi trường Supabase!");
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 

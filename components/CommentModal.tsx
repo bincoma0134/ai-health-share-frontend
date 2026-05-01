@@ -3,10 +3,10 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { X, Send, User as UserIcon, Sparkles, MoreHorizontal, AlertTriangle, EyeOff, Crown, ShieldCheck, BadgeCheck, MessageCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { createClient } from "@supabase/supabase-js";
-import { useRouter } from "next/navigation";
 
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 interface CommentModalProps {
