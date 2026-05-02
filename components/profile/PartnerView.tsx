@@ -7,17 +7,42 @@ import {
   Star, Package, BadgeCheck, TrendingUp, Building2, X
 } from "lucide-react";
 import { toast } from "sonner";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 
-// Khởi tạo Supabase & API
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null;
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 export default function PartnerView({ profile, community_posts = [], likedPosts = [], savedPosts = [], services = [], reviews = [], stats = {} }: any) {
   const [activeTab, setActiveTab] = useState("services");
   const [sortOrder, setSortOrder] = useState("newest");
+
+  // --- STATE FOLLOW ---
+  const [isFollowing, setIsFollowing] = useState(profile?.is_followed || false);
+  const [followersCount, setFollowersCount] = useState(profile?.followers_count || 0);
+
+  const handleToggleFollow = async () => {
+    if (!supabase) return toast.error("Hệ thống chưa sẵn sàng!");
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return toast.error("Vui lòng đăng nhập để quan tâm cơ sở này!");
+    
+    // Optimistic Update (Cập nhật giao diện trước)
+    const wasFollowing = isFollowing;
+    setIsFollowing(!wasFollowing);
+    setFollowersCount((prev: number) => wasFollowing ? Math.max(0, prev - 1) : prev + 1);
+
+    try {
+        const res = await fetch(`${API_URL}/user/follow/${profile.id}`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${session.access_token}` }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Lỗi server");
+    } catch (err: any) {
+        toast.error(err.message);
+        // Rollback (Phục hồi state nếu lỗi)
+        setIsFollowing(wasFollowing);
+        setFollowersCount((prev: number) => wasFollowing ? prev + 1 : Math.max(0, prev - 1));
+    }
+  };
 
   // --- STATE CỬA SỔ ĐẶT LỊCH (BOOKING MODAL) ---
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
@@ -136,8 +161,20 @@ export default function PartnerView({ profile, community_posts = [], likedPosts 
 
           {/* Nút Action Đưa xuống dưới Username */}
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-8">
-            <button className="px-8 py-3.5 bg-blue-600 dark:bg-blue-500 text-white font-black rounded-2xl hover:shadow-[0_0_20px_rgba(59,130,246,0.4)] transition-all flex items-center gap-2 active:scale-95 text-xs uppercase tracking-widest shadow-lg">
-              <UserPlus size={18} strokeWidth={2.5} /> Quan tâm
+            <button 
+              onClick={handleToggleFollow} 
+              className={`relative px-8 py-3.5 font-black rounded-2xl transition-all duration-300 ease-out flex items-center justify-center gap-2 overflow-hidden group active:scale-95 text-xs uppercase tracking-widest min-w-[160px] ${
+                isFollowing 
+                ? 'bg-slate-100 dark:bg-zinc-800/80 text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700/50 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-500 dark:hover:text-rose-400 hover:border-rose-200 dark:hover:border-rose-500/30' 
+                : 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white hover:scale-[1.02] hover:-translate-y-0.5 shadow-[0_8px_20px_-6px_rgba(59,130,246,0.5)] hover:shadow-[0_15px_25px_-6px_rgba(59,130,246,0.6)]'
+              }`}
+            >
+              {!isFollowing && <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-700 skew-x-12"></div>}
+              {isFollowing ? (
+                <><span className="group-hover:hidden">Đã quan tâm</span><span className="hidden group-hover:block">Hủy quan tâm</span></>
+              ) : (
+                <><UserPlus size={18} strokeWidth={2.5} className="group-hover:rotate-12 group-hover:scale-110 transition-transform" /> Quan tâm</>
+              )}
             </button>
             <button className="p-3.5 bg-white/60 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white rounded-2xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all shadow-sm active:scale-90">
               <MessageCircle size={18} />
@@ -153,7 +190,7 @@ export default function PartnerView({ profile, community_posts = [], likedPosts 
           {/* CHỈ SỐ BUSINESS */}
           <div className="flex items-center justify-center md:justify-start gap-8 mb-6">
             <div className="flex items-center gap-2 group cursor-pointer">
-              <span className="text-xl md:text-2xl font-black text-slate-900 dark:text-white transition-colors">{profile?.followers_count || 0}</span>
+              <span className="text-xl md:text-2xl font-black text-slate-900 dark:text-white transition-colors">{followersCount.toLocaleString()}</span>
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-tight">Người quan<br/>tâm</span>
             </div>
             <div className="w-[1px] h-8 bg-slate-200 dark:bg-white/10"></div>

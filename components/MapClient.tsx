@@ -1,62 +1,95 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
-import L from "leaflet";
-import { useEffect } from "react";
+import { useEffect, useRef } from 'react';
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 
-// Marker Đối tác - Hiệu ứng Glow Emerald
-const partnerIcon = L.divIcon({
-  className: "custom-pin",
-  html: `<div class="relative w-10 h-10 flex items-center justify-center">
-            <div class="absolute inset-0 bg-[#80BF84] rounded-full blur-md opacity-40 animate-pulse"></div>
-            <div class="relative w-8 h-8 bg-[#80BF84] rounded-full border-[3px] border-white shadow-2xl flex items-center justify-center">
-              <div class="w-2 h-2 bg-white rounded-full"></div>
+// Hàm tạo Marker động với hiệu ứng Glassmorphism & Glow
+const createCustomMarker = (partner: any) => {
+    // Nếu có avatar thì hiển thị, nếu không dùng icon mặc định
+    const avatarUrl = partner.avatar_url || 'https://ui-avatars.com/api/?name=Partner&background=80BF84&color=fff';
+    const htmlString = `
+        <div class="relative flex items-center justify-center w-12 h-12">
+            <!-- Vòng tròn tỏa sáng (Glow Pulse) -->
+            <div class="absolute inset-0 bg-[#80BF84] rounded-full animate-ping opacity-40"></div>
+            
+            <!-- Khối Glassmorphism Avatar -->
+            <div class="relative w-10 h-10 bg-white/80 backdrop-blur-md rounded-full border-[3px] border-[#80BF84] shadow-[0_0_20px_rgba(128,191,132,0.8)] flex items-center justify-center overflow-hidden transition-transform hover:scale-110">
+                <img src="${avatarUrl}" class="w-full h-full object-cover" />
             </div>
-         </div>`,
-  iconSize: [40, 40],
-  iconAnchor: [20, 40],
+            
+            <!-- Mũi ghim nhọn chĩa xuống mặt đất -->
+            <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-[#80BF84]"></div>
+        </div>
+    `;
+
+    return L.divIcon({
+        className: 'bg-transparent border-none', // Chặn style viền trắng mặc định của Leaflet
+        html: htmlString,
+        iconSize: [48, 48],
+        iconAnchor: [24, 48], // Cắm đúng tâm mũi nhọn xuống tọa độ
+    });
+};
+
+const userMarkerIcon = new L.Icon({
+    iconUrl: 'https://cdn-icons-png.flaticon.com/512/1004/1004093.png', // Icon vị trí của bạn (Blue dot)
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
 });
 
-// Marker Người dùng - Hiệu ứng Radar Blue
-const userIcon = L.divIcon({
-  className: "user-pin",
-  html: `<div class="relative w-8 h-8 flex items-center justify-center">
-            <div class="absolute inset-0 bg-blue-500 rounded-full animate-ping opacity-20"></div>
-            <div class="relative w-5 h-5 bg-blue-600 rounded-full border-2 border-white shadow-[0_0_15px_rgba(37,99,235,0.6)]"></div>
-         </div>`,
-  iconSize: [32, 32],
-  iconAnchor: [16, 16],
-});
-
-function MapUpdater({ center, zoom, mapType }: any) {
-  const map = useMap();
-  useEffect(() => {
-    map.setView(center, zoom, { animate: true, duration: 1 });
-  }, [center, zoom, map]);
-
-  return (
-    <TileLayer
-      url={mapType === "satellite" 
-        ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-        : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"}
-      attribution='&copy; AI Health Share'
-    />
-  );
+// Component hỗ trợ camera tự động bao quát toàn bộ Marker
+function MapBoundsUpdater({ partners, center, zoom }: { partners: any[], center: [number, number], zoom: number }) {
+    const map = useMap();
+    useEffect(() => {
+        if (partners && partners.length > 0) {
+            // Nếu có nhiều Marker, tạo khung (Bounds) bao trọn tất cả
+            const bounds = L.latLngBounds(partners.map(p => [p.latitude, p.longitude]));
+            // Bay camera ra để nhìn thấy hết, maxZoom 16 để tránh zoom sát mặt đất quá
+            map.flyToBounds(bounds, { padding: [50, 50], maxZoom: 16, duration: 1.5 });
+        } else {
+            // Nếu không có Marker nào (hoặc rỗng), bay về điểm Center mặc định
+            map.flyTo(center, zoom, { duration: 1.5 });
+        }
+    }, [partners, center, zoom, map]);
+    return null;
 }
 
-export default function MapClient({ partners, onMarkerClick, mapState, userLocation }: any) {
-  return (
-    <MapContainer center={mapState.center} zoom={mapState.zoom} zoomControl={false} className="w-full h-full z-0">
-      <MapUpdater center={mapState.center} zoom={mapState.zoom} mapType={mapState.mapType} />
-      {userLocation && <Marker position={userLocation} icon={userIcon} />}
-      {partners.map((p: any) => (
-        <Marker 
-          key={p.id} 
-          position={[p.latitude || 21.0285, p.longitude || 105.8048]} 
-          icon={partnerIcon}
-          eventHandlers={{ click: () => onMarkerClick(p) }}
-        />
-      ))}
-    </MapContainer>
-  );
+export default function MapClient({ partners, mapState, userLocation, onMarkerClick }: any) {
+    // Sử dụng CartoDB BaseMap cho giao diện sạch sẽ, hiện đại
+    const tileUrl = mapState.mapType === 'satellite'
+        ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+        : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+
+    return (
+        <MapContainer 
+            center={mapState.center} 
+            zoom={mapState.zoom} 
+            zoomControl={false} 
+            className="w-full h-full"
+            attributionControl={false}
+        >
+            <TileLayer url={tileUrl} />
+            <MapBoundsUpdater partners={partners} center={mapState.center} zoom={mapState.zoom} />
+            
+            {/* Vị trí của người dùng hiện tại */}
+            {userLocation && (
+                <Marker position={userLocation} icon={userMarkerIcon} zIndexOffset={1000} />
+            )}
+
+            {/* Vị trí của các cơ sở */}
+            {partners.map((p: any) => (
+                <Marker 
+                    key={p.id} 
+                    position={[p.latitude, p.longitude]} 
+                    icon={createCustomMarker(p)}
+                    eventHandlers={{ 
+                        click: () => {
+                            onMarkerClick(p);
+                        } 
+                    }}
+                />
+            ))}
+        </MapContainer>
+    );
 }

@@ -12,6 +12,9 @@ import { useRouter } from "next/navigation";
 import NotificationModal from "@/components/NotificationModal";
 import { useUI } from "@/context/UIContext";
 import { supabase } from "@/lib/supabase";
+import dynamic from "next/dynamic";
+
+const MiniMapPicker = dynamic(() => import("@/components/MiniMapPicker"), { ssr: false });
 
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -31,8 +34,9 @@ export default function PartnerProfilePage() {
   const [myServices, setMyServices] = useState<any[]>([]);
   const [myVideos, setMyVideos] = useState<any[]>([]);
 
-  const [editForm, setEditForm] = useState({ username: "", full_name: "", bio: "", address: "" });
+  const [editForm, setEditForm] = useState({ username: "", full_name: "", bio: "", physical_address: "", latitude: 21.028511, longitude: 105.804817 });
   const [socials, setSocials] = useState<SocialLink[]>([]);
+  const [isGeocoding, setIsGeocoding] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
@@ -78,7 +82,9 @@ export default function PartnerProfilePage() {
           username: dataP.data.profile.username || "",
           full_name: dataP.data.profile.full_name || "",
           bio: dataP.data.profile.bio || "",
-          address: dataP.data.profile.address || ""
+          physical_address: dataP.data.profile.physical_address || "",
+          latitude: dataP.data.profile.latitude || 21.028511,
+          longitude: dataP.data.profile.longitude || 105.804817
         });
         try {
           const parsed = dataP.data.profile.social_links ? JSON.parse(dataP.data.profile.social_links) : [];
@@ -96,6 +102,23 @@ export default function PartnerProfilePage() {
   useEffect(() => { fetchData(); }, [router]);
 
   const handleLogout = async () => { await supabase.auth.signOut(); router.push("/"); };
+
+  const handleGeocode = async () => {
+    if (!editForm.physical_address) return toast.error("Vui lòng nhập địa chỉ để tìm kiếm!");
+    setIsGeocoding(true);
+    const tid = toast.loading("Đang tìm kiếm tọa độ...");
+    try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(editForm.physical_address)}&limit=1`);
+        const data = await res.json();
+        if (data && data.length > 0) {
+            setEditForm(prev => ({ ...prev, latitude: parseFloat(data[0].lat), longitude: parseFloat(data[0].lon) }));
+            toast.success("Đã tìm thấy vị trí!", { id: tid });
+        } else {
+            toast.error("Không tìm thấy, vui lòng kéo ghim thủ công.", { id: tid });
+        }
+    } catch { toast.error("Lỗi kết nối bản đồ", { id: tid }); }
+    finally { setIsGeocoding(false); }
+  };
 
   const handleShareProfile = () => {
       const url = `${window.location.origin}/${profileData?.profile?.username}`;
@@ -531,9 +554,23 @@ export default function PartnerProfilePage() {
                                         <label className="text-[11px] font-black text-slate-800 dark:text-white uppercase tracking-widest ml-1">Tên doanh nghiệp hiển thị</label>
                                         <input type="text" className="w-full bg-slate-100/50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 shadow-inner" value={editForm.full_name} onChange={e => setEditForm({...editForm, full_name: e.target.value})} />
                                     </div>
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-[11px] font-black text-slate-800 dark:text-white uppercase tracking-widest ml-1">Địa chỉ cơ sở (Maps)</label>
-                                        <input type="text" className="w-full bg-slate-100/50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 shadow-inner" value={editForm.address} onChange={e => setEditForm({...editForm, address: e.target.value})} />
+                                    <div className="flex flex-col gap-3">
+                                        <label className="text-[11px] font-black text-slate-800 dark:text-white uppercase tracking-widest ml-1">Địa chỉ cơ sở (Bản đồ)</label>
+                                        <div className="flex gap-2">
+                                            <input type="text" placeholder="VD: 18 Ngõ 28 Nguyên Hồng..." className="flex-1 bg-slate-100/50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 shadow-inner" value={editForm.physical_address} onChange={e => setEditForm({...editForm, physical_address: e.target.value})} />
+                                            <button type="button" onClick={handleGeocode} disabled={isGeocoding} className="px-6 bg-slate-900 dark:bg-white text-white dark:text-black font-bold rounded-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center min-w-[120px]">
+                                                {isGeocoding ? <div className="w-5 h-5 border-2 border-white dark:border-black border-t-transparent rounded-full animate-spin"></div> : "Tìm tọa độ"}
+                                            </button>
+                                        </div>
+                                        
+                                        {/* Bản đồ Mini cho phép kéo thả Marker */}
+                                        <div className="w-full h-[250px] rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-inner relative z-0">
+                                            <MiniMapPicker 
+                                                position={[editForm.latitude, editForm.longitude]} 
+                                                onChange={(lat: number, lng: number) => setEditForm(prev => ({...prev, latitude: lat, longitude: lng}))} 
+                                            />
+                                        </div>
+                                        <p className="text-[10px] text-slate-500 font-bold italic ml-1">* Bạn có thể nắm kéo chiếc ghim trên bản đồ để đặt vị trí chính xác nhất.</p>
                                     </div>
                                     <div className="flex flex-col gap-2">
                                         <label className="text-[11px] font-black text-slate-800 dark:text-white uppercase tracking-widest ml-1">Tiểu sử</label>

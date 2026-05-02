@@ -6,9 +6,32 @@ import {
   Lock, Play, Heart, Bookmark, LayoutGrid 
 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 
 export default function RegularUserView({ profile, posts = [], likedPosts = [], savedPosts = [] }: any) {
   const [activeTab, setActiveTab] = useState("videos");
+
+  // Khai báo kết nối Backend
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
+  const [isFollowing, setIsFollowing] = useState(profile?.is_followed || false);
+  const [followersCount, setFollowersCount] = useState(profile?.followers_count || 0);
+
+  const handleToggleFollow = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return toast.error("Vui lòng đăng nhập!");
+    const wasFollowing = isFollowing;
+    setIsFollowing(!wasFollowing);
+    setFollowersCount((prev: number) => wasFollowing ? Math.max(0, prev - 1) : prev + 1);
+
+    try {
+        const res = await fetch(`${API_URL}/user/follow/${profile.id}`, { method: 'POST', headers: { 'Authorization': `Bearer ${session.access_token}` }});
+        if (!res.ok) throw new Error("Lỗi");
+    } catch {
+        setIsFollowing(wasFollowing);
+        setFollowersCount((prev: number) => wasFollowing ? prev + 1 : Math.max(0, prev - 1));
+    }
+  };
 
   const handleShare = () => {
       const profileUrl = window.location.href;
@@ -45,8 +68,20 @@ export default function RegularUserView({ profile, posts = [], likedPosts = [], 
 
           {/* Buttons: Glassmorphism trau chuốt */}
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mb-8">
-            <button className="px-10 py-3.5 bg-gradient-to-br from-[#80BF84] to-[#6da871] text-zinc-950 font-black rounded-2xl hover:shadow-[0_0_25px_rgba(128,191,132,0.4)] transition-all active:scale-95 flex items-center gap-2 shadow-lg">
-              <UserPlus size={20} strokeWidth={3} /> <span>Kết bạn</span>
+            <button 
+              onClick={handleToggleFollow} 
+              className={`relative px-10 py-3.5 font-black rounded-2xl transition-all duration-300 ease-out flex items-center justify-center gap-2 overflow-hidden group active:scale-95 min-w-[160px] shadow-lg ${
+                isFollowing 
+                ? 'bg-slate-100 dark:bg-zinc-800/80 text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700/50 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-500 dark:hover:text-rose-400 hover:border-rose-200 dark:hover:border-rose-500/30' 
+                : 'bg-gradient-to-br from-[#80BF84] to-[#6da871] text-zinc-950 hover:scale-[1.02] hover:-translate-y-0.5 hover:shadow-[0_15px_25px_-6px_rgba(128,191,132,0.5)]'
+              }`}
+            >
+              {!isFollowing && <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-700 skew-x-12"></div>}
+              {isFollowing ? (
+                <><span className="group-hover:hidden">Đã theo dõi</span><span className="hidden group-hover:block">Hủy theo dõi</span></>
+              ) : (
+                <><UserPlus size={20} strokeWidth={3} className="group-hover:rotate-12 group-hover:scale-110 transition-transform" /> Theo dõi</>
+              )}
             </button>
 
             <button className="px-8 py-3.5 bg-white/40 dark:bg-white/5 backdrop-blur-3xl border border-white/50 dark:border-white/10 text-slate-900 dark:text-white font-black rounded-2xl hover:bg-white/60 dark:hover:bg-white/10 transition-all flex items-center gap-2 shadow-xl active:scale-95">
@@ -66,11 +101,11 @@ export default function RegularUserView({ profile, posts = [], likedPosts = [], 
           {/* Chỉ số Stats */}
           <div className="flex justify-center md:justify-start gap-10 mb-6 px-2">
             <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2">
-              <span className="text-2xl font-black text-slate-900 dark:text-white">22</span>
+              <span className="text-2xl font-black text-slate-900 dark:text-white">{(profile?.following_count || 0).toLocaleString()}</span>
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Đang theo dõi</span>
             </div>
             <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2 border-x border-slate-200 dark:border-white/10 px-8">
-              <span className="text-2xl font-black text-slate-900 dark:text-white">196</span>
+              <span className="text-2xl font-black text-slate-900 dark:text-white">{followersCount.toLocaleString()}</span>
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Người theo dõi</span>
             </div>
             <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2">
