@@ -15,7 +15,9 @@ import { useUI } from "@/context/UIContext";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
+// Nhận trực tiếp params đã được await từ Server Component
 export default function UserProfilePage({ params }: { params: { username: string } }) {
+  // Thay vì dùng useParams(), hãy dùng luôn giá trị chắc chắn từ props
   const username = params.username;
   const { isNotifOpen, setIsNotifOpen } = useUI() as any;
   const [theme, setTheme] = useState<"light" | "dark">("light");
