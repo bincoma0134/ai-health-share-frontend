@@ -25,10 +25,14 @@ export default function BottomNavigation() {
   };
 
   return (
-    <div 
-      className="md:hidden fixed left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[400px] z-[90] bottom-4"
-      style={{ marginBottom: 'env(safe-area-inset-bottom, 8px)' }}
-    >
+    <>
+      {/* Tấm nền vô hình lấp đầy khoảng trắng Safe Area ở đáy màn hình */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-50 dark:bg-black z-[80]" style={{ height: 'env(safe-area-inset-bottom, 0px)' }}></div>
+      
+      <div 
+        className="md:hidden fixed left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[400px] z-[90] bottom-4"
+        style={{ marginBottom: 'env(safe-area-inset-bottom, 8px)' }}
+      >
       {/* 🔮 THE GLASS PILL: Nền kính siêu mờ (Ultra-premium Glassmorphism) */}
       <div className="relative bg-white/30 dark:bg-[#09090b]/40 backdrop-blur-3xl border border-white/60 dark:border-white/10 rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.6)] px-4 py-3 flex justify-between items-center">
         
@@ -71,5 +75,6 @@ export default function BottomNavigation() {
 
       </div>
     </div>
+    </>
   );
 }
