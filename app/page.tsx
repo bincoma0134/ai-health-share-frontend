@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useState, useRef } from "react";
 import { 
   CalendarPlus, X, User as UserIcon, ShieldCheck, Sparkles, Home, Compass, 
   Heart, MessageCircle, Bookmark, Share2, Plus,
@@ -9,7 +9,8 @@ import {
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import CommentModal from "@/components/CommentModal";   
+import CommentModal from "@/components/CommentModal";  
+import FeedVideoPlayer from "@/components/FeedVideoPlayer"; 
 
 
 
@@ -102,6 +103,32 @@ export default function UserFeed() {
       setIsLoading(false);
     }
   };
+
+  const [activeVideoIndex, setActiveVideoIndex] = useState(0);
+const observerRef = useRef<IntersectionObserver | null>(null);
+
+// Cài đặt con mắt theo dõi thao tác cuộn (Intersection Observer)
+useEffect(() => {
+  const options = { root: null, rootMargin: '0px', threshold: 0.6 }; // 60% video hiện ra thì tính là Active
+  
+  const handleIntersect = (entries: IntersectionObserverEntry[]) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        // Lấy index từ thuộc tính data-index của thẻ div
+        const index = Number(entry.target.getAttribute('data-index'));
+        setActiveVideoIndex(index);
+      }
+    });
+  };
+
+  observerRef.current = new IntersectionObserver(handleIntersect, options);
+  
+  // Áp dụng "con mắt" cho tất cả các thẻ có class 'video-snap-item'
+  const elements = document.querySelectorAll('.video-snap-item');
+  elements.forEach((el) => observerRef.current?.observe(el));
+
+  return () => observerRef.current?.disconnect();
+}, [videos]); // Chạy lại khi danh sách video thay đổi
 
   useEffect(() => {
     setIsMounted(true); 
@@ -388,8 +415,13 @@ export default function UserFeed() {
                 <div className="hidden md:block absolute inset-0 w-full h-full">
                   <video src={item.video_url || fallbackVideo} className="w-full h-full object-cover opacity-10 dark:opacity-30 blur-[60px] scale-125 transition-opacity duration-500" loop autoPlay muted playsInline />
                 </div>
-                <div className="relative w-full h-full md:h-[94vh] md:w-auto md:aspect-[9/16] md:rounded-[2.5rem] overflow-hidden bg-black md:border border-slate-200 dark:border-white/10 md:shadow-[0_0_50px_rgba(0,0,0,0.1)] dark:md:shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-all duration-500">
-                    <video src={item.video_url || fallbackVideo} className="absolute inset-0 w-full h-full object-cover opacity-90" loop autoPlay muted playsInline />
+                <div data-index={index} className="video-snap-item relative w-full h-full md:h-[94vh] md:w-auto md:aspect-[9/16] md:rounded-[2.5rem] overflow-hidden bg-black md:border border-slate-200 dark:border-white/10 md:shadow-[0_0_50px_rgba(0,0,0,0.1)] dark:md:shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-all duration-500">
+    
+                    {/* 🔥 CHÈN COMPONENT MỚI VÀO ĐÂY */}
+                    <FeedVideoPlayer 
+                        videoUrl={item.video_url || fallbackVideo} 
+                        isActive={index === activeVideoIndex} 
+                    />
                     <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none"></div>
                     
                     <div className="absolute bottom-[100px] md:bottom-[40px] left-4 md:left-6 z-10 max-w-[75%] pointer-events-auto animate-slide-up">
