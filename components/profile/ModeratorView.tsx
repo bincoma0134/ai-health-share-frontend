@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
+import DashboardButton from "./DashboardButton";
 
 
 export default function ModeratorView({ profile, likedPosts = [], savedPosts = [] }: any) {
@@ -88,6 +89,7 @@ export default function ModeratorView({ profile, likedPosts = [], savedPosts = [
 
           {/* Nút Action Đưa xuống dưới Username */}
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-8">
+            <DashboardButton userRole={profile?.role} />
             <button 
               onClick={handleToggleFollow} 
               className={`relative px-8 py-3.5 font-black rounded-2xl transition-all duration-300 ease-out flex items-center justify-center gap-2 overflow-hidden group active:scale-95 text-xs uppercase tracking-widest min-w-[160px] shadow-lg ${

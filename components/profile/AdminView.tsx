@@ -6,6 +6,7 @@ import {
   Lock, Play, Heart, Bookmark, LayoutGrid, Crown, ShieldAlert, Activity, Sparkles, CheckCircle
 } from "lucide-react";
 import { toast } from "sonner";
+import DashboardButton from "./DashboardButton";
 
 export default function AdminView({ profile, videos = [], community_posts = [], savedPosts = [] }: any) {
   const [activeTab, setActiveTab] = useState("activities");
@@ -62,6 +63,9 @@ export default function AdminView({ profile, videos = [], community_posts = [], 
           
           {/* NÚT HÀNH ĐỘNG: Đã đưa xuống dưới Username theo yêu cầu */}
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-8">
+              {/* Chỉ hiển thị Bảng điều khiển nếu là chủ sở hữu profile */}
+              <DashboardButton userRole={profile?.role} />
+              
               <button className="px-8 py-3 bg-slate-900 dark:bg-white text-amber-500 dark:text-slate-900 font-black rounded-2xl hover:shadow-[0_0_20px_rgba(245,158,11,0.3)] transition-all flex items-center gap-2 active:scale-95 text-xs uppercase tracking-widest border border-amber-500/20 shadow-lg">
                   <ShieldAlert size={18} strokeWidth={2.5} /> Báo cáo
               </button>
