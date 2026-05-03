@@ -424,14 +424,7 @@ export default function CalendarFeature() {
 
         {/* CŨ: <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-max pointer-events-auto">... */}
 
-        <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-max pointer-events-auto">
-          <div className="px-8 py-3.5 rounded-full flex gap-8 shadow-2xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/60 backdrop-blur-2xl">
-            <button onClick={() => router.push('/')} className="text-slate-500"><Home size={26} /></button>
-            <button onClick={() => router.push('/features/explore')} className="text-slate-500"><Compass size={26} /></button>
-            <button className="text-[#80BF84]"><CalendarDays size={26} /></button>
-            <button onClick={() => setIsUserMenuOpen(!isUserMenuOpen)} className="text-slate-500"><UserIcon size={26} /></button>
-          </div>
-        </div>
+        
       </div>
     </div>
   );

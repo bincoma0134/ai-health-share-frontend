@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Be_Vietnam_Pro } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
+import BottomNavigation from "@/components/BottomNavigation";
 
 // IMPORT ĐẦY ĐỦ CÁC CÔNG CỤ VÀ COMPONENT TOÀN CỤC
 import { UIProvider } from "@/context/UIContext";
@@ -32,13 +33,15 @@ export default function RootLayout({
         {/* Bọc toàn bộ ứng dụng bằng các Provider */}
         <AuthProvider>
           <UIProvider>
-            <div className="flex h-[100dvh] w-full overflow-hidden bg-slate-50 dark:bg-black font-be-vietnam">
-              {/* Sidebar thông minh dùng chung */}
+          <div className="flex h-[100dvh] w-full overflow-hidden bg-slate-50 dark:bg-black font-be-vietnam pb-[80px] md:pb-0">
+              {/* Sidebar (Chỉ hiện trên Desktop, bản thân Sidebar đã có class hidden md:flex) */}
               <Sidebar />
-              {/* Vùng chứa nội dung các trang tính năng */}
+              {/* Vùng chứa nội dung chính */}
               <main className="flex-1 h-full overflow-hidden relative">
                 {children}
               </main>
+              {/* Thanh điều hướng Mobile (Tự động ẩn trên Desktop) */}
+              <BottomNavigation />
             </div>
             
             {/* Các Modal nổi ở cấp cao nhất */}

@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import CommentModal from "@/components/CommentModal";   
 
 
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 // --- SCHEMA MỚI DÀNH CHO STUDIO VIDEO TRANG CHỦ ---
@@ -440,31 +441,7 @@ export default function UserFeed() {
         </div>
 
         {/* ================= MOBILE BOTTOM DOCK ================= */}
-        <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-max animate-slide-up pointer-events-auto">
-          <div className="px-8 py-3.5 rounded-full flex items-center justify-center gap-8 sm:gap-10 shadow-2xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/60 backdrop-blur-2xl transition-colors duration-500">
-            <button className="text-[#80BF84] transition-colors group"><Home size={26} strokeWidth={2.5} /></button>
-            <button onClick={() => router.push('/features/explore')} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Compass size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
-            <button onClick={() => router.push('/features/AI')} className="relative -mt-10 group">
-              <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#80BF84] to-emerald-300 p-[2px] shadow-[0_0_20px_rgba(128,191,132,0.3)] group-hover:scale-105 transition-all duration-300"><div className="w-full h-full bg-white dark:bg-zinc-950 rounded-full flex items-center justify-center transition-colors duration-500"><Sparkles size={26} className="text-[#80BF84]" strokeWidth={2.5} /></div></div>
-            </button>
-            <button onClick={() => router.push('/features/favorite')} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Heart size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
-            
-            <div className="relative">
-              {isUserMenuOpen && user && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setIsUserMenuOpen(false)}></div>
-                  <div className="absolute bottom-full mb-6 right-0 w-48 p-2 flex flex-col gap-1 z-50 animate-fade-in bg-white/90 dark:bg-black/80 backdrop-blur-3xl shadow-2xl border border-slate-200 dark:border-white/10 rounded-2xl">
-                      <button onClick={handleGoToProfile} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white font-bold transition-all text-sm w-full text-left"><UserIcon size={16} /> Trang cá nhân</button>
-                      <button onClick={handleLogout} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-rose-500/10 text-rose-500 font-bold transition-all text-sm w-full text-left"><LogOut size={16} /> Đăng xuất</button>
-                  </div>
-                </>
-              )}
-              <button onClick={handleUserAvatarClick} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group">
-                <UserIcon size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
-              </button>
-            </div>
-          </div>
-        </div>
+        
       </div>
 
       {/* ================= CÁC COMPONENTS MODAL CON ================= */}
