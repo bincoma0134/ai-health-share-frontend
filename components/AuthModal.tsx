@@ -124,13 +124,15 @@ export default function AuthModal() {
         setIsAuthModalOpen(false);
         
         // Điều hướng thẳng về profile của user đó[cite: 13]
-        // Dùng window.location.href để ép tải lại toàn bộ Context và xóa Cache
         const loggedInUsername = authData?.user?.user_metadata?.username;
-        if (loggedInUsername) {
-            window.location.href = `/user-profile?u=${loggedInUsername}`;
-        } else {
-            window.location.reload(); 
-        }
+        // Cho trình duyệt 800ms để Supabase ghi Session Cookie hoàn tất trước khi chuyển trang
+        setTimeout(() => {
+            if (loggedInUsername) {
+                window.location.href = `/user-profile?u=${loggedInUsername}`;
+            } else {
+                window.location.reload(); 
+            }
+        }, 800);
 
       } else if (authMode === "REGISTER_CREDENTIALS") {
         if (pwdStrength < 30) throw new Error("Mật khẩu quá yếu!");
@@ -182,8 +184,10 @@ export default function AuthModal() {
         toast.success("Khởi tạo tài khoản hoàn tất!", { id: toastId });
         setIsAuthModalOpen(false);
         
-        // Chuyển hướng cứng để dọn dẹp bộ nhớ đệm và mount lại UI
-        window.location.href = `/user-profile?u=${username}`;
+        // Chờ Cookie được ghi lại sau khi update thông tin
+        setTimeout(() => {
+            window.location.href = `/user-profile?u=${username}`;
+        }, 800);
       }
     } catch (error: any) {
       toast.error(error.message, { id: toastId });

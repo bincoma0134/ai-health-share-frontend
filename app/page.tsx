@@ -196,12 +196,21 @@ export default function UserFeed() {
     setIsUserMenuOpen(false);
     const toastId = toast.loading("Đang đăng xuất...");
     try {
-      await supabase.auth.signOut();
-      window.location.href = "/";
+      // Dọn sạch State của React ngay lập tức
       setUser(null);
       setAccessToken(null);
       setUserRole("USER");
+      
+      // Gọi lệnh xóa Session của Supabase
+      await supabase.auth.signOut();
+      
       toast.success("Đã đăng xuất thành công!", { id: toastId });
+      
+      // Cho trình duyệt 500ms để ghi nhận việc xóa Cookie trước khi chuyển hướng
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 500);
+      
     } catch (error: any) { toast.error("Lỗi đăng xuất!", { id: toastId }); }
   };
 
