@@ -6,12 +6,14 @@ import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { useUI } from "@/context/UIContext";
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 type AuthStep = "LOGIN" | "REGISTER_CREDENTIALS" | "VERIFY_OTP" | "SETUP_PROFILE";
 
 export default function AuthModal() {
   const { isAuthModalOpen, setIsAuthModalOpen } = useUI();
+  const router = useRouter();
   
   const [authMode, setAuthMode] = useState<AuthStep>("LOGIN");
   const [loginMethod, setLoginMethod] = useState<"EMAIL" | "PHONE">("EMAIL");
@@ -115,11 +117,19 @@ export default function AuthModal() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || "Không tìm thấy tài khoản");
 
-        const { error } = await supabase.auth.signInWithPassword({ email: data.email, password });
+        // Thay vì chỉ bắt lỗi, ta lấy thêm authData để trích xuất username[cite: 13]
+        const { data: authData, error } = await supabase.auth.signInWithPassword({ email: data.email, password });
         if (error) throw error;
         toast.success("Chào mừng bạn trở lại!", { id: toastId });
         setIsAuthModalOpen(false);
-        window.location.reload();
+        
+        // Điều hướng thẳng về profile của user đó[cite: 13]
+        const loggedInUsername = authData?.user?.user_metadata?.username;
+        if (loggedInUsername) {
+            router.push(`/user-profile?u=${loggedInUsername}`);
+        } else {
+            window.location.reload(); // Đề phòng user cũ chưa cập nhật username
+        }
 
       } else if (authMode === "REGISTER_CREDENTIALS") {
         if (pwdStrength < 30) throw new Error("Mật khẩu quá yếu!");
@@ -170,7 +180,9 @@ export default function AuthModal() {
         if (error) throw error;
         toast.success("Khởi tạo tài khoản hoàn tất!", { id: toastId });
         setIsAuthModalOpen(false);
-        window.location.reload();
+        
+        // Chuyển hướng tới trang cá nhân bằng username họ vừa nhập[cite: 13]
+        router.push(`/user-profile?u=${username}`);
       }
     } catch (error: any) {
       toast.error(error.message, { id: toastId });

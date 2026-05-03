@@ -261,7 +261,7 @@ export default function AIFeature() {
             <form onSubmit={handleSendMessage} className="relative w-full flex items-end gap-3 p-2 bg-white/80 dark:bg-black/60 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-[2rem] shadow-2xl focus-within:border-[#80BF84]/50 dark:focus-within:shadow-[0_0_20px_rgba(128,191,132,0.15)] transition-all duration-300">
                 <textarea 
                     className="flex-1 bg-transparent px-5 py-4 min-h-[56px] max-h-[120px] text-[15px] font-medium text-slate-900 dark:text-white placeholder:text-slate-500 focus:outline-none resize-none no-scrollbar" 
-                    placeholder="Mô tả triệu chứng hoặc câu hỏi của bạn..."
+                    placeholder="VN Share xin chào..."
                     value={input} 
                     onChange={e => setInput(e.target.value)} 
                     onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(e); } }}
