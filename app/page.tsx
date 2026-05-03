@@ -197,6 +197,7 @@ export default function UserFeed() {
     const toastId = toast.loading("Đang đăng xuất...");
     try {
       await supabase.auth.signOut();
+      window.location.href = "/";
       setUser(null);
       setAccessToken(null);
       setUserRole("USER");

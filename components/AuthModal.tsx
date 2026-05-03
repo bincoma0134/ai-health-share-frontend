@@ -124,11 +124,12 @@ export default function AuthModal() {
         setIsAuthModalOpen(false);
         
         // Điều hướng thẳng về profile của user đó[cite: 13]
+        // Dùng window.location.href để ép tải lại toàn bộ Context và xóa Cache
         const loggedInUsername = authData?.user?.user_metadata?.username;
         if (loggedInUsername) {
-            router.push(`/user-profile?u=${loggedInUsername}`);
+            window.location.href = `/user-profile?u=${loggedInUsername}`;
         } else {
-            window.location.reload(); // Đề phòng user cũ chưa cập nhật username
+            window.location.reload(); 
         }
 
       } else if (authMode === "REGISTER_CREDENTIALS") {
@@ -181,8 +182,8 @@ export default function AuthModal() {
         toast.success("Khởi tạo tài khoản hoàn tất!", { id: toastId });
         setIsAuthModalOpen(false);
         
-        // Chuyển hướng tới trang cá nhân bằng username họ vừa nhập[cite: 13]
-        router.push(`/user-profile?u=${username}`);
+        // Chuyển hướng cứng để dọn dẹp bộ nhớ đệm và mount lại UI
+        window.location.href = `/user-profile?u=${username}`;
       }
     } catch (error: any) {
       toast.error(error.message, { id: toastId });
