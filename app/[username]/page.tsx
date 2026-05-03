@@ -9,6 +9,7 @@ import CreatorView from "@/components/profile/CreatorView";
 import PartnerView from "@/components/profile/PartnerView";
 import ModeratorView from "@/components/profile/ModeratorView";
 import AdminView from "@/components/profile/AdminView"; 
+import GuestProfileView from "@/components/profile/GuestProfileView";
 import { useUI } from "@/context/UIContext";
 
 
@@ -24,6 +25,10 @@ export default function UserProfilePage() {
 
   useEffect(() => {
     const fetchProfileData = async () => {
+      if (username === "guest") {
+        setLoading(false);
+        return;
+      }
       try {
         const res = await fetch(`${API_URL}/user/public/${username}`);
         const result = await res.json();
@@ -49,6 +54,14 @@ export default function UserProfilePage() {
   };
 
   if (loading) return null; 
+
+  if (username === "guest") {
+    return (
+      <div className="flex-1 relative h-[100dvh] flex flex-col bg-slate-50 dark:bg-zinc-950 transition-colors duration-500 overflow-hidden font-be-vietnam">
+         <GuestProfileView />
+      </div>
+    );
+  }
 
   if (!data) return (
     <div className="h-[100dvh] flex items-center justify-center bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-white font-black text-xl uppercase tracking-tighter">

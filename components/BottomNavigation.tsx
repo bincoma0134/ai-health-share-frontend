@@ -13,7 +13,7 @@ export default function BottomNavigation() {
 
   const handleProfileClick = () => {
     if (!user) {
-      setIsAuthModalOpen(true);
+      router.push("/guest"); // Đưa khách vãng lai đến trang nhử mồi
       return;
     }
     // Tự động điều hướng Profile theo Role
