@@ -55,17 +55,18 @@ export default function AdminDashboardOverview() {
           try { pData = await (await fetch(`${API_URL}/admin/partners`, opts)).json(); } catch(e) {}
           
           if (sData && sData.status === "success" && sData.data) {
-              // BỘ LỌC AN TOÀN CHO BIỂU ĐỒ: Giữ nguyên thứ tự thời gian, ép kiểu số học chặt chẽ
-              let safeChartData = [];
-              if (Array.isArray(sData.data.chart_data)) {
-                  safeChartData = sData.data.chart_data.map((item: any) => ({
-                      date: item.date || "",
-                      GMV: Number(item.GMV) || 0,
-                      "Doanh thu": Number(item["Doanh thu"]) || 0
-                  }));
-              }
-              setStats({ ...sData.data, chart_data: safeChartData });
-          }
+            // CHUẨN HÓA DỮ LIỆU "BỌC THÉP": Đổi key sang gmv/revenue (lowercase) để Recharts không lỗi
+            let safeChartData = [];
+            if (Array.isArray(sData.data.chart_data)) {
+                safeChartData = sData.data.chart_data.map((item: any) => ({
+                    date: item.date || "",
+                    gmv: Math.round(Number(item.GMV) || 0),
+                    revenue: Math.round(Number(item["Doanh thu"]) || 0)
+                }));
+            }
+            // Ghi đè stats với chart_data đã được làm sạch
+            setStats({ ...sData.data, chart_data: safeChartData });
+        }
           if (wData && wData.status === "success") setWithdrawals(wData.data || []);
           if (pData && pData.status === "success") setPartners(pData.data || []);
 
@@ -269,8 +270,9 @@ export default function AdminDashboardOverview() {
                                           <YAxis axisLine={false} tickLine={false} width={45} tick={{ fontSize: 11, fontWeight: 'bold', fill: '#64748b' }} tickFormatter={formatYAxis} />
                                           {/* Kết nối Tooltip Tùy chỉnh */}
                                           <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#f59e0b', strokeWidth: 1, strokeDasharray: '5 5' }} />
-                                          <Area type="monotone" dataKey="GMV" stroke="#f59e0b" strokeWidth={4} fill="url(#colorGmv)" activeDot={{ r: 6, fill: '#f59e0b', stroke: '#fff', strokeWidth: 2 }} />
-                                          <Area type="monotone" dataKey="Doanh thu" stroke="#10b981" strokeWidth={4} fill="url(#colorRev)" activeDot={{ r: 6, fill: '#10b981', stroke: '#fff', strokeWidth: 2 }} />
+                                          {/* dataKey phải khớp chính xác với biến đã map ở trên */}
+                                          <Area type="monotone" dataKey="gmv" name="GMV" stroke="#f59e0b" strokeWidth={4} fill="url(#colorGmv)" isAnimationActive={false} activeDot={{ r: 6, fill: '#f59e0b', stroke: '#fff', strokeWidth: 2 }} />
+                                          <Area type="monotone" dataKey="revenue" name="Doanh thu" stroke="#10b981" strokeWidth={4} fill="url(#colorRev)" isAnimationActive={false} activeDot={{ r: 6, fill: '#10b981', stroke: '#fff', strokeWidth: 2 }} />
                                       </AreaChart>
                                   </ResponsiveContainer>
                               </div>
