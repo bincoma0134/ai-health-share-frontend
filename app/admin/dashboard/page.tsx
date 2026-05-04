@@ -156,7 +156,7 @@ export default function AdminDashboardOverview() {
                       <BarChart3 size={20}/> <span className="hidden md:block uppercase tracking-widest text-[11px]">Tổng quan</span>
                   </button>
                   <button onClick={() => setActiveTab('finance')} className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl font-bold transition-all ${activeTab === 'finance' ? 'bg-amber-500 text-slate-900 shadow-lg shadow-amber-500/20' : 'text-slate-500 hover:bg-slate-200/50 dark:hover:bg-white/5'}`}>
-                      <div className="flex items-center gap-4"><Landmark size={20}/> <span className="hidden md:block uppercase tracking-widest text-[11px]">Tài chính & Escrow</span></div>
+                      <div className="flex items-center gap-4"><Landmark size={20}/> <span className="hidden md:block uppercase tracking-widest text-[11px]">Tài chính</span></div>
                       {stats.pending_withdrawals > 0 && <span className="hidden md:flex px-2 py-0.5 bg-rose-500 text-white text-[10px] rounded-full">{stats.pending_withdrawals}</span>}
                   </button>
                   <button onClick={() => setActiveTab('partners')} className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl font-bold transition-all ${activeTab === 'partners' ? 'bg-amber-500 text-slate-900 shadow-lg shadow-amber-500/20' : 'text-slate-500 hover:bg-slate-200/50 dark:hover:bg-white/5'}`}>
