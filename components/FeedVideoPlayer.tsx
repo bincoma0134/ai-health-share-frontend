@@ -15,16 +15,30 @@ export default function FeedVideoPlayer({ videoUrl, isActive }: FeedVideoPlayerP
   const [showIndicator, setShowIndicator] = useState(false); // Hiệu ứng Kính Mờ lúc chạm
   const indicatorTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  // Xử lý khi cuộn tới/cuộn đi
+  // Xử lý khi cuộn tới/cuộn đi - Ép Autoplay an toàn
   useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
     if (isActive) {
-      videoRef.current?.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+      // Ép tắt tiếng ở tầng DOM để trình duyệt cho phép Autoplay 100%
+      video.muted = isMuted; 
+      const playPromise = video.play();
+      
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => setIsPlaying(true))
+          .catch(() => {
+            console.log("Autoplay bị chặn, chờ tương tác...");
+            setIsPlaying(false);
+          });
+      }
     } else {
-      videoRef.current?.pause();
+      video.pause();
       setIsPlaying(false);
-      videoRef.current!.currentTime = 0; // Trôi qua thì tua lại từ đầu để tiết kiệm RAM
+      if (video.currentTime > 0) video.currentTime = 0; // Reset an toàn
     }
-  }, [isActive]);
+  }, [isActive, isMuted]);
 
   // Hành động Click toàn màn hình
   const handleTogglePlay = (e: React.MouseEvent) => {
@@ -61,8 +75,9 @@ export default function FeedVideoPlayer({ videoUrl, isActive }: FeedVideoPlayerP
         className="w-full h-full object-cover"
         loop
         playsInline
-        muted={isMuted} // Trạng thái âm thanh động
-        preload="metadata" // Tối ưu tải trang
+        autoPlay={isActive}
+        muted={isMuted}
+        preload="auto" // Load sẵn dữ liệu để phát ngay lập tức
       />
 
       {/* Lớp Overlay Đen mờ khi Tạm dừng */}
