@@ -54,7 +54,19 @@ export default function AdminDashboardOverview() {
           try { wData = await (await fetch(`${API_URL}/admin/withdrawals`, opts)).json(); } catch(e) {}
           try { pData = await (await fetch(`${API_URL}/admin/partners`, opts)).json(); } catch(e) {}
           
-          if (sData && sData.status === "success") setStats(sData.data);
+          if (sData && sData.status === "success") {
+              // BỘ LỌC AN TOÀN CHO BIỂU ĐỒ: Ép kiểu dữ liệu để Recharts không bị "ngáo"
+              let safeChartData = [];
+              if (Array.isArray(sData.data.chart_data)) {
+                  // Đảo ngược mảng để ngày cũ ở trái, ngày mới ở phải
+                  safeChartData = sData.data.chart_data.map((item: any) => ({
+                      date: item.date || "",
+                      GMV: Number(item.GMV) || 0,
+                      "Doanh thu": Number(item["Doanh thu"]) || 0
+                  })).reverse();
+              }
+              setStats({ ...sData.data, chart_data: safeChartData });
+          }
           if (wData && wData.status === "success") setWithdrawals(wData.data || []);
           if (pData && pData.status === "success") setPartners(pData.data || []);
 
