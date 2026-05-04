@@ -20,19 +20,19 @@ export default function UserProfileClient({ params }: { params: { username: stri
   const { isNotifOpen, setIsNotifOpen } = useUI() as any;
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); const [isAuthReady, setIsAuthReady] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
 
   // 1. Lắng nghe trạng thái đăng nhập liên tục để chống lỗi F5 trắng trang
   useEffect(() => {
     const fetchSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      setCurrentUser(session?.user || null);
+      setCurrentUser(session?.user || null); setIsAuthReady(true);
     };
     fetchSession();
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setCurrentUser(session?.user || null);
+      setCurrentUser(session?.user || null); setIsAuthReady(true);
     });
 
     return () => authListener.subscription.unsubscribe();
@@ -45,7 +45,8 @@ export default function UserProfileClient({ params }: { params: { username: stri
         return;
       }
       try {
-        const res = await fetch(`${API_URL}/user/public/${username}`);
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch(`${API_URL}/user/public/${username}`, { headers: session ? { 'Authorization': `Bearer ${session.access_token}` } : {} });
         const result = await res.json();
         if (result.status === "success") setData(result.data);
       } catch (err) {
@@ -112,7 +113,7 @@ export default function UserProfileClient({ params }: { params: { username: stri
               const isOwner = currentUser?.id === data.profile.id;
               
               if (data.profile.role === "SUPER_ADMIN" || data.profile.role === "ADMIN") {
-                return <AdminView profile={data.profile} videoTiktokFeeds={data.videos || []} communityPosts={data.community_posts || []} savedTiktokFeeds={data.savedPosts || []} isOwner={isOwner} />;
+                return <AdminView profile={data.profile} videoTiktokFeeds={data.videos || []} communityPosts={data.community_posts || []} likedTiktokFeeds={data.likedPosts || []} savedTiktokFeeds={data.savedPosts || []} isOwner={isOwner} />;
               }
               if (data.profile.role === "PARTNER_ADMIN" || data.profile.role === "PARTNER") {
                 return <PartnerView profile={data.profile} videoTiktokFeeds={data.videos || []} communityPosts={data.community_posts || []} likedTiktokFeeds={data.likedPosts || []} savedTiktokFeeds={data.savedPosts || []} services={data.services || []} reviews={data.reviews || []} stats={data.stats || {}} isOwner={isOwner} />;
@@ -123,7 +124,7 @@ export default function UserProfileClient({ params }: { params: { username: stri
               if (data.profile.role === "MODERATOR") {
                 return <ModeratorView profile={data.profile} likedTiktokFeeds={data.likedPosts || []} savedTiktokFeeds={data.savedPosts || []} isOwner={isOwner} />;
               }
-              return <RegularUserView profile={data.profile} communityPosts={data.community_posts || []} likedTiktokFeeds={data.likedPosts || []} savedTiktokFeeds={data.savedPosts || []} isOwner={isOwner} />;
+              return <RegularUserView profile={data.profile} videoTiktokFeeds={data.videos || []} communityPosts={data.community_posts || []} likedTiktokFeeds={data.likedPosts || []} savedTiktokFeeds={data.savedPosts || []} isOwner={isOwner} />;
             })()}
           </div>
       </main>
