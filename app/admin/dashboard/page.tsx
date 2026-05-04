@@ -85,6 +85,37 @@ export default function AdminDashboardOverview() {
 
   const closeModal = () => { setSelectedWithdrawal(null); setAdminNote(""); };
 
+  // Format trục Y rút gọn (Ví dụ: 10,000,000 -> 10M)
+  const formatYAxis = (tickItem: number) => {
+      if (tickItem >= 1000000000) return (tickItem / 1000000000).toFixed(1).replace(/\.0$/, '') + 'B';
+      if (tickItem >= 1000000) return (tickItem / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+      if (tickItem >= 1000) return (tickItem / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+      return tickItem.toString();
+  };
+
+  // Tooltip Tùy chỉnh (Glassmorphism & Định dạng tiền tệ VND)
+  const CustomTooltip = ({ active, payload, label }: any) => {
+      if (active && payload && payload.length) {
+          return (
+              <div className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl p-5 rounded-3xl shadow-2xl border border-slate-200 dark:border-white/10 z-50">
+                  <p className="text-xs font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-4 border-b border-slate-100 dark:border-white/5 pb-2">{label}</p>
+                  {payload.map((entry: any, index: number) => (
+                      <div key={index} className="flex items-center justify-between gap-8 mb-3 last:mb-0">
+                          <div className="flex items-center gap-2.5">
+                              <div className="w-3.5 h-3.5 rounded-full shadow-sm" style={{ backgroundColor: entry.color }}></div>
+                              <span className="text-sm font-bold text-slate-600 dark:text-zinc-300">{entry.name}</span>
+                          </div>
+                          <span className="text-base font-black" style={{ color: entry.color }}>
+                              {Number(entry.value).toLocaleString('vi-VN')} <span className="text-xs">VND</span>
+                          </span>
+                      </div>
+                  ))}
+              </div>
+          );
+      }
+      return null;
+  };
+
   if (!isMounted) return null;
 
   if (isLoading) return (
@@ -202,21 +233,33 @@ export default function AdminDashboardOverview() {
                           </div>
 
                           {/* BIỂU ĐỒ TÀI CHÍNH */}
-                          <div className="p-8 rounded-[3rem] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 shadow-lg">
-                              <h3 className="text-xs font-black text-slate-400 dark:text-zinc-500 uppercase tracking-[0.2em] mb-8 flex items-center gap-2"><Activity size={18} className="text-amber-500"/> Dòng tiền 7 ngày qua (VND)</h3>
-                              <div className="h-[300px] w-full">
+                          <div className="p-8 md:p-10 rounded-[3rem] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 shadow-xl relative">
+                              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                                  <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-[0.2em] flex items-center gap-3">
+                                      <div className="p-2 bg-amber-500/10 rounded-xl"><Activity size={20} className="text-amber-500"/></div>
+                                      Dòng tiền 7 ngày qua
+                                  </h3>
+                                  {/* Chú thích màu sắc (Legend) */}
+                                  <div className="flex gap-4">
+                                      <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-[#f59e0b]"></div><span className="text-xs font-bold text-slate-500">GMV</span></div>
+                                      <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-[#10b981]"></div><span className="text-xs font-bold text-slate-500">Doanh thu</span></div>
+                                  </div>
+                              </div>
+                              
+                              <div className="h-[350px] w-full">
                                   <ResponsiveContainer width="100%" height="100%">
-                                      <AreaChart data={stats.chart_data || []}>
+                                      <AreaChart data={stats.chart_data || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                           <defs>
                                               <linearGradient id="colorGmv" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#f59e0b" stopOpacity={0.4}/><stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/></linearGradient>
                                               <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/><stop offset="95%" stopColor="#10b981" stopOpacity={0}/></linearGradient>
                                           </defs>
-                                          <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
-                                          <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 'bold' }} />
-                                          <YAxis hide domain={['dataMin', 'auto']} />
-                                          <Tooltip contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }} />
-                                          <Area type="monotone" dataKey="GMV" stroke="#f59e0b" strokeWidth={4} fill="url(#colorGmv)" />
-                                          <Area type="monotone" dataKey="Doanh thu" stroke="#10b981" strokeWidth={4} fill="url(#colorRev)" />
+                                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#94a3b8" strokeOpacity={0.15} />
+                                          <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 'bold', fill: '#64748b' }} dy={10} />
+                                          <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 'bold', fill: '#64748b' }} tickFormatter={formatYAxis} />
+                                          {/* Kết nối Tooltip Tùy chỉnh */}
+                                          <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#f59e0b', strokeWidth: 1, strokeDasharray: '5 5' }} />
+                                          <Area type="monotone" dataKey="GMV" stroke="#f59e0b" strokeWidth={4} fill="url(#colorGmv)" activeDot={{ r: 6, fill: '#f59e0b', stroke: '#fff', strokeWidth: 2 }} />
+                                          <Area type="monotone" dataKey="Doanh thu" stroke="#10b981" strokeWidth={4} fill="url(#colorRev)" activeDot={{ r: 6, fill: '#10b981', stroke: '#fff', strokeWidth: 2 }} />
                                       </AreaChart>
                                   </ResponsiveContainer>
                               </div>
