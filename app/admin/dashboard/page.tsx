@@ -132,15 +132,7 @@ export default function AdminDashboardOverview() {
 
   if (!isMounted) return null;
 
-  if (isLoading) return (
-    <div className="fixed inset-0 z-[9999] bg-slate-50 dark:bg-zinc-950 flex flex-col items-center justify-center gap-6 transition-colors duration-500">
-      <div className="relative w-16 h-16">
-        <div className="absolute inset-0 bg-amber-200 rounded-full animate-ping opacity-70"></div>
-        <div className="absolute inset-2 bg-amber-500 rounded-full flex items-center justify-center shadow-lg shadow-amber-500/30"><Crown className="text-white w-6 h-6 animate-pulse" /></div>
-      </div>
-      <p className="text-amber-500 text-sm font-black tracking-widest uppercase animate-pulse">Thiết lập quyền kiểm soát...</p>
-    </div>
-  );
+   
 
   return (
     <div className="h-[100dvh] w-full bg-slate-50 dark:bg-zinc-950 overflow-hidden flex flex-col transition-colors duration-500 font-be-vietnam">
@@ -182,11 +174,22 @@ export default function AdminDashboardOverview() {
               </div>
           </div>
 
-          {/* CONTENT AREA */}
-          <div className="flex-1 overflow-y-auto no-scrollbar bg-slate-50/50 dark:bg-zinc-950/50 p-6 md:p-10">
+           {/* CONTENT AREA */}
+          <div className="flex-1 overflow-y-auto no-scrollbar bg-slate-50/50 dark:bg-zinc-950/50 p-6 md:p-10 relative">
+              {/* HIỆU ỨNG LOADING NẰM TRONG NỘI DUNG (GIỮ SIDEBAR) */}
+              {isLoading && (
+                  <div className="absolute inset-0 z-[40] bg-slate-50/80 dark:bg-zinc-950/80 backdrop-blur-sm flex flex-col items-center justify-center gap-6 transition-all duration-500">
+                      <div className="relative w-16 h-16">
+                          <div className="absolute inset-0 bg-amber-200 rounded-full animate-ping opacity-70"></div>
+                          <div className="absolute inset-2 bg-amber-500 rounded-full flex items-center justify-center shadow-lg shadow-amber-500/30"><Crown className="text-white w-6 h-6 animate-pulse" /></div>
+                      </div>
+                      <p className="text-amber-500 text-[10px] font-black tracking-[0.3em] uppercase animate-pulse">Đang đồng bộ dữ liệu...</p>
+                  </div>
+              )}
+
               {isNotifOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-fade-in"><NotificationModal /></div>}
 
-              <div className="max-w-6xl mx-auto space-y-10 animate-fade-in">
+              <div className={`max-w-6xl mx-auto space-y-10 transition-all duration-700 ${isLoading ? 'opacity-0 scale-95 blur-xl' : 'opacity-100 scale-100 blur-0'}`}>
                   
                   {/* --- TAB: TỔNG QUAN --- */}
                   {activeTab === 'overview' && (

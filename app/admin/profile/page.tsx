@@ -199,15 +199,21 @@ export default function SuperAdminProfile() {
     finally { setIsPostUploading(false); }
   };
 
-  if (isLoading) return (
-      <div className="h-[100dvh] w-full bg-slate-50 dark:bg-zinc-950 flex flex-col items-center justify-center transition-colors duration-500">
-          <Crown className="text-amber-500 w-10 h-10 animate-pulse" />
-          <p className="text-slate-500 mt-4 text-xs font-black tracking-widest uppercase">Xác thực hệ thống...</p>
-      </div>
-  );
+
 
   return (
     <div className="flex-1 relative h-[100dvh] overflow-y-auto no-scrollbar scroll-smooth bg-slate-50 dark:bg-zinc-950 transition-colors duration-500 font-be-vietnam">
+      
+      {/* HIỆU ỨNG LOADING ĐỒNG BỘ DASHBOARD (NẰM DƯỚI SIDEBAR) */}
+      {isLoading && (
+          <div className="absolute inset-0 z-[60] bg-slate-50/80 dark:bg-zinc-950/80 backdrop-blur-md flex flex-col items-center justify-center gap-6 transition-all duration-500">
+              <div className="relative w-16 h-16">
+                  <div className="absolute inset-0 bg-amber-200 rounded-full animate-ping opacity-70"></div>
+                  <div className="absolute inset-2 bg-amber-500 rounded-full flex items-center justify-center shadow-lg shadow-amber-500/30"><Crown className="text-white w-6 h-6 animate-pulse" /></div>
+              </div>
+              <p className="text-amber-500 text-[10px] font-black tracking-[0.3em] uppercase animate-pulse">Xác thực hệ thống...</p>
+          </div>
+      )}
       
       <input type="file" accept="image/*" className="hidden" ref={avatarInputRef} onChange={e => handleImageUpload(e, 'avatar')} />
       <input type="file" accept="image/*" className="hidden" ref={coverInputRef} onChange={e => handleImageUpload(e, 'cover')} />
@@ -222,7 +228,7 @@ export default function SuperAdminProfile() {
           </div>
       </div>
 
-      <main className="flex-1 overflow-y-auto no-scrollbar scroll-smooth">
+      <main className={`flex-1 overflow-y-auto no-scrollbar scroll-smooth transition-all duration-700 ${isLoading ? 'opacity-0 scale-95 blur-xl' : 'opacity-100 scale-100 blur-0'}`}>
           {isNotifOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-fade-in"><NotificationModal /></div>}
 
           {/* --- COVER IMAGE (Đồng bộ Partner) --- */}
