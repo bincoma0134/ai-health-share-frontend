@@ -10,7 +10,7 @@ import { supabase } from "@/lib/supabase";
 import DashboardButton from "./DashboardButton";
 
 
-export default function CreatorView({ profile, videos = [], community_posts = [], likedPosts = [], savedPosts = [] }: any) {
+export default function CreatorView({ profile, videoTiktokFeeds = [], communityPosts = [], likedTiktokFeeds = [], savedTiktokFeeds = [], isOwner }: any) {
   const [activeTab, setActiveTab] = useState("videos");
 
   // Khai báo kết nối Backend
@@ -167,7 +167,7 @@ export default function CreatorView({ profile, videos = [], community_posts = []
         {/* TAB NỘI DUNG: VIDEOS / LƯU TRỮ */}
         {(activeTab === "videos" || activeTab === "saved" || activeTab === "liked") && (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mt-8">
-            {(activeTab === "videos" ? videos : activeTab === "liked" ? likedPosts : savedPosts).map((item: any) => (
+            {(activeTab === "videos" ? videoTiktokFeeds : activeTab === "liked" ? likedTiktokFeeds : savedTiktokFeeds).map((item: any) => (
               <div key={item.id} className="relative aspect-[9/16] bg-zinc-800 rounded-[2rem] overflow-hidden group cursor-pointer shadow-lg border border-slate-200 dark:border-white/10">
                 <img src={item.image_url || `https://picsum.photos/seed/${item.id}/400/600`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-90 group-hover:opacity-100" alt="post" />
                 
@@ -184,7 +184,7 @@ export default function CreatorView({ profile, videos = [], community_posts = []
               </div>
             ))}
 
-            {(activeTab === "videos" ? videos : activeTab === "liked" ? likedPosts : savedPosts).length === 0 && (
+            {(activeTab === "videos" ? videoTiktokFeeds : activeTab === "liked" ? likedTiktokFeeds : savedTiktokFeeds).length === 0 && (
               <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-[2rem]">
                   <LayoutGrid size={48} className="mx-auto text-slate-300 dark:text-zinc-700 mb-4" />
                   <p className="text-slate-500 font-bold">Chưa có video nào để hiển thị.</p>
@@ -196,7 +196,7 @@ export default function CreatorView({ profile, videos = [], community_posts = []
         {/* TAB NỘI DUNG: BÀI ĐĂNG CỘNG ĐỒNG */}
         {activeTab === "posts" && (
             <div className="max-w-2xl mx-auto space-y-6 mt-8 pb-20">
-                {community_posts.map((post: any) => (
+                {communityPosts.map((post: any) => (
                     <div key={post.id} className="bg-white dark:bg-zinc-900 rounded-[2rem] p-6 border border-slate-200 dark:border-white/10 shadow-sm">
                         <div className="flex items-center gap-3 mb-4">
                             <img src={profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.full_name}&background=f43f5e&color=fff`} className="w-10 h-10 rounded-full border border-slate-200 dark:border-white/10" />
@@ -218,7 +218,7 @@ export default function CreatorView({ profile, videos = [], community_posts = []
                     </div>
                 ))}
 
-                {community_posts.length === 0 && (
+                {communityPosts.length === 0 && (
                     <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-[2rem]">
                         <MessageCircle size={48} className="mx-auto text-slate-300 dark:text-zinc-700 mb-4" />
                         <p className="text-slate-500 font-bold">Chưa có bài viết nào trên cộng đồng.</p>

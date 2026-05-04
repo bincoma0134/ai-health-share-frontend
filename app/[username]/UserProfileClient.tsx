@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
 import { Sun, Moon, Bell } from "lucide-react";
 import NotificationModal from "@/components/NotificationModal";
+import { supabase } from "@/lib/supabase";
 import RegularUserView from "@/components/profile/RegularUserView";
 import CreatorView from "@/components/profile/CreatorView";
 import PartnerView from "@/components/profile/PartnerView";
@@ -12,17 +12,31 @@ import AdminView from "@/components/profile/AdminView";
 import GuestProfileView from "@/components/profile/GuestProfileView";
 import { useUI } from "@/context/UIContext";
 
-
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 // Nhận trực tiếp params đã được await từ Server Component
-export default function UserProfilePage({ params }: { params: { username: string } }) {
-  // Thay vì dùng useParams(), hãy dùng luôn giá trị chắc chắn từ props
+export default function UserProfileClient({ params }: { params: { username: string } }) {
   const username = params.username;
   const { isNotifOpen, setIsNotifOpen } = useUI() as any;
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  // 1. Lắng nghe trạng thái đăng nhập liên tục để chống lỗi F5 trắng trang
+  useEffect(() => {
+    const fetchSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setCurrentUser(session?.user || null);
+    };
+    fetchSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser(session?.user || null);
+    });
+
+    return () => authListener.subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -93,47 +107,24 @@ export default function UserProfilePage({ params }: { params: { username: string
           )}
 
           <div className="max-w-4xl mx-auto p-6 md:p-12 pt-28 pb-32">
-            {/* BẮT BUỘC TRUYỀN CẢ VIDEOS VÀ POSTS VÀO COMPONENTS */}
-            {data.profile.role === "SUPER_ADMIN" || data.profile.role === "ADMIN" ? (
-              <AdminView 
-                profile={data.profile} 
-                videos={data.videos || []} 
-                posts={data.community_posts || []} 
-                savedPosts={data.savedPosts || []}
-              />
-            ) : data.profile.role === "PARTNER_ADMIN" || data.profile.role === "PARTNER" ? (
-              <PartnerView 
-                profile={data.profile} 
-                videos={data.videos || []}
-                posts={data.community_posts || []} 
-                likedPosts={data.likedPosts || []}
-                savedPosts={data.savedPosts || []}
-                services={data.services || []} 
-                reviews={data.reviews || []}
-                stats={data.stats || {}}
-              />
-            ) : data.profile.role === "CREATOR" ? (
-              <CreatorView 
-                profile={data.profile} 
-                videos={data.videos || []}
-                posts={data.community_posts || []} 
-                likedPosts={data.likedPosts || []}
-                savedPosts={data.savedPosts || []}
-              />
-            ) : data.profile.role === "MODERATOR" ? (
-              <ModeratorView 
-                profile={data.profile} 
-                likedPosts={data.likedPosts || []}
-                savedPosts={data.savedPosts || []}
-              />
-            ) : (
-              <RegularUserView 
-                profile={data.profile} 
-                posts={data.community_posts || []} 
-                likedPosts={data.likedPosts || []}
-                savedPosts={data.savedPosts || []}
-              />
-            )}
+            {/* KIỂM TRA QUYỀN CHỦ SỞ HỮU (IS OWNER) */}
+            {(() => {
+              const isOwner = currentUser?.id === data.profile.id;
+              
+              if (data.profile.role === "SUPER_ADMIN" || data.profile.role === "ADMIN") {
+                return <AdminView profile={data.profile} videoTiktokFeeds={data.videos || []} communityPosts={data.community_posts || []} savedTiktokFeeds={data.savedPosts || []} isOwner={isOwner} />;
+              }
+              if (data.profile.role === "PARTNER_ADMIN" || data.profile.role === "PARTNER") {
+                return <PartnerView profile={data.profile} videoTiktokFeeds={data.videos || []} communityPosts={data.community_posts || []} likedTiktokFeeds={data.likedPosts || []} savedTiktokFeeds={data.savedPosts || []} services={data.services || []} reviews={data.reviews || []} stats={data.stats || {}} isOwner={isOwner} />;
+              }
+              if (data.profile.role === "CREATOR") {
+                return <CreatorView profile={data.profile} videoTiktokFeeds={data.videos || []} communityPosts={data.community_posts || []} likedTiktokFeeds={data.likedPosts || []} savedTiktokFeeds={data.savedPosts || []} isOwner={isOwner} />;
+              }
+              if (data.profile.role === "MODERATOR") {
+                return <ModeratorView profile={data.profile} likedTiktokFeeds={data.likedPosts || []} savedTiktokFeeds={data.savedPosts || []} isOwner={isOwner} />;
+              }
+              return <RegularUserView profile={data.profile} communityPosts={data.community_posts || []} likedTiktokFeeds={data.likedPosts || []} savedTiktokFeeds={data.savedPosts || []} isOwner={isOwner} />;
+            })()}
           </div>
       </main>
     </div>

@@ -10,7 +10,7 @@ import { supabase } from "@/lib/supabase";
 import DashboardButton from "./DashboardButton";
 
 
-export default function ModeratorView({ profile, likedPosts = [], savedPosts = [] }: any) {
+export default function ModeratorView({ profile, likedTiktokFeeds = [], savedTiktokFeeds = [], isOwner }: any) {
   const [activeTab, setActiveTab] = useState("liked");
 
   // Khai báo kết nối Backend
@@ -165,7 +165,7 @@ export default function ModeratorView({ profile, likedPosts = [], savedPosts = [
 
         {/* Lưới Video (Đã lưu / Đã thích) */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mt-8">
-          {(activeTab === "liked" ? likedPosts : savedPosts).map((item: any) => (
+          {(activeTab === "liked" ? likedTiktokFeeds : savedTiktokFeeds).map((item: any) => (
             <div key={item.id} className="relative aspect-[9/16] bg-zinc-800 rounded-[2rem] overflow-hidden group cursor-pointer shadow-lg border border-slate-200 dark:border-white/10">
               <img src={item.image_url || `https://picsum.photos/seed/${item.id}/400/600`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-90 group-hover:opacity-100" alt="post" />
               
@@ -186,7 +186,7 @@ export default function ModeratorView({ profile, likedPosts = [], savedPosts = [
         </div>
 
         {/* Empty State cho Video */}
-        {(activeTab === "liked" ? likedPosts : savedPosts).length === 0 && (
+        {(activeTab === "liked" ? likedTiktokFeeds : savedTiktokFeeds).length === 0 && (
           <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-[2rem] mt-8">
             <LayoutGrid size={48} className="mx-auto text-slate-300 dark:text-zinc-700 mb-4" />
             <p className="text-slate-500 font-bold">Chưa có nội dung {activeTab === "liked" ? "đã thích" : "đã lưu"}.</p>
