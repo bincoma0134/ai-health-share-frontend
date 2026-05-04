@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { 
   Users, Building2, Activity, DollarSign, Wallet, TrendingUp, LogOut, 
   Home, ShieldCheck, BarChart3, Sparkles, Compass, User as UserIcon, 
-  Sun, Moon, Bell, Crown, Settings, Landmark, FileText, CheckCircle, XCircle, X, Search
+  Sun, Moon, Bell, Crown, Settings, Landmark, FileText, CheckCircle, XCircle, X, Search, Clock
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -39,6 +39,7 @@ export default function AdminDashboardOverview() {
   const [selectedWithdrawal, setSelectedWithdrawal] = useState<WithdrawalItem | null>(null);
   const [adminNote, setAdminNote] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [withdrawalFilter, setWithdrawalFilter] = useState<'ALL' | 'PENDING' | 'COMPLETED' | 'REJECTED'>('ALL');
 
   useEffect(() => { setIsMounted(true); fetchDashboardData(); }, [router]);
 
@@ -293,39 +294,103 @@ export default function AdminDashboardOverview() {
 
                   {/* --- TAB: TÀI CHÍNH & GIẢI NGÂN (WITHDRAWALS) --- */}
                   {activeTab === 'finance' && (
-                      <div className="space-y-6">
-                          <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-6">Quản trị Giải ngân (Payouts)</h2>
-                          
+                      <div className="space-y-8 animate-fade-in">
+                          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                              <div>
+                                  <h2 className="text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3"><Wallet className="text-amber-500" size={32} /> Quản trị Giải ngân</h2>
+                                  <p className="text-slate-500 font-medium text-sm mt-1">Kiểm soát luồng tiền ra khỏi quỹ Escrow và thanh toán cho Đối tác.</p>
+                              </div>
+                          </div>
+
+                          {/* THẺ CHỈ SỐ TỔNG QUAN TÀI CHÍNH */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                              <div className="p-6 rounded-[2rem] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 shadow-sm flex flex-col gap-2 relative overflow-hidden group">
+                                  <div className="absolute right-0 top-0 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform"></div>
+                                  <span className="text-xs font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest relative z-10">Tổng Yêu Cầu Ghi Nhận</span>
+                                  <span className="text-3xl font-black text-slate-900 dark:text-white relative z-10">{withdrawals.length} <span className="text-sm font-bold text-slate-400">lệnh</span></span>
+                              </div>
+                              <div className="p-6 rounded-[2rem] bg-amber-50/50 dark:bg-amber-500/10 border border-amber-200/50 dark:border-amber-500/20 shadow-sm flex flex-col gap-2 relative overflow-hidden group">
+                                  <div className="absolute right-0 top-0 w-24 h-24 bg-amber-500/20 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform"></div>
+                                  <span className="text-xs font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest relative z-10">Đang Chờ Xử Lý</span>
+                                  <span className="text-3xl font-black text-amber-600 dark:text-amber-400 relative z-10">{withdrawals.filter(w => w.status === 'PENDING').length} <span className="text-sm font-bold opacity-60">lệnh</span></span>
+                              </div>
+                              <div className="p-6 rounded-[2rem] bg-gradient-to-br from-slate-900 to-slate-800 border border-emerald-500/20 shadow-xl flex flex-col gap-2 relative overflow-hidden">
+                                  <div className="absolute right-4 bottom-4 opacity-10"><CheckCircle size={80} className="text-emerald-500" /></div>
+                                  <span className="text-xs font-black text-emerald-400 uppercase tracking-widest relative z-10">Đã Giải Ngân Thành Công</span>
+                                  <span className="text-3xl font-black text-white relative z-10">
+                                      {withdrawals.filter(w => w.status === 'COMPLETED').reduce((acc, curr) => acc + curr.amount, 0).toLocaleString()} <span className="text-sm font-bold text-emerald-400/60">VND</span>
+                                  </span>
+                              </div>
+                          </div>
+
+                          {/* BỘ LỌC VÀ DANH SÁCH */}
                           <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm">
+                              <div className="p-6 border-b border-slate-100 dark:border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50/50 dark:bg-black/20">
+                                  <div className="flex gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar pb-2 sm:pb-0">
+                                      {['ALL', 'PENDING', 'COMPLETED', 'REJECTED'].map((filter) => (
+                                          <button 
+                                              key={filter} 
+                                              onClick={() => setWithdrawalFilter(filter as any)}
+                                              className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all border ${withdrawalFilter === filter ? 'bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-black dark:border-white shadow-md' : 'bg-transparent text-slate-500 border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5'}`}
+                                          >
+                                              {filter === 'ALL' ? 'Tất cả' : filter}
+                                          </button>
+                                      ))}
+                                  </div>
+                                  <div className="text-xs font-bold text-slate-400">
+                                      Hiển thị {withdrawalFilter === 'ALL' ? withdrawals.length : withdrawals.filter(w => w.status === withdrawalFilter).length} kết quả
+                                  </div>
+                              </div>
+
                               <div className="overflow-x-auto">
                                   <table className="w-full text-left min-w-[1000px]">
-                                      <thead className="bg-slate-50 dark:bg-black/50 border-b border-slate-200 dark:border-white/10">
+                                      <thead className="bg-white dark:bg-zinc-900 border-b border-slate-200 dark:border-white/10">
                                           <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                              <th className="p-5 w-16">ID</th>
-                                              <th className="p-5">Thời gian yêu cầu</th>
-                                              <th className="p-5">Người yêu cầu (Role)</th>
-                                              <th className="p-5">Số tiền (VND)</th>
-                                              <th className="p-5">Trạng thái</th>
-                                              <th className="p-5">Hành động</th>
+                                              <th className="p-6">Yêu cầu</th>
+                                              <th className="p-6">Thông tin Đối tác</th>
+                                              <th className="p-6 text-right">Số tiền (VND)</th>
+                                              <th className="p-6 text-center">Trạng thái</th>
+                                              <th className="p-6 text-center">Hành động</th>
                                           </tr>
                                       </thead>
                                       <tbody className="text-sm divide-y divide-slate-100 dark:divide-white/5">
                                           {withdrawals.length === 0 ? (
-                                              <tr><td colSpan={6} className="p-10 text-center text-slate-400 font-bold uppercase tracking-widest text-xs">Không có yêu cầu giải ngân</td></tr>
-                                          ) : withdrawals.map((item) => (
-                                              <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                                                  <td className="p-5 font-black text-xs text-slate-400">#{item.id.split('-')[0]}</td>
-                                                  <td className="p-5 font-bold text-slate-600 dark:text-zinc-300">{new Date(item.created_at).toLocaleString('vi-VN')}</td>
-                                                  <td className="p-5">
-                                                      <div className="font-bold text-slate-900 dark:text-white">{item.users?.full_name}</div>
-                                                      <div className="text-[10px] font-black text-amber-500 uppercase">{item.users?.role}</div>
+                                              <tr><td colSpan={5} className="p-16 text-center text-slate-400 font-bold uppercase tracking-widest text-xs flex flex-col items-center justify-center gap-3"><FileText size={32} className="opacity-30"/> Không có yêu cầu giải ngân</td></tr>
+                                          ) : withdrawals.filter(w => withdrawalFilter === 'ALL' || w.status === withdrawalFilter).map((item) => (
+                                              <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
+                                                  <td className="p-6">
+                                                      <div className="flex flex-col gap-1">
+                                                          <span className="font-mono text-xs font-black text-slate-500 dark:text-zinc-400 uppercase">#{item.id.split('-')[0]}</span>
+                                                          <span className="text-[10px] font-bold text-slate-400">{new Date(item.created_at).toLocaleString('vi-VN')}</span>
+                                                      </div>
                                                   </td>
-                                                  <td className="p-5 font-black text-rose-500">{item.amount.toLocaleString()} đ</td>
-                                                  <td className="p-5">
-                                                      <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase border ${item.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : item.status === 'REJECTED' ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-amber-50 text-amber-600 border-amber-200'}`}>{item.status}</span>
+                                                  <td className="p-6">
+                                                      <div className="flex items-center gap-3">
+                                                          <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-slate-500 font-black border border-slate-200 dark:border-white/10">{item.users?.full_name?.charAt(0) || 'U'}</div>
+                                                          <div className="flex flex-col">
+                                                              <span className="font-bold text-slate-900 dark:text-white">{item.users?.full_name}</span>
+                                                              <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest">{item.users?.role}</span>
+                                                          </div>
+                                                      </div>
                                                   </td>
-                                                  <td className="p-5">
-                                                      <button onClick={() => setSelectedWithdrawal(item)} className="px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black text-[10px] uppercase tracking-widest rounded-xl hover:scale-105 transition-transform">Xử lý</button>
+                                                  <td className="p-6 text-right">
+                                                      <span className="text-lg font-black text-rose-500">{item.amount.toLocaleString()} đ</span>
+                                                  </td>
+                                                  <td className="p-6 text-center">
+                                                      <span className={`inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border ${item.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/20' : item.status === 'REJECTED' ? 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/20' : 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20'}`}>
+                                                          {item.status === 'PENDING' && <Clock size={12} className="mr-1.5 animate-pulse"/>}
+                                                          {item.status === 'COMPLETED' && <CheckCircle size={12} className="mr-1.5"/>}
+                                                          {item.status === 'REJECTED' && <XCircle size={12} className="mr-1.5"/>}
+                                                          {item.status}
+                                                      </span>
+                                                  </td>
+                                                  <td className="p-6 text-center">
+                                                      <button 
+                                                          onClick={() => setSelectedWithdrawal(item)} 
+                                                          className={`px-6 py-2.5 font-black text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-sm active:scale-95 ${item.status === 'PENDING' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:scale-105 shadow-slate-900/20' : 'bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-white/10'}`}
+                                                      >
+                                                          {item.status === 'PENDING' ? 'Kiểm Duyệt' : 'Xem Chi Tiết'}
+                                                      </button>
                                                   </td>
                                               </tr>
                                           ))}
