@@ -104,7 +104,7 @@ export default function UserFeed() {
     }
   };
 
-  const [activeVideoIndex, setActiveVideoIndex] = useState(0);
+  const [activeVideoIndex, setActiveVideoIndex] = useState<number | null>(null);
 const observerRef = useRef<IntersectionObserver | null>(null);
 
 // Cài đặt con mắt theo dõi thao tác cuộn (Intersection Observer)
