@@ -40,6 +40,10 @@ export default function AdminDashboardOverview() {
   const [adminNote, setAdminNote] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [withdrawalFilter, setWithdrawalFilter] = useState<'ALL' | 'PENDING' | 'COMPLETED' | 'REJECTED'>('ALL');
+  
+  // State Quản lý Nhân sự / Đối tác
+  const [partnerFilter, setPartnerFilter] = useState<'ALL' | 'PARTNER_ADMIN' | 'CREATOR' | 'MODERATOR'>('ALL');
+  const [partnerSearch, setPartnerSearch] = useState("");
 
   useEffect(() => { setIsMounted(true); fetchDashboardData(); }, [router]);
 
@@ -401,27 +405,133 @@ export default function AdminDashboardOverview() {
                       </div>
                   )}
 
-                  {/* --- TAB: QUẢN LÝ ĐỐI TÁC --- */}
+                  {/* --- TAB: QUẢN LÝ NHÂN SỰ & ĐỐI TÁC --- */}
                   {activeTab === 'partners' && (
-                      <div className="space-y-6">
-                          <div className="flex justify-between items-center mb-6">
-                              <h2 className="text-2xl font-black text-slate-900 dark:text-white">Đối tác Kinh doanh (Partners)</h2>
-                              <div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16}/><input type="text" placeholder="Tìm kiếm đối tác..." className="pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-amber-500" /></div>
+                      <div className="space-y-8 animate-fade-in">
+                          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                              <div>
+                                  <h2 className="text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3"><Users className="text-amber-500" size={32} /> Nhân sự & Đối tác</h2>
+                                  <p className="text-slate-500 font-medium text-sm mt-1">Quản lý cơ sở dịch vụ, nhà sáng tạo nội dung và đội ngũ kiểm duyệt.</p>
+                              </div>
+                              <div className="relative w-full md:w-72">
+                                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18}/>
+                                  <input 
+                                      type="text" 
+                                      placeholder="Tìm tên, email..." 
+                                      value={partnerSearch}
+                                      onChange={(e) => setPartnerSearch(e.target.value)}
+                                      className="w-full pl-11 pr-4 py-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-2xl text-sm font-medium focus:outline-none focus:border-amber-500 shadow-sm transition-colors" 
+                                  />
+                              </div>
                           </div>
-                          
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                              {partners.length === 0 ? (
-                                  <div className="col-span-full py-10 text-center text-slate-500 font-bold">Chưa có đối tác nào.</div>
-                              ) : partners.map(partner => (
-                                  <div key={partner.id} className="p-6 bg-white dark:bg-zinc-900 rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-sm flex items-center gap-4 hover:-translate-y-1 transition-transform">
-                                      <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-slate-500 font-black text-lg">{partner.full_name?.charAt(0) || 'P'}</div>
-                                      <div className="flex-1 min-w-0">
-                                          <h3 className="font-bold text-slate-900 dark:text-white truncate">{partner.full_name || 'Đối tác mới'}</h3>
-                                          <p className="text-xs text-slate-500 truncate">{partner.email}</p>
-                                          <p className="text-[10px] text-slate-400 mt-1">Tham gia: {new Date(partner.created_at).toLocaleDateString('vi-VN')}</p>
-                                      </div>
+
+                          {/* THẺ CHỈ SỐ TỔNG QUAN NHÂN SỰ */}
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                              <div className="p-5 rounded-[2rem] bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl flex flex-col justify-between relative overflow-hidden group">
+                                  <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-150 transition-transform"><Users size={80}/></div>
+                                  <span className="text-[10px] font-black uppercase tracking-widest relative z-10 opacity-70">Tổng Mạng Lưới</span>
+                                  <span className="text-4xl font-black mt-2 relative z-10">{partners.length}</span>
+                              </div>
+                              <div className="p-5 rounded-[2rem] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 shadow-sm flex flex-col justify-between">
+                                  <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-1.5"><Building2 size={14}/> Đối Tác Cơ Sở</span>
+                                  <span className="text-3xl font-black text-slate-900 dark:text-white mt-2">{partners.filter(p => p.role === 'PARTNER_ADMIN').length}</span>
+                              </div>
+                              <div className="p-5 rounded-[2rem] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 shadow-sm flex flex-col justify-between">
+                                  <span className="text-[10px] font-black text-fuchsia-500 uppercase tracking-widest flex items-center gap-1.5"><Sparkles size={14}/> Nhà Sáng Tạo</span>
+                                  <span className="text-3xl font-black text-slate-900 dark:text-white mt-2">{partners.filter(p => p.role === 'CREATOR').length}</span>
+                              </div>
+                              <div className="p-5 rounded-[2rem] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 shadow-sm flex flex-col justify-between">
+                                  <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest flex items-center gap-1.5"><ShieldCheck size={14}/> Ban Kiểm Duyệt</span>
+                                  <span className="text-3xl font-black text-slate-900 dark:text-white mt-2">{partners.filter(p => p.role === 'MODERATOR').length}</span>
+                              </div>
+                          </div>
+
+                          {/* BỘ LỌC VÀ DANH SÁCH */}
+                          <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm">
+                              <div className="p-6 border-b border-slate-100 dark:border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50/50 dark:bg-black/20">
+                                  <div className="flex gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar pb-2 sm:pb-0">
+                                      {[
+                                        { id: 'ALL', label: 'Tất cả' }, 
+                                        { id: 'PARTNER_ADMIN', label: 'Đối tác' }, 
+                                        { id: 'CREATOR', label: 'Creator' }, 
+                                        { id: 'MODERATOR', label: 'Moderator' }
+                                      ].map((filter) => (
+                                          <button 
+                                              key={filter.id} 
+                                              onClick={() => setPartnerFilter(filter.id as any)}
+                                              className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all border ${partnerFilter === filter.id ? 'bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-black dark:border-white shadow-md' : 'bg-transparent text-slate-500 border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5'}`}
+                                          >
+                                              {filter.label}
+                                          </button>
+                                      ))}
                                   </div>
-                              ))}
+                              </div>
+
+                              <div className="overflow-x-auto">
+                                  <table className="w-full text-left min-w-[900px]">
+                                      <thead className="bg-white dark:bg-zinc-900 border-b border-slate-200 dark:border-white/10">
+                                          <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                              <th className="p-6 w-16">ID</th>
+                                              <th className="p-6">Hồ sơ Cấp dưới</th>
+                                              <th className="p-6">Phân quyền (Role)</th>
+                                              <th className="p-6">Liên hệ</th>
+                                              <th className="p-6 text-center">Hành động</th>
+                                          </tr>
+                                      </thead>
+                                      <tbody className="text-sm divide-y divide-slate-100 dark:divide-white/5">
+                                          {partners.filter(p => {
+                                              const matchFilter = partnerFilter === 'ALL' || p.role === partnerFilter;
+                                              const matchSearch = (p.full_name || '').toLowerCase().includes(partnerSearch.toLowerCase()) || 
+                                                                  (p.email || '').toLowerCase().includes(partnerSearch.toLowerCase());
+                                              return matchFilter && matchSearch;
+                                          }).length === 0 ? (
+                                              <tr><td colSpan={5} className="p-16 text-center text-slate-400 font-bold uppercase tracking-widest text-xs flex flex-col items-center justify-center gap-3"><Users size={32} className="opacity-30"/> Không tìm thấy kết quả</td></tr>
+                                          ) : partners.filter(p => {
+                                              const matchFilter = partnerFilter === 'ALL' || p.role === partnerFilter;
+                                              const matchSearch = (p.full_name || '').toLowerCase().includes(partnerSearch.toLowerCase()) || 
+                                                                  (p.email || '').toLowerCase().includes(partnerSearch.toLowerCase());
+                                              return matchFilter && matchSearch;
+                                          }).map((partner) => (
+                                              <tr key={partner.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
+                                                  <td className="p-6 font-mono text-xs font-black text-slate-400 uppercase">#{partner.id.split('-')[0]}</td>
+                                                  <td className="p-6">
+                                                      <div className="flex items-center gap-3">
+                                                          <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-zinc-800 flex items-center justify-center overflow-hidden border border-slate-300 dark:border-white/10 shadow-sm shrink-0">
+                                                              {partner.avatar_url ? (
+                                                                  <img src={partner.avatar_url} alt="avatar" className="w-full h-full object-cover" />
+                                                              ) : (
+                                                                  <span className="text-slate-500 font-black text-sm">{partner.full_name?.charAt(0) || 'U'}</span>
+                                                              )}
+                                                          </div>
+                                                          <div className="flex flex-col">
+                                                              <span className="font-bold text-slate-900 dark:text-white">{partner.full_name || 'Người dùng chưa đặt tên'}</span>
+                                                              <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1"><Clock size={10}/> Tham gia: {new Date(partner.created_at).toLocaleDateString('vi-VN')}</span>
+                                                          </div>
+                                                      </div>
+                                                  </td>
+                                                  <td className="p-6">
+                                                      <span className={`inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${
+                                                          partner.role === 'PARTNER_ADMIN' ? 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20' : 
+                                                          partner.role === 'CREATOR' ? 'bg-fuchsia-50 text-fuchsia-600 border-fuchsia-200 dark:bg-fuchsia-500/10 dark:border-fuchsia-500/20' : 
+                                                          'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-500/10 dark:border-blue-500/20'
+                                                      }`}>
+                                                          {partner.role === 'PARTNER_ADMIN' && <Building2 size={12} className="mr-1.5"/>}
+                                                          {partner.role === 'CREATOR' && <Sparkles size={12} className="mr-1.5"/>}
+                                                          {partner.role === 'MODERATOR' && <ShieldCheck size={12} className="mr-1.5"/>}
+                                                          {partner.role.replace('_ADMIN', '')}
+                                                      </span>
+                                                  </td>
+                                                  <td className="p-6">
+                                                      <span className="text-xs font-medium text-slate-600 dark:text-zinc-400">{partner.email}</span>
+                                                  </td>
+                                                  <td className="p-6 text-center">
+                                                      <button className="px-4 py-2 bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-white/10 font-black text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-sm active:scale-95">Hồ Sơ</button>
+                                                  </td>
+                                              </tr>
+                                          ))}
+                                      </tbody>
+                                  </table>
+                              </div>
                           </div>
                       </div>
                   )}
