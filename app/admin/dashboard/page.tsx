@@ -55,7 +55,7 @@ export default function AdminDashboardOverview() {
           try { pData = await (await fetch(`${API_URL}/admin/partners`, opts)).json(); } catch(e) {}
           
           if (sData && sData.status === "success" && sData.data) {
-              // BỘ LỌC AN TOÀN CHO BIỂU ĐỒ: Đảm bảo dữ liệu là số nguyên và đúng cấu trúc
+              // BỘ LỌC AN TOÀN CHO BIỂU ĐỒ: Giữ nguyên thứ tự thời gian, ép kiểu số học chặt chẽ
               let safeChartData = [];
               if (Array.isArray(sData.data.chart_data)) {
                   safeChartData = sData.data.chart_data.map((item: any) => ({
@@ -259,14 +259,14 @@ export default function AdminDashboardOverview() {
                               
                               <div className="h-[350px] w-full">
                                   <ResponsiveContainer width="100%" height="100%">
-                                      <AreaChart data={stats.chart_data || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                      <AreaChart data={stats.chart_data || []} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                                           <defs>
                                               <linearGradient id="colorGmv" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#f59e0b" stopOpacity={0.4}/><stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/></linearGradient>
                                               <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/><stop offset="95%" stopColor="#10b981" stopOpacity={0}/></linearGradient>
                                           </defs>
                                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#94a3b8" strokeOpacity={0.15} />
                                           <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 'bold', fill: '#64748b' }} dy={10} />
-                                          <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 'bold', fill: '#64748b' }} tickFormatter={formatYAxis} />
+                                          <YAxis axisLine={false} tickLine={false} width={45} tick={{ fontSize: 11, fontWeight: 'bold', fill: '#64748b' }} tickFormatter={formatYAxis} />
                                           {/* Kết nối Tooltip Tùy chỉnh */}
                                           <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#f59e0b', strokeWidth: 1, strokeDasharray: '5 5' }} />
                                           <Area type="monotone" dataKey="GMV" stroke="#f59e0b" strokeWidth={4} fill="url(#colorGmv)" activeDot={{ r: 6, fill: '#f59e0b', stroke: '#fff', strokeWidth: 2 }} />
