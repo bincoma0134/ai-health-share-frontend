@@ -8,7 +8,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import dynamic from 'next/dynamic';
+// Triệt tiêu lỗi window is not defined bằng dynamic import
+const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 import { useUI } from "@/context/UIContext"; 
 import NotificationModal from "@/components/NotificationModal";
 import { supabase } from "@/lib/supabase";
@@ -258,23 +260,29 @@ export default function AdminDashboardOverview() {
                                   </div>
                               </div>
                               
-                              <div className="h-[350px] w-full">
-                                  <ResponsiveContainer width="100%" height="100%">
-                                      <AreaChart data={stats.chart_data || []} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-                                          <defs>
-                                              <linearGradient id="colorGmv" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#f59e0b" stopOpacity={0.4}/><stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/></linearGradient>
-                                              <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/><stop offset="95%" stopColor="#10b981" stopOpacity={0}/></linearGradient>
-                                          </defs>
-                                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#94a3b8" strokeOpacity={0.15} />
-                                          <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 'bold', fill: '#64748b' }} dy={10} />
-                                          <YAxis axisLine={false} tickLine={false} width={45} tick={{ fontSize: 11, fontWeight: 'bold', fill: '#64748b' }} tickFormatter={formatYAxis} />
-                                          {/* Kết nối Tooltip Tùy chỉnh */}
-                                          <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#f59e0b', strokeWidth: 1, strokeDasharray: '5 5' }} />
-                                          {/* dataKey phải khớp chính xác với biến đã map ở trên */}
-                                          <Area type="monotone" dataKey="gmv" name="GMV" stroke="#f59e0b" strokeWidth={4} fill="url(#colorGmv)" isAnimationActive={false} activeDot={{ r: 6, fill: '#f59e0b', stroke: '#fff', strokeWidth: 2 }} />
-                                          <Area type="monotone" dataKey="revenue" name="Doanh thu" stroke="#10b981" strokeWidth={4} fill="url(#colorRev)" isAnimationActive={false} activeDot={{ r: 6, fill: '#10b981', stroke: '#fff', strokeWidth: 2 }} />
-                                      </AreaChart>
-                                  </ResponsiveContainer>
+                              <div className="h-[380px] w-full overflow-hidden">
+                                  {stats.chart_data?.length > 0 && typeof window !== 'undefined' && (
+                                      <Chart
+                                          options={{
+                                              chart: { type: 'area', toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'Be Vietnam Pro' },
+                                              colors: ['#f59e0b', '#10b981'],
+                                              stroke: { curve: 'smooth', width: 4 },
+                                              fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0 } },
+                                              grid: { borderColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', strokeDashArray: 4, padding: { left: 20, right: 20 } },
+                                              xaxis: { categories: stats.chart_data.map((d: any) => d.date), axisBorder: { show: false }, axisTicks: { show: false }, labels: { style: { colors: '#64748b', fontWeight: 700 } } },
+                                              yaxis: { labels: { formatter: (val) => formatYAxis(val), style: { colors: '#64748b', fontWeight: 700 } } },
+                                              dataLabels: { enabled: false },
+                                              tooltip: { theme: theme, x: { show: true }, y: { formatter: (val) => val.toLocaleString() + " đ" } },
+                                              legend: { show: false }
+                                          }}
+                                          series={[
+                                              { name: 'GMV', data: stats.chart_data.map((d: any) => d.gmv) },
+                                              { name: 'Doanh thu', data: stats.chart_data.map((d: any) => d.revenue) }
+                                          ]}
+                                          type="area"
+                                          height="100%"
+                                      />
+                                  )}
                               </div>
                           </div>
                       </div>
