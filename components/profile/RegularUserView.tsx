@@ -8,7 +8,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 
-export default function RegularUserView({ profile, communityPosts = [], likedTiktokFeeds = [], savedTiktokFeeds = [], isOwner }: any) {
+export default function RegularUserView({ profile, videoTiktokFeeds = [], communityPosts = [], likedTiktokFeeds = [], savedTiktokFeeds = [], isOwner }: any) {
   const [activeTab, setActiveTab] = useState("videos");
 
   // Khai báo kết nối Backend
@@ -145,7 +145,7 @@ export default function RegularUserView({ profile, communityPosts = [], likedTik
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4 mt-8">
-          {(activeTab === "videos" ? communityPosts : activeTab === "liked" ? likedTiktokFeeds : savedTiktokFeeds).map((item: any) => (
+          {(activeTab === "videos" ? videoTiktokFeeds : activeTab === "liked" ? likedTiktokFeeds : savedTiktokFeeds).map((item: any) => (
             <div key={item.id} className="relative aspect-[3/4] bg-zinc-800 rounded-[2rem] overflow-hidden group cursor-pointer shadow-2xl border border-white/5">
               <img src={item.image_url || `https://picsum.photos/seed/${item.id}/400/600`} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" alt="post" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent flex flex-col justify-between p-5 opacity-0 group-hover:opacity-100 transition-all duration-300">

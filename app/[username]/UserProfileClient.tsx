@@ -69,7 +69,7 @@ export default function UserProfileClient({ params }: { params: { username: stri
     setTheme(nextTheme);
   };
 
-  if (loading) return null; 
+  if (loading || !isAuthReady) return null; 
 
   if (username === "guest") {
     return (
