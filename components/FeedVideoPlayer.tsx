@@ -77,24 +77,28 @@ export default function FeedVideoPlayer({ videoUrl, isActive }: FeedVideoPlayerP
         playsInline
         autoPlay={isActive}
         muted={isMuted}
-        preload="auto" // Load sẵn dữ liệu để phát ngay lập tức
+        preload="auto"
       />
 
-      {/* Lớp Overlay Đen mờ khi Tạm dừng */}
+      {/* Lớp Overlay Đen mờ & Nút Play trung tâm khi Tạm dừng */}
       {!isPlaying && (
-        <div className="absolute inset-0 bg-black/30 transition-all duration-300 pointer-events-none" />
+        <div className="absolute inset-0 bg-black/40 flex items-center justify-center transition-all duration-500 animate-fade-in pointer-events-none">
+           <div className="w-20 h-20 bg-white/20 backdrop-blur-xl rounded-full border border-white/30 flex items-center justify-center shadow-2xl">
+              <Play className="text-white w-10 h-10 ml-1 fill-white" />
+           </div>
+        </div>
       )}
 
-      {/* Biểu tượng Trạng thái (Glassmorphism) - Chỉ hiện khi Click */}
+      {/* Biểu tượng Indicator chớp tắt khi tương tác (Giữ nguyên logic cũ nhưng tinh chỉnh icon) */}
       <div
-        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center w-20 h-20 bg-black/40 backdrop-blur-md rounded-full border border-white/20 transition-all duration-300 pointer-events-none ${
+        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center w-24 h-24 bg-white/10 backdrop-blur-2xl rounded-full border border-white/20 transition-all duration-300 pointer-events-none ${
           showIndicator ? "opacity-100 scale-100" : "opacity-0 scale-150"
         }`}
       >
         {isPlaying ? (
-          <Play className="text-white w-10 h-10 ml-1 opacity-80" fill="currentColor" />
+          <Pause className="text-white w-12 h-12 opacity-80 fill-white" />
         ) : (
-          <Pause className="text-white w-10 h-10 opacity-80" fill="currentColor" />
+          <Play className="text-white w-12 h-12 ml-1 opacity-80 fill-white" />
         )}
       </div>
     </div>
