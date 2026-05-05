@@ -138,10 +138,10 @@ export default function AuthModal() {
         if (pwdStrength < 30) throw new Error("Mật khẩu quá yếu!");
         if (password !== confirmPassword) throw new Error("Mật khẩu xác nhận không khớp!");
 
-        // FIX TYPESCRIPT: Tách biệt cấu trúc Đăng ký
+        // ĐỊNH DANH TỨ THÌ: Gán sẵn role USER vào metadata ngay khi đăng ký
         const signUpPayload = loginMethod === "EMAIL"
-            ? { email: email, password }
-            : { phone: phone, password };
+            ? { email: email, password, options: { data: { role: 'USER' } } }
+            : { phone: phone, password, options: { data: { role: 'USER' } } };
 
         const { error } = await supabase.auth.signUp(signUpPayload);
         
