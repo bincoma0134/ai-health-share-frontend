@@ -36,10 +36,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
         .then(res => res.json())
         .then(result => {
-          if (result.status === "success" && result.data.profile.role !== cachedRole) {
-            setUserRole(result.data.profile.role);
-            // Tự động cập nhật lại Metadata nếu phát hiện sai lệch so với DB
-            supabase.auth.updateUser({ data: { role: result.data.profile.role } });
+          if (result.status === "success") {
+            // Lấy Role một cách an toàn từ kết quả trả về của RPC
+            const realRole = result.data?.profile?.role || "USER";
+            
+            if (realRole !== cachedRole) {
+               setUserRole(realRole);
+               // Tự động cập nhật lại Metadata nếu phát hiện sai lệch so với DB
+               supabase.auth.updateUser({ data: { role: realRole } });
+            }
           }
         })
         .catch(e => console.error("AuthContext: Lỗi đồng bộ role ngầm", e));

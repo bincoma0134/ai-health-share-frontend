@@ -109,31 +109,46 @@ export default function AuthModal() {
 
     try {
       if (authMode === "LOGIN") {
-        const res = await fetch(`${API_URL}/auth/resolve`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ identifier })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Không tìm thấy tài khoản");
+        let finalEmail = identifier;
 
-        // Thay vì chỉ bắt lỗi, ta lấy thêm authData để trích xuất username[cite: 13]
-        const { data: authData, error } = await supabase.auth.signInWithPassword({ email: data.email, password });
+        // Lọc thông minh (Regex Bypass): Nếu không phải định dạng email, mới gọi API để resolve
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier)) {
+           const res = await fetch(`${API_URL}/auth/resolve`, {
+               method: "POST",
+               headers: { "Content-Type": "application/json" },
+               body: JSON.stringify({ identifier })
+           });
+           const data = await res.json();
+           if (!res.ok) throw new Error(data.detail || "Không tìm thấy tài khoản");
+           finalEmail = data.email;
+        }
+
+        const { data: authData, error } = await supabase.auth.signInWithPassword({ email: finalEmail, password });
         if (error) throw error;
+        
         toast.success("Chào mừng bạn trở lại!", { id: toastId });
         setIsAuthModalOpen(false);
         
-        // Điều hướng thẳng về profile của user đó[cite: 13]
-        const loggedInUsername = authData?.user?.user_metadata?.username;
-        // Cho trình duyệt 800ms để Supabase ghi Session Cookie hoàn tất trước khi chuyển trang
-        setTimeout(() => {
-            if (loggedInUsername) {
-                window.location.href = `/user-profile?u=${loggedInUsername}`;
-            } else {
-                window.location.reload(); 
-            }
-        }, 800);
-
+        // Điều hướng mềm bằng Next.js Router và xác định Role
+        const userMeta = authData?.user?.user_metadata;
+        const currentRole = userMeta?.role || "USER";
+        
+        if (currentRole === "SUPER_ADMIN") {
+           router.push("/admin/dashboard");
+        } else if (currentRole === "PARTNER_ADMIN" || currentRole === "PARTNER") {
+           router.push("/partner/dashboard");
+        } else if (currentRole === "MODERATOR") {
+           router.push("/moderator/dashboard");
+        } else if (currentRole === "CREATOR") {
+           router.push("/creator/dashboard");
+        } else {
+           if (userMeta?.username) {
+               router.push(`/user/profile`); 
+           } else {
+               router.push("/");
+           }
+        }
+        
       } else if (authMode === "REGISTER_CREDENTIALS") {
         if (pwdStrength < 30) throw new Error("Mật khẩu quá yếu!");
         if (password !== confirmPassword) throw new Error("Mật khẩu xác nhận không khớp!");
