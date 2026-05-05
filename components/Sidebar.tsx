@@ -128,10 +128,9 @@ export default function Sidebar() {
     { name: "Lịch hẹn", icon: CalendarDays, path: "/features/calendar" },
   ];
 
-  if (authLoading) return null;
-
+  // KIỂN TRÚC UI SHELL: Hiển thị ngay lập tức ở mili giây thứ 0, không chờ đợi (Loại bỏ blur-sm, delay)
   return (
-    <div className="hidden md:flex flex-col w-[280px] h-full bg-white/70 dark:bg-zinc-950/80 backdrop-blur-2xl border-r border-slate-200 dark:border-white/5 z-50 pt-8 shrink-0 shadow-[25px_0_60px_rgba(0,0,0,0.03)] dark:shadow-[25px_0_60px_rgba(0,0,0,0.3)] transition-all duration-500">
+    <div className={`hidden md:flex flex-col w-[280px] h-full bg-white/70 dark:bg-zinc-950/80 backdrop-blur-2xl border-r border-slate-200 dark:border-white/5 z-50 pt-8 shrink-0 shadow-[25px_0_60px_rgba(0,0,0,0.03)] dark:shadow-[25px_0_60px_rgba(0,0,0,0.3)] transition-all duration-300 opacity-100`}>
       
       {/* LOGO AREA */}
       <div className="px-7 mb-10 cursor-pointer group" onClick={() => router.push('/')}>

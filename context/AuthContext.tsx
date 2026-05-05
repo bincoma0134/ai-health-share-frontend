@@ -23,22 +23,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadProfile = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
-      setUser(session.user);
-      try {
-        // 2. Sửa lại đường dẫn fetch để gọi về Backend Local
-        const res = await fetch(`${API_URL}/user/profile`, {
-          headers: { "Authorization": `Bearer ${session.access_token}` }
-        });
-        const result = await res.json();
-        if (result.status === "success") {
-          setUserRole(result.data.profile.role);
-        } else {
-            console.error("Backend trả về lỗi:", result);
-        }
-      } catch (e) { 
-          // Log rõ lỗi ra để dễ kiểm soát thay vì chỉ in string cứng
-          console.error("AuthContext: Lỗi fetch role", e); 
-      }
+      const currentUser = session.user;
+      setUser(currentUser);
+      
+      // 2. Xác thực tức thì từ JWT Metadata (Tốc độ mili giây)
+      const cachedRole = currentUser.user_metadata?.role || "USER";
+      setUserRole(cachedRole);
+
+      // 3. Chạy ngầm đồng bộ với Backend (Không block UI)
+      fetch(`${API_URL}/user/profile`, {
+        headers: { "Authorization": `Bearer ${session.access_token}` }
+      })
+        .then(res => res.json())
+        .then(result => {
+          if (result.status === "success" && result.data.profile.role !== cachedRole) {
+            setUserRole(result.data.profile.role);
+            // Tự động cập nhật lại Metadata nếu phát hiện sai lệch so với DB
+            supabase.auth.updateUser({ data: { role: result.data.profile.role } });
+          }
+        })
+        .catch(e => console.error("AuthContext: Lỗi đồng bộ role ngầm", e));
     }
     setIsLoading(false);
   };
