@@ -5,6 +5,7 @@ import { X, Mail, Lock, ShieldCheck, User as UserIcon, Phone, Smartphone, ArrowR
 import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { useUI } from "@/context/UIContext";
+import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -13,6 +14,7 @@ type AuthStep = "LOGIN" | "REGISTER_CREDENTIALS" | "VERIFY_OTP" | "SETUP_PROFILE
 
 export default function AuthModal() {
   const { isAuthModalOpen, setIsAuthModalOpen } = useUI();
+  const { refreshProfile } = useAuth();
   const router = useRouter();
   
   const [authMode, setAuthMode] = useState<AuthStep>("LOGIN");
@@ -125,29 +127,15 @@ export default function AuthModal() {
 
         const { data: authData, error } = await supabase.auth.signInWithPassword({ email: finalEmail, password });
         if (error) throw error;
+
+        // ÉP CẬP NHẬT SIDEBAR TỨC THÌ (Bảo đảm Sidebar đổi giao diện trước khi Modal đóng)
+        await refreshProfile(authData.session);
         
         toast.success("Chào mừng bạn trở lại!", { id: toastId });
         setIsAuthModalOpen(false);
         
-        // Điều hướng mềm bằng Next.js Router và xác định Role
-        const userMeta = authData?.user?.user_metadata;
-        const currentRole = userMeta?.role || "USER";
-        
-        if (currentRole === "SUPER_ADMIN") {
-           router.push("/admin/dashboard");
-        } else if (currentRole === "PARTNER_ADMIN" || currentRole === "PARTNER") {
-           router.push("/partner/dashboard");
-        } else if (currentRole === "MODERATOR") {
-           router.push("/moderator/dashboard");
-        } else if (currentRole === "CREATOR") {
-           router.push("/creator/dashboard");
-        } else {
-           if (userMeta?.username) {
-               router.push(`/user/profile`); 
-           } else {
-               router.push("/");
-           }
-        }
+        // ĐIỀU HƯỚNG VỀ TRANG CHỦ THEO YÊU CẦU (Cho mọi Role)
+        router.push("/");
         
       } else if (authMode === "REGISTER_CREDENTIALS") {
         if (pwdStrength < 30) throw new Error("Mật khẩu quá yếu!");

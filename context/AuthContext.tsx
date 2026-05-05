@@ -10,7 +10,7 @@ interface AuthContextType {
   user: any;
   userRole: string;
   isLoading: boolean;
-  refreshProfile: () => Promise<void>;
+  refreshProfile: (session?: any) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -20,10 +20,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [userRole, setUserRole] = useState<string>("USER");
   const [isLoading, setIsLoading] = useState(true);
 
-  const loadProfile = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      const currentUser = session.user;
+  const loadProfile = async (session?: any) => {
+    let currentSession = session;
+
+    // Nếu không có session truyền vào (trường hợp gọi refreshProfile), tự đi lấy
+    if (!currentSession) {
+      const { data } = await supabase.auth.getSession();
+      currentSession = data.session;
+    }
+
+    if (currentSession?.user) {
+      const currentUser = currentSession.user;
       setUser(currentUser);
       
       // 2. Xác thực tức thì từ JWT Metadata (Tốc độ mili giây)
@@ -37,22 +44,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .then(res => res.json())
         .then(result => {
           if (result.status === "success") {
-            // Lấy Role một cách an toàn từ kết quả trả về của RPC
             const realRole = result.data?.profile?.role || "USER";
-            
             if (realRole !== cachedRole) {
                setUserRole(realRole);
-               // Tự động cập nhật lại Metadata nếu phát hiện sai lệch so với DB
                supabase.auth.updateUser({ data: { role: realRole } });
             }
           }
         })
         .catch(e => console.error("AuthContext: Lỗi đồng bộ role ngầm", e));
+    } else {
+       // Reset state nếu không có session (Đăng xuất)
+       setUser(null);
+       setUserRole("USER");
     }
     setIsLoading(false);
   };
 
-  useEffect(() => { loadProfile(); }, []);
+  useEffect(() => { 
+    // 1. Chạy lần đầu khi F5
+    supabase.auth.getSession().then(({ data: { session } }) => {
+       loadProfile(session);
+    });
+
+    // 2. ĐẶT TRẠM GÁC LẮNG NGHE SỰ KIỆN TỰ ĐỘNG (Bảo đảm Soft Routing hoạt động)
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        // Mỗi khi đăng nhập/đăng xuất thành công, hàm này tự động chạy
+        loadProfile(session);
+      }
+    );
+
+    return () => {
+       authListener.subscription.unsubscribe();
+    };
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, userRole, isLoading, refreshProfile: loadProfile }}>
