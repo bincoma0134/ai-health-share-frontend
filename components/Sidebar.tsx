@@ -56,9 +56,11 @@ export default function Sidebar() {
   }, [user]);
 
   const handleLogout = async () => {
+    const toastId = toast.loading("Đang đăng xuất an toàn...");
     await supabase.auth.signOut();
     router.push("/");
-    window.location.reload();
+    toast.success("Hẹn gặp lại bạn!", { id: toastId });
+    // AuthContext Listener sẽ tự động cập nhật UI mà không cần reload trang
   };
 
   const getManagementConfig = (role: string): RoleConfig => {
