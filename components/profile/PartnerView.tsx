@@ -333,9 +333,23 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                    {mockServices.map((svc: any) => (
                       <div key={svc.id} onClick={() => setExpandedService(svc)} className="bg-white/60 dark:bg-zinc-900/50 backdrop-blur-xl rounded-[2rem] border border-slate-200 dark:border-white/10 overflow-hidden hover:shadow-2xl hover:border-blue-500/50 transition-all duration-300 hover:-translate-y-1 group flex flex-col cursor-pointer">
-                          <div className="relative h-40 overflow-hidden shrink-0">
-                              <img src={svc.image_url || svc.image || "https://picsum.photos/400"} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                              <div className="absolute top-3 left-3 flex gap-2">
+                          <div className="relative h-44 overflow-hidden shrink-0 bg-slate-100 dark:bg-black">
+                              {/* Ưu tiên hiển thị Video nếu có, không thì hiện ảnh */}
+                              {svc.video_url ? (
+                                  <video 
+                                    src={svc.video_url} 
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                                    autoPlay muted loop playsInline 
+                                  />
+                              ) : (
+                                  <img 
+                                    src={svc.image_url || svc.image || "https://picsum.photos/400"} 
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                                    alt={svc.service_name || svc.name}
+                                  />
+                              )}
+                              
+                              <div className="absolute top-4 left-4 flex gap-2 z-10">
                                   {(svc.tags || []).map((tag: string) => (
                                       <span key={tag} className="px-2.5 py-1 bg-rose-500 text-white text-[10px] font-black uppercase rounded-lg shadow-md flex items-center gap-1">
                                           {tag === "Hot" && <TrendingUp size={10}/>} {tag}
@@ -370,22 +384,42 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
             {(activeTab === "videos" || activeTab === "liked" || activeTab === "saved") && (
                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 md:gap-6 animate-fade-in">
                {(activeTab === "videos" ? localVideos : activeTab === "liked" ? likedTiktokFeeds : savedTiktokFeeds).map((item: any) => (
-                 <div key={item.id} onClick={() => { if(activeTab === 'videos') setExpandedVideo(item); }} className={`relative aspect-[9/16] bg-zinc-800 rounded-[2rem] overflow-hidden group shadow-sm border border-white/5 transition-all duration-300 ${activeTab === 'videos' ? 'cursor-pointer hover:shadow-2xl hover:border-blue-500/50 hover:-translate-y-1' : ''}`}>
-                   <video src={item.video_url || item.image_url} className="w-full h-full object-cover opacity-80 transition-transform duration-1000 group-hover:scale-105 group-hover:opacity-100" muted playsInline />
+                 <div key={item.id} onClick={() => { if(activeTab === 'videos') setExpandedVideo(item); }} className={`relative aspect-[9/16] bg-zinc-900 rounded-[2.2rem] overflow-hidden group shadow-sm border border-white/5 transition-all duration-500 ${activeTab === 'videos' ? 'cursor-pointer hover:shadow-2xl hover:border-blue-500/40 hover:-translate-y-1.5' : ''}`}>
+                   <video src={item.video_url || item.image_url} className="w-full h-full object-cover opacity-85 transition-all duration-1000 group-hover:scale-110 group-hover:opacity-100" muted playsInline />
                    
-                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent p-4 pt-12 pointer-events-none flex flex-col justify-end">
-                      <p className="text-white text-xs font-bold line-clamp-2 leading-tight drop-shadow-md mb-1">{item.title}</p>
-                      {item.price && (
-                          <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-500/20 backdrop-blur-md border border-blue-400/30 rounded-lg w-max mt-1">
-                              <DollarSign size={10} className="text-blue-400"/>
-                              <span className="text-blue-400 text-[10px] font-black">{parseFloat(item.price).toLocaleString('vi-VN')} đ</span>
+                   {/* Overlay: Hiển thị Tim & Lượt xem trực quan ngay Preview */}
+                   <div className="absolute top-4 left-4 z-20 flex flex-col gap-2">
+                       <div className="flex items-center gap-1 px-2 py-1 bg-black/40 backdrop-blur-md border border-white/10 rounded-full text-[9px] font-black text-white shadow-lg">
+                           <Heart size={10} className={item.is_liked ? "fill-rose-500 text-rose-500" : "text-white"} />
+                           <span>{item.likes_count || 0}</span>
+                       </div>
+                   </div>
+
+                   {/* Thông tin đáy thẻ: Glassmorphism Design */}
+                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent p-5 pt-16 pointer-events-none flex flex-col justify-end">
+                      <p className="text-white text-[11px] font-black line-clamp-2 leading-snug drop-shadow-xl mb-2 group-hover:text-blue-400 transition-colors">{item.title}</p>
+                      
+                      {item.price ? (
+                          <div className="flex items-center gap-2">
+                              <div className="px-2.5 py-1 bg-blue-500/20 backdrop-blur-xl border border-blue-400/30 rounded-lg shadow-inner">
+                                  <span className="text-blue-400 text-[10px] font-black tracking-tight">{parseFloat(item.price).toLocaleString('vi-VN')} đ</span>
+                              </div>
+                              <div className="w-6 h-6 bg-white/10 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 translate-x-2 group-hover:translate-x-0">
+                                  <Play size={10} className="fill-white text-white ml-0.5" />
+                              </div>
+                          </div>
+                      ) : (
+                          <div className="w-7 h-7 bg-white/10 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center">
+                              <Play size={12} className="fill-white text-white ml-0.5" />
                           </div>
                       )}
                    </div>
 
-                   <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
-                      <button onClick={(e) => { e.stopPropagation(); handleInteraction(item.id, 'like'); }} className="p-2 bg-black/40 backdrop-blur-md text-white rounded-full hover:bg-rose-500/80 transition-colors"><Heart size={14} className={item.is_liked ? "fill-white" : ""}/></button>
-                      <button onClick={(e) => { e.stopPropagation(); handleInteraction(item.id, 'share'); }} className="p-2 bg-black/40 backdrop-blur-md text-white rounded-full hover:bg-blue-500/80 transition-colors"><Share2 size={14}/></button>
+                   {/* Quick Actions (Hover Only) */}
+                   <div className="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-4 group-hover:translate-x-0 z-20">
+                      <button onClick={(e) => { e.stopPropagation(); handleInteraction(item.id, 'share'); }} className="p-2.5 bg-white/10 backdrop-blur-xl border border-white/20 text-white rounded-full hover:bg-blue-600 transition-all shadow-xl">
+                          <Share2 size={14} strokeWidth={2.5} />
+                      </button>
                    </div>
                  </div>
                ))}
