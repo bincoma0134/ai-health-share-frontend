@@ -874,11 +874,14 @@ export default function CalendarFeature() {
                                         {selectedDetail.users?.avatar_url ? <img src={selectedDetail.users.avatar_url} className="w-full h-full object-cover" /> : <UserIcon size={24}/>}
                                     </div>
                                     <div>
-                                        <p className="font-black text-xl text-slate-900 dark:text-white">{selectedDetail.users?.full_name || "Khách hàng ẩn danh"}</p>
+                                        <p className="font-black text-xl text-slate-900 dark:text-white">{selectedDetail.customer_name || selectedDetail.users?.full_name || "Khách hàng ẩn danh"}</p>
                                         <div className="flex items-center gap-2 mt-1">
-                                            <span className="text-xs font-bold text-slate-500">{selectedDetail.users?.phone || "Không có SĐT"}</span>
-                                            {selectedDetail.users?.phone && (
-                                                <a href={`tel:${selectedDetail.users.phone}`} className="w-6 h-6 rounded-full bg-[#80BF84]/20 flex items-center justify-center text-[#80BF84] hover:bg-[#80BF84] hover:text-white transition-colors">
+                                            {/* Ưu tiên lấy SĐT khách để lại trong đơn hàng */}
+                                            <span className="text-xs font-bold text-slate-500 dark:text-zinc-400">
+                                                {selectedDetail.customer_phone || selectedDetail.users?.phone || "Không có SĐT"}
+                                            </span>
+                                            {(selectedDetail.customer_phone || selectedDetail.users?.phone) && (
+                                                <a href={`tel:${selectedDetail.customer_phone || selectedDetail.users?.phone}`} className="w-6 h-6 rounded-full bg-[#80BF84]/20 flex items-center justify-center text-[#80BF84] hover:bg-[#80BF84] hover:text-white transition-colors">
                                                     <Phone size={10} />
                                                 </a>
                                             )}
@@ -924,7 +927,7 @@ export default function CalendarFeature() {
                                     <input 
                                         type="text" 
                                         placeholder="Nhập 6 số mã khách" 
-                                        className="w-full px-4 py-4 text-center rounded-[1.5rem] border border-emerald-200 dark:border-emerald-800/50 bg-white dark:bg-black/50 font-black text-xl tracking-[0.3em] outline-none focus:ring-2 focus:ring-emerald-500/50 mb-4 transition-all"
+                                        className="w-full px-4 py-4 text-center rounded-[1.5rem] border border-emerald-200 dark:border-white/10 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 font-black text-xl tracking-[0.3em] outline-none focus:ring-2 focus:ring-emerald-500/50 mb-4 transition-all placeholder:text-slate-300 dark:placeholder:text-zinc-600"
                                         value={checkInCodes[selectedDetail.id] || ''}
                                         onChange={(e) => setCheckInCodes({...checkInCodes, [selectedDetail.id]: e.target.value})}
                                     />
