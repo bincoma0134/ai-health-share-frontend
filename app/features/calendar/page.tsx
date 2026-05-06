@@ -79,6 +79,33 @@ export default function CalendarFeature() {
   };
 
   const metrics = getPartnerMetrics();
+
+  // --- LOGIC GOOGLE CALENDAR GRID ---
+  const hours = Array.from({ length: 18 }, (_, i) => i + 5); // Hiển thị từ 5 AM đến 10 PM
+  const startOfCurrentWeek = () => {
+      const d = new Date();
+      const day = d.getDay(), diff = d.getDate() - day + (day === 0 ? -6 : 1);
+      return new Date(d.setDate(diff));
+  };
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+      const d = startOfCurrentWeek();
+      d.setDate(d.getDate() + i);
+      return d;
+  });
+
+  const getEventStyle = (startTime: string, endTime: string) => {
+      const start = new Date(startTime);
+      const end = new Date(endTime);
+      const startHour = start.getHours();
+      const startMin = start.getMinutes();
+      const duration = (end.getTime() - start.getTime()) / (1000 * 60);
+
+      // Mỗi 1 giờ tương ứng với 80px trong Grid
+      const top = (startHour - 5) * 80 + (startMin / 60) * 80;
+      const height = (duration / 60) * 80;
+
+      return { top: `${top}px`, height: `${height}px` };
+  };
   
   // Cấu hình UI cho biểu đồ ApexCharts
   const chartOptions: any = {
@@ -287,65 +314,88 @@ export default function CalendarFeature() {
                             </div>
                         </div>
                     ) : (
-                        <div className="bg-white dark:bg-[#0f0f11] rounded-[1.5rem] p-6 border border-slate-200 dark:border-white/10 shadow-sm animate-fade-in">
-                            <h3 className="text-lg font-black text-slate-900 dark:text-white mb-6 flex items-center gap-2"><Clock className="text-[#80BF84]" size={20} /> Lịch trình phục vụ</h3>
-                            <div className="flex flex-col gap-0">
-                                {appointments.filter(a => ['CONFIRMED', 'SERVED', 'COMPLETED'].includes(a.status)).length === 0 ? (
-                                    <div className="py-10 text-center text-slate-500 font-medium">Bạn chưa có lịch trình nào cần phục vụ.</div>
-                                ) : (
-                                    appointments
-                                        .filter(a => ['CONFIRMED', 'SERVED', 'COMPLETED'].includes(a.status))
-                                        .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime())
-                                        .map((appt) => {
-                                            const startObj = appt.start_time ? new Date(appt.start_time) : new Date();
-                                            const dateStr = startObj.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                                            const timeStr = startObj.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-                                            const isConfirmed = appt.status === 'CONFIRMED';
-                                            const isServed = appt.status === 'SERVED';
-                                            
-                                            return (
-                                                <div key={appt.id} className="relative pl-8 md:pl-10 py-5 border-l-2 border-slate-200 dark:border-white/10 group">
-                                                    {/* Timeline Dot */}
-                                                    <div className={`absolute left-[-11px] top-6 w-5 h-5 rounded-full bg-white dark:bg-zinc-900 border-4 transition-transform group-hover:scale-125 ${isConfirmed ? 'border-emerald-500' : isServed ? 'border-blue-500' : 'border-slate-300 dark:border-zinc-700'}`}></div>
-                                                    
-                                                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                                                        <div>
-                                                            <div className="flex items-center gap-3 mb-1">
-                                                                <span className="text-xl font-black text-slate-900 dark:text-white tracking-tight">{timeStr}</span>
-                                                                <span className="text-[10px] font-black tracking-widest text-slate-500 dark:text-zinc-400 bg-slate-100 dark:bg-white/5 px-2.5 py-1 rounded-md border border-slate-200 dark:border-white/10">{dateStr}</span>
-                                                            </div>
-                                                            <div className="flex items-center gap-2 mt-3 mb-1">
-                                                                <div className="w-7 h-7 rounded-full bg-slate-200 dark:bg-zinc-800 flex items-center justify-center text-slate-500 shrink-0 border border-white dark:border-zinc-700 shadow-sm"><UserIcon size={14}/></div>
-                                                                <span className="font-bold text-sm text-slate-800 dark:text-zinc-200">{appt.users?.full_name || "Khách hàng"}</span>
-                                                                {appt.users?.phone && <span className="text-xs font-medium text-slate-400 dark:text-zinc-500 ml-1">· {appt.users.phone}</span>}
-                                                            </div>
-                                                            <p className="text-sm font-bold text-slate-500 dark:text-zinc-400 flex items-center gap-1.5"><CheckCircle size={14} className="text-[#80BF84]"/> {appt.services?.service_name}</p>
+                        <div className="bg-white dark:bg-[#0f0f11] rounded-[2.5rem] border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden flex flex-col animate-fade-in h-[800px]">
+                            {/* Calendar Header */}
+                            <div className="grid grid-cols-[80px_1fr] border-b border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/5">
+                                <div className="p-4 border-r border-slate-200 dark:border-white/10 flex items-center justify-center font-bold text-[10px] text-slate-400">GMT+07</div>
+                                <div className="grid grid-cols-7">
+                                    {weekDays.map((day, i) => (
+                                        <div key={i} className={`p-4 text-center border-r last:border-0 border-slate-200 dark:border-white/10 ${day.toDateString() === new Date().toDateString() ? 'bg-[#80BF84]/10' : ''}`}>
+                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{day.toLocaleDateString('vi-VN', { weekday: 'short' })}</p>
+                                            <p className={`text-xl font-black mt-1 ${day.toDateString() === new Date().toDateString() ? 'text-[#80BF84]' : 'text-slate-900 dark:text-white'}`}>{day.getDate()}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Calendar Body */}
+                            <div className="flex-1 overflow-y-auto relative no-scrollbar bg-white dark:bg-black/20">
+                                <div className="grid grid-cols-[80px_1fr] min-h-[1440px]">
+                                    {/* Giờ bên trái */}
+                                    <div className="border-r border-slate-200 dark:border-white/10">
+                                        {hours.map(h => (
+                                            <div key={h} className="h-[80px] border-b border-slate-100 dark:border-white/5 text-[10px] font-bold text-slate-400 p-2 text-right uppercase">
+                                                {h > 12 ? `${h-12} PM` : `${h} AM`}
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Lưới lịch hẹn */}
+                                    <div className="grid grid-cols-7 relative">
+                                        {/* Vẽ các đường kẻ ngang */}
+                                        {hours.map(h => (
+                                            <div key={h} className="absolute w-full border-b border-slate-100 dark:border-white/5" style={{ top: `${(h-5)*80}px` }}></div>
+                                        ))}
+                                        
+                                        {/* Vẽ các đường kẻ dọc */}
+                                        {Array.from({length: 6}).map((_, i) => (
+                                            <div key={i} className="absolute h-full border-r border-slate-100 dark:border-white/5" style={{ left: `${(i+1)*(100/7)}%` }}></div>
+                                        ))}
+
+                                        {/* Render Event Blocks */}
+                                        {appointments
+                                            .filter(a => ['CONFIRMED', 'SERVED', 'COMPLETED'].includes(a.status) && a.start_time)
+                                            .map((appt) => {
+                                                const start = new Date(appt.start_time);
+                                                const dayIndex = (start.getDay() + 6) % 7; // Chuyển Chủ nhật từ 0 sang index 6
+                                                const { top, height } = getEventStyle(appt.start_time, appt.end_time);
+                                                const isConfirmed = appt.status === 'CONFIRMED';
+                                                
+                                                return (
+                                                    <div 
+                                                        key={appt.id}
+                                                        className={`absolute mx-1 rounded-xl p-2 border-l-4 shadow-sm transition-all hover:scale-[1.02] hover:z-10 cursor-pointer overflow-hidden
+                                                            ${isConfirmed ? 'bg-emerald-50 dark:bg-emerald-500/20 border-emerald-500 text-emerald-700 dark:text-emerald-400' : 
+                                                              appt.status === 'SERVED' ? 'bg-blue-50 dark:bg-blue-500/20 border-blue-500 text-blue-700 dark:text-blue-400' : 
+                                                              'bg-slate-50 dark:bg-white/10 border-slate-400 text-slate-600 dark:text-slate-400 grayscale'}`}
+                                                        style={{ 
+                                                            top, height, 
+                                                            left: `${dayIndex * (100/7)}%`, 
+                                                            width: `calc(${(100/7)}% - 8px)` 
+                                                        }}
+                                                        onClick={() => {
+                                                            if (isConfirmed) {
+                                                                toast.info(`Khách: ${appt.users?.full_name}. Mã xác nhận: ${appt.check_in_code}`);
+                                                            }
+                                                        }}
+                                                    >
+                                                        <p className="text-[10px] font-black uppercase leading-tight truncate">{appt.services?.service_name}</p>
+                                                        <p className="text-[9px] font-bold opacity-80 mt-0.5">{new Date(appt.start_time).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}</p>
+                                                        <div className="flex items-center gap-1 mt-2">
+                                                            <div className="w-4 h-4 rounded-full bg-white/50 dark:bg-black/20 flex items-center justify-center"><UserIcon size={8}/></div>
+                                                            <span className="text-[9px] font-black truncate">{appt.users?.full_name}</span>
                                                         </div>
-                                                        
-                                                        {isConfirmed && (
-                                                            <div className="bg-slate-50 dark:bg-white/5 p-3 rounded-2xl border border-slate-200 dark:border-white/10 flex flex-col gap-2 w-full md:w-64 shadow-sm">
-                                                                <input 
-                                                                    type="text" 
-                                                                    placeholder="Mã Check-in" 
-                                                                    className="px-3 py-2.5 text-sm rounded-xl border border-slate-300 dark:border-white/20 bg-white dark:bg-black text-center font-black tracking-widest outline-none focus:border-[#80BF84] focus:ring-2 focus:ring-[#80BF84]/20 w-full transition-all"
-                                                                    value={checkInCodes[appt.id] || ''}
-                                                                    onChange={(e) => setCheckInCodes({...checkInCodes, [appt.id]: e.target.value})}
-                                                                />
-                                                                <button onClick={() => handleComplete(appt.id)} className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#80BF84] text-zinc-950 text-xs font-black rounded-xl hover:scale-105 active:scale-95 transition-transform shadow-lg shadow-[#80BF84]/30 uppercase tracking-wide">
-                                                                    <CheckCircle size={16}/> Xác nhận
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                        {isServed && (
-                                                            <div className="px-4 py-3 rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 text-xs font-bold border border-blue-200 dark:border-blue-500/20 flex items-center justify-center gap-2 w-full md:w-64">
-                                                                <Clock size={16} className="animate-spin-slow"/> Chờ khách xác nhận
-                                                            </div>
-                                                        )}
                                                     </div>
-                                                </div>
-                                            );
-                                        })
-                                )}
+                                                );
+                                            })}
+
+                                        {/* Current Time Indicator (Sợi chỉ đỏ của Google) */}
+                                        <div className="absolute w-full flex items-center z-20 pointer-events-none" style={{ top: `${(new Date().getHours() - 5) * 80 + (new Date().getMinutes() / 60) * 80}px` }}>
+                                            <div className="w-3 h-3 rounded-full bg-rose-500 -ml-1.5 shadow-sm"></div>
+                                            <div className="flex-1 h-0.5 bg-rose-500/50"></div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}
