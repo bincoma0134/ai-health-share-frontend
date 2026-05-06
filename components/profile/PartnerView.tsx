@@ -1,19 +1,78 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   UserPlus, MessageCircle, Share2, MoreHorizontal, 
   Lock, Play, Heart, Bookmark, LayoutGrid, ShieldCheck, 
-  Star, Package, BadgeCheck, TrendingUp, Building2, X
+  Star, Package, BadgeCheck, TrendingUp, Building2, X, DollarSign, CalendarPlus, Sparkles, Plus
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import DashboardButton from "./DashboardButton";
+import CommentModal from "@/components/CommentModal";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
-export default function PartnerView({ profile, videoTiktokFeeds = [], communityPosts = [], likedTiktokFeeds = [], savedTiktokFeeds = [], services = [], reviews = [], stats = {}, isOwner }: any) {  const [activeTab, setActiveTab] = useState("services");
+export default function PartnerView({ profile, videoTiktokFeeds = [], communityPosts = [], likedTiktokFeeds = [], savedTiktokFeeds = [], services = [], reviews = [], stats = {}, isOwner }: any) {  
+  const [activeTab, setActiveTab] = useState("services");
   const [sortOrder, setSortOrder] = useState("newest");
+
+  // --- LOCAL STATES CHO TƯƠNG TÁC XÃ HỘI ---
+  const [localVideos, setLocalVideos] = useState<any[]>(videoTiktokFeeds);
+  const [expandedService, setExpandedService] = useState<any>(null);
+  const [expandedVideo, setExpandedVideo] = useState<any>(null);
+  const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
+  const [activeCommentVideoId, setActiveCommentVideoId] = useState<string | null>(null);
+
+  // Đồng bộ Video Feed khi Props thay đổi
+  useEffect(() => { setLocalVideos(videoTiktokFeeds); }, [videoTiktokFeeds]);
+
+  const handleInteraction = async (videoId: string, action: 'like' | 'save' | 'share') => {
+      if (action === 'share') {
+          navigator.clipboard.writeText(`${window.location.origin}/?video=${videoId}`);
+          toast.success("Đã sao chép liên kết!");
+          return;
+      }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { toast.info("Vui lòng đăng nhập để thao tác!"); return; }
+      
+      setLocalVideos(prev => prev.map(v => {
+          if (v.id === videoId) {
+              if (action === 'like') return { ...v, is_liked: !v.is_liked, likes_count: (v.likes_count || 0) + (v.is_liked ? -1 : 1) };
+              if (action === 'save') return { ...v, is_saved: !v.is_saved, saves_count: (v.saves_count || 0) + (v.is_saved ? -1 : 1) };
+          }
+          return v;
+      }));
+      
+      if (expandedVideo && expandedVideo.id === videoId) {
+          setExpandedVideo((prev: any) => {
+              if (action === 'like') return { ...prev, is_liked: !prev.is_liked, likes_count: (prev.likes_count || 0) + (prev.is_liked ? -1 : 1) };
+              if (action === 'save') return { ...prev, is_saved: !prev.is_saved, saves_count: (prev.saves_count || 0) + (prev.is_saved ? -1 : 1) };
+              return prev;
+          });
+      }
+
+      try {
+          await fetch(`${API_URL}/tiktok/feeds/${videoId}/${action}`, {
+              method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` }
+          });
+      } catch (error) { } 
+  };
+
+  const handleOpenComments = (videoId: string) => {
+      setActiveCommentVideoId(videoId);
+      setIsCommentModalOpen(true);
+  };
+
+  const handleCommentSuccess = () => {
+      setLocalVideos(prev => prev.map(v => v.id === activeCommentVideoId ? { ...v, comments_count: (v.comments_count || 0) + 1 } : v));
+      if (expandedVideo && expandedVideo.id === activeCommentVideoId) setExpandedVideo((prev: any) => ({ ...prev, comments_count: (prev.comments_count || 0) + 1 }));
+  };
+
+  const handleCommentDeleted = () => {
+      setLocalVideos(prev => prev.map(v => v.id === activeCommentVideoId ? { ...v, comments_count: Math.max((v.comments_count || 0) - 1, 0) } : v));
+      if (expandedVideo && expandedVideo.id === activeCommentVideoId) setExpandedVideo((prev: any) => ({ ...prev, comments_count: Math.max((prev.comments_count || 0) - 1, 0) }));
+  };
 
   // --- STATE FOLLOW ---
   const [isFollowing, setIsFollowing] = useState(profile?.is_followed || false);
@@ -69,17 +128,25 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) throw new Error("Vui lòng đăng nhập để đặt lịch!");
 
+        const payload: any = {
+            partner_id: profile.id,
+            total_amount: selectedService.price || 0,
+            customer_name: bookingName.trim(),
+            customer_phone: bookingPhone.trim(),
+            note: bookingNote.trim()
+        };
+
+        // Phân biệt ID của Video hay ID của Dịch vụ
+        if (selectedService.title !== undefined) {
+            payload.video_id = selectedService.id; 
+        } else {
+            payload.service_id = selectedService.id; 
+        }
+
         const res = await fetch(`${API_URL}/appointments/request`, {
             method: "POST",
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
-            body: JSON.stringify({ 
-                partner_id: profile.id, // Lấy ID của chủ Profile làm Partner ID
-                service_id: selectedService.id, 
-                total_amount: selectedService.price || 0,
-                customer_name: bookingName.trim(),
-                customer_phone: bookingPhone.trim(),
-                note: bookingNote.trim()
-            })
+            body: JSON.stringify(payload)
         });
         
         const data = await res.json();
@@ -265,7 +332,7 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
                 {/* Danh sách Dịch vụ */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                    {mockServices.map((svc: any) => (
-                      <div key={svc.id} className="bg-white/60 dark:bg-zinc-900/50 backdrop-blur-xl rounded-[2rem] border border-slate-200 dark:border-white/10 overflow-hidden hover:shadow-xl hover:border-blue-500/50 transition-all group flex flex-col">
+                      <div key={svc.id} onClick={() => setExpandedService(svc)} className="bg-white/60 dark:bg-zinc-900/50 backdrop-blur-xl rounded-[2rem] border border-slate-200 dark:border-white/10 overflow-hidden hover:shadow-2xl hover:border-blue-500/50 transition-all duration-300 hover:-translate-y-1 group flex flex-col cursor-pointer">
                           <div className="relative h-40 overflow-hidden shrink-0">
                               <img src={svc.image_url || svc.image || "https://picsum.photos/400"} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                               <div className="absolute top-3 left-3 flex gap-2">
@@ -278,16 +345,17 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
                           </div>
                           <div className="p-5 flex-1 flex flex-col">
                               <div className="flex items-start justify-between gap-2 mb-2">
-                                  <h3 className="font-black text-slate-900 dark:text-white line-clamp-2">{svc.service_name || svc.name}</h3>
+                                  <h3 className="font-black text-lg text-slate-900 dark:text-white line-clamp-2 group-hover:text-blue-500 transition-colors">{svc.service_name || svc.name}</h3>
                                   <BadgeCheck size={18} className="text-blue-500 shrink-0 mt-0.5" />
                               </div>
                               <p className="text-sm text-slate-500 dark:text-zinc-400 line-clamp-2 mb-4 flex-1">{svc.description || svc.desc}</p>
-                              <div className="flex items-end justify-between mt-auto">
-                                  <div className="text-blue-600 dark:text-blue-400 font-black text-lg">
-                                      {parseFloat(svc.price).toLocaleString('vi-VN')}đ
+                              <div className="flex items-end justify-between mt-auto border-t border-slate-100 dark:border-white/5 pt-4">
+                                  <div>
+                                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Giá trọn gói</span>
+                                      <span className="text-blue-600 dark:text-blue-400 font-black text-xl">{parseFloat(svc.price).toLocaleString('vi-VN')} đ</span>
                                   </div>
-                                  <button onClick={() => { setSelectedService(svc); setIsBookingModalOpen(true); }} className="px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-black text-xs font-black rounded-xl hover:scale-105 transition-transform shadow-lg">
-                                      Đặt ngay
+                                  <button onClick={(e) => { e.stopPropagation(); setSelectedService(svc); setIsBookingModalOpen(true); }} className="w-10 h-10 bg-slate-900 dark:bg-white text-white dark:text-black rounded-full hover:scale-110 active:scale-95 transition-all shadow-lg flex items-center justify-center group-hover:bg-blue-500 group-hover:text-white">
+                                      <CalendarPlus size={18} />
                                   </button>
                               </div>
                           </div>
@@ -298,19 +366,26 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
             )}
 
             {/* TAB: VIDEOS / LIKED / SAVED */}
+            {/* TAB: VIDEOS / LIKED / SAVED */}
             {(activeTab === "videos" || activeTab === "liked" || activeTab === "saved") && (
                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 md:gap-6 animate-fade-in">
-               {(activeTab === "videos" ? videoTiktokFeeds : activeTab === "liked" ? likedTiktokFeeds : savedTiktokFeeds).map((item: any) => (
-                 <div key={item.id} className="relative aspect-[9/16] bg-zinc-800 rounded-[2rem] overflow-hidden group cursor-pointer shadow-2xl border border-white/5">
-                   <video src={item.video_url || item.image_url} className="w-full h-full object-cover opacity-90 transition-transform duration-1000 group-hover:scale-110 group-hover:opacity-100" muted playsInline />
-                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-transparent flex flex-col justify-end p-4 pt-12 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                     <div className="flex justify-between items-end">
-                        <h3 className="text-white text-xs font-bold line-clamp-2 leading-tight drop-shadow-md">{item.title}</h3>
-                        <div className="flex items-center gap-1.5 text-white text-xs font-black shrink-0"><Play size={16} className="fill-white" /> <span>{item.likes_count || 0}</span></div>
-                     </div>
+               {(activeTab === "videos" ? localVideos : activeTab === "liked" ? likedTiktokFeeds : savedTiktokFeeds).map((item: any) => (
+                 <div key={item.id} onClick={() => { if(activeTab === 'videos') setExpandedVideo(item); }} className={`relative aspect-[9/16] bg-zinc-800 rounded-[2rem] overflow-hidden group shadow-sm border border-white/5 transition-all duration-300 ${activeTab === 'videos' ? 'cursor-pointer hover:shadow-2xl hover:border-blue-500/50 hover:-translate-y-1' : ''}`}>
+                   <video src={item.video_url || item.image_url} className="w-full h-full object-cover opacity-80 transition-transform duration-1000 group-hover:scale-105 group-hover:opacity-100" muted playsInline />
+                   
+                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent p-4 pt-12 pointer-events-none flex flex-col justify-end">
+                      <p className="text-white text-xs font-bold line-clamp-2 leading-tight drop-shadow-md mb-1">{item.title}</p>
+                      {item.price && (
+                          <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-500/20 backdrop-blur-md border border-blue-400/30 rounded-lg w-max mt-1">
+                              <DollarSign size={10} className="text-blue-400"/>
+                              <span className="text-blue-400 text-[10px] font-black">{parseFloat(item.price).toLocaleString('vi-VN')} đ</span>
+                          </div>
+                      )}
                    </div>
-                   <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="p-2 bg-black/50 backdrop-blur-md rounded-full text-white hover:bg-blue-500 transition-colors"><Share2 size={14} /></button>
+
+                   <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                      <button onClick={(e) => { e.stopPropagation(); handleInteraction(item.id, 'like'); }} className="p-2 bg-black/40 backdrop-blur-md text-white rounded-full hover:bg-rose-500/80 transition-colors"><Heart size={14} className={item.is_liked ? "fill-white" : ""}/></button>
+                      <button onClick={(e) => { e.stopPropagation(); handleInteraction(item.id, 'share'); }} className="p-2 bg-black/40 backdrop-blur-md text-white rounded-full hover:bg-blue-500/80 transition-colors"><Share2 size={14}/></button>
                    </div>
                  </div>
                ))}
@@ -338,7 +413,7 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
                         <ShieldCheck size={18} strokeWidth={3} /> ĐIỂM UY TÍN
                     </div>
                     <div className="flex items-baseline gap-1 mb-2 justify-center md:justify-start">
-                        <span className="text-6xl font-black text-slate-800 dark:text-white tracking-tighter">{stats.reputation || "92"}</span>
+                        <span className="text-6xl font-black text-slate-800 dark:text-white tracking-tighter">{stats.reputation || profile?.reputation_points || "92"}</span>
                         <span className="text-2xl font-bold text-slate-400 dark:text-slate-500">/100</span>
                     </div>
                     <p className="text-xs text-slate-600 dark:text-zinc-400 font-medium text-center md:text-left mt-2">
@@ -385,55 +460,226 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
             </div>
       </div>
 
-      {/* ================= MODAL: CỬA SỔ ĐẶT LỊCH (CORE FLOW) ================= */}
-      {isBookingModalOpen && selectedService && (
-        <div className="fixed inset-0 z-[100] flex justify-center items-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsBookingModalOpen(false)}></div>
-            <div className="relative w-full max-w-md bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-slate-200 dark:border-white/10 shadow-2xl animate-slide-up overflow-hidden flex flex-col">
-                <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-black/20">
-                    <h3 className="font-black text-lg text-slate-900 dark:text-white flex items-center gap-2">
-                        <ShieldCheck size={20} className="text-[#80BF84]"/> Gửi yêu cầu dịch vụ
-                    </h3>
-                    <button onClick={() => setIsBookingModalOpen(false)} className="p-2 bg-slate-200/50 dark:bg-white/5 rounded-full text-slate-500 hover:text-rose-500 transition-colors"><X size={16}/></button>
+      {/* ================= MODAL: XEM TRƯỚC DỊCH VỤ (EXPANDED VIEW PUBLIC) ================= */}
+      {expandedService && (
+        <div className="fixed inset-0 z-[140] flex justify-center items-center p-4 md:p-6">
+          <div className="absolute inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-xl transition-opacity duration-500 animate-fade-in" onClick={() => setExpandedService(null)}></div>
+          
+          <div className="relative w-full max-w-4xl bg-white dark:bg-[#0a0a0a] rounded-[2.5rem] overflow-hidden flex flex-col md:flex-row shadow-[0_20px_60px_rgba(0,0,0,0.2)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.9)] border border-slate-200 dark:border-white/10 animate-slide-up max-h-[90vh]">
+            
+            <div className="w-full md:w-1/2 h-64 md:h-auto bg-slate-100 dark:bg-black relative flex items-center justify-center shrink-0">
+                {expandedService.image_url || expandedService.image ? (
+                    <img src={expandedService.image_url || expandedService.image} className="w-full h-full object-cover" alt={expandedService.service_name || expandedService.name} />
+                ) : expandedService.video_url ? (
+                    <video src={expandedService.video_url} className="w-full h-full object-cover" autoPlay loop muted playsInline />
+                ) : (
+                    <Package size={60} className="text-slate-300 dark:text-zinc-800"/>
+                )}
+                <button onClick={() => setExpandedService(null)} className="md:hidden absolute top-4 right-4 p-2 rounded-full bg-black/50 backdrop-blur-md text-white"><X size={20}/></button>
+            </div>
+
+            <div className="flex-1 p-6 md:p-10 flex flex-col overflow-y-auto no-scrollbar relative">
+                <button onClick={() => setExpandedService(null)} className="hidden md:flex absolute top-6 right-6 p-2 rounded-full bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-zinc-400 transition-colors"><X size={20}/></button>
+                
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#80BF84]/10 border border-[#80BF84]/20 rounded-full text-[10px] font-bold text-[#80BF84] mb-4 uppercase tracking-wider w-max">
+                  <Sparkles size={12} /> Thông tin dịch vụ
+                </div>
+
+                <h2 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white leading-tight mb-4">{expandedService.service_name || expandedService.name}</h2>
+                <div className="flex flex-wrap gap-2 mb-6">{(expandedService.tags || []).map((tag: string, i: number) => <span key={i} className="text-[10px] font-bold bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 px-2 py-1 rounded-md">#{tag}</span>)}</div>
+                
+                <div className="flex-1">
+                    <p className="text-sm md:text-base text-slate-600 dark:text-zinc-400 leading-relaxed mb-8 whitespace-pre-wrap">{expandedService.description || expandedService.desc}</p>
                 </div>
                 
-                <form onSubmit={handleBookingSubmit} className="p-6 space-y-4">
-                    {/* Thông tin dịch vụ */}
-                    <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5 mb-2">
-                        <h4 className="font-bold text-slate-900 dark:text-white line-clamp-1">{selectedService.service_name || selectedService.name}</h4>
-                        <p className="text-[#80BF84] font-black mt-1">{parseFloat(selectedService.price).toLocaleString('vi-VN')} VND</p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Họ và tên</label>
-                            <input type="text" className="w-full bg-slate-100/50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-[#80BF84]" placeholder="Nhập tên..." value={bookingName} onChange={e => setBookingName(e.target.value)} required />
-                        </div>
-                        <div>
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Số điện thoại</label>
-                            <input type="text" className="w-full bg-slate-100/50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-[#80BF84]" placeholder="Nhập SĐT..." value={bookingPhone} onChange={e => setBookingPhone(e.target.value)} required />
-                        </div>
-                    </div>
-                    
+                <div className="mt-auto pt-6 border-t border-slate-100 dark:border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                     <div>
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Lời nhắn cho cơ sở (Tùy chọn)</label>
-                        <textarea rows={2} className="w-full bg-slate-100/50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-[#80BF84] resize-none" placeholder="Ví dụ: Mình muốn tư vấn thêm về da..." value={bookingNote} onChange={e => setBookingNote(e.target.value)} />
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Giá trọn gói</p>
+                        <p className="text-3xl font-black text-[#80BF84]">{Number(expandedService.price).toLocaleString()} <span className="text-base text-slate-500">đ</span></p>
                     </div>
-
-                    {/* Hộp thông báo tiền xử lý Escrow */}
-                    <div className="p-4 mt-2 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-xl flex items-start gap-3">
-                        <ShieldCheck size={20} className="text-blue-500 shrink-0 mt-0.5" />
-                        <p className="text-xs leading-relaxed text-blue-800 dark:text-blue-300 font-medium">
-                            Bạn <strong>chưa cần thanh toán lúc này</strong>. Tổng tiền <strong className="text-blue-600 dark:text-blue-400">{parseFloat(selectedService.price).toLocaleString()} VND</strong> sẽ được yêu cầu thanh toán bảo chứng <strong>sau khi cơ sở phản hồi & ấn định lịch trống</strong>.
-                        </p>
-                    </div>
-
-                    <button type="submit" disabled={isSubmitting} className="w-full py-4 mt-4 bg-gradient-to-tr from-slate-800 to-slate-900 dark:from-white dark:to-slate-200 text-white dark:text-zinc-950 font-black rounded-2xl shadow-xl active:scale-95 transition-all text-sm uppercase tracking-widest flex justify-center items-center gap-2">
-                        {isSubmitting && <div className="w-4 h-4 border-2 border-slate-500 border-t-transparent rounded-full animate-spin"/>} 
-                        {isSubmitting ? "ĐANG GỬI..." : "GỬI YÊU CẦU ĐẶT LỊCH"}
+                    {/* Nút Đặt lịch ngay cho Public View */}
+                    <button 
+                        onClick={() => {
+                            setSelectedService(expandedService);
+                            setExpandedService(null);
+                            setIsBookingModalOpen(true);
+                        }} 
+                        className="w-full sm:w-auto px-8 py-4 bg-[#80BF84] hover:bg-emerald-400 text-zinc-950 font-black rounded-2xl shadow-xl hover:shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-xs"
+                    >
+                        <CalendarPlus size={18}/> Đặt lịch ngay
                     </button>
-                </form>
+                </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: XEM VIDEO STUDIO PUBLIC (CHUẨN TIKTOK 9:16 + CENTERED) ================= */}
+      {expandedVideo && (
+        <div className="fixed inset-0 z-[140] flex justify-center items-center overflow-hidden transition-all duration-500">
+          <div className="absolute inset-0 bg-black/95 backdrop-blur-3xl animate-fade-in" 
+               onClick={() => { 
+                   setExpandedVideo(null); 
+                   setIsCommentModalOpen(false);
+                   setActiveCommentVideoId(null);
+               }}>
+               <video src={expandedVideo.video_url} className="absolute inset-0 w-full h-full object-cover opacity-20 blur-[100px] scale-110" muted playsInline autoPlay loop />
+          </div>
+          
+          <div className="relative w-full h-full flex items-center justify-center pointer-events-none p-4 md:p-10">
+            <div className="relative h-full max-h-[92vh] aspect-[9/16] bg-black rounded-[2.5rem] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.8)] border border-white/10 animate-slide-up pointer-events-auto">
+                
+                <video src={expandedVideo.video_url} className="absolute inset-0 w-full h-full object-cover" autoPlay loop muted playsInline />
+                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/95 via-black/20 to-transparent pointer-events-none"></div>
+                
+                <div className="absolute top-6 left-6 z-30 flex items-center gap-3">
+                    <button onClick={() => { 
+                                setExpandedVideo(null); 
+                                setIsCommentModalOpen(false); 
+                                setActiveCommentVideoId(null);
+                            }} 
+                            className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-white hover:bg-rose-500/30 hover:text-rose-400 transition-all active:scale-90 flex items-center justify-center shadow-lg">
+                        <X size={20} strokeWidth={3}/>
+                    </button>
+                </div>
+
+                {/* Nút Đặt lịch từ Video (Top-Right) */}
+                {expandedVideo.price && (
+                    <button onClick={() => { 
+                                setSelectedService(expandedVideo);
+                                setExpandedVideo(null); 
+                                setIsCommentModalOpen(false);
+                                setIsBookingModalOpen(true); 
+                            }} 
+                            className="absolute top-6 right-6 z-30 group flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#80BF84]/90 backdrop-blur-xl border border-[#80BF84] text-zinc-950 hover:bg-[#80BF84] hover:scale-105 transition-all shadow-[0_0_20px_rgba(128,191,132,0.4)] active:scale-95">
+                        <CalendarPlus size={16} strokeWidth={2.5} />
+                        <span className="text-[10px] font-black uppercase tracking-widest">Đặt lịch</span>
+                    </button>
+                )}
+
+                <div className="absolute bottom-[40px] left-6 z-20 max-w-[70%] pointer-events-auto animate-slide-up">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/20 backdrop-blur-md border border-white/30 rounded-full text-[9px] font-black text-white mb-4 uppercase tracking-widest">
+                      <ShieldCheck size={10} /> {profile?.full_name || "Dịch vụ xác thực"}
+                    </div>
+                    <h3 className="text-xl md:text-2xl font-black text-white leading-tight drop-shadow-2xl mb-1">{expandedVideo.title}</h3>
+                    <p className="text-zinc-200 text-xs line-clamp-2 drop-shadow-md font-medium mb-5 pr-4 opacity-90">{expandedVideo.content}</p>
+                    
+                    {expandedVideo.price && (
+                      <div className="flex items-center gap-3 pl-1.5 pr-6 py-2 bg-black/40 backdrop-blur-xl border border-white/10 text-white rounded-full w-max shadow-2xl">
+                        <div className="w-8 h-8 bg-[#80BF84] rounded-full flex items-center justify-center text-zinc-950 shadow-inner"><DollarSign size={16} strokeWidth={3} /></div>
+                        <div className="flex flex-col"><span className="text-[8px] font-black text-slate-300 uppercase leading-none mb-0.5">Giá tham khảo</span><span className="font-black text-sm leading-none text-[#80BF84]">{parseFloat(expandedVideo.price).toLocaleString()} đ</span></div>
+                      </div>
+                    )}
+                </div>
+
+                <div className="absolute bottom-[40px] right-3 z-20 flex flex-col items-center gap-6 pointer-events-auto">
+                    <div className="relative mb-2">
+                      <div className="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-zinc-800 shadow-xl">
+                         <img src={profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.full_name}&background=3b82f6&color=fff`} className="w-full h-full object-cover"/>
+                      </div>
+                      <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-4.5 h-4.5 bg-[#80BF84] rounded-full flex items-center justify-center border-2 border-zinc-900 shadow-md"><Plus size={10} className="text-zinc-950" strokeWidth={4} /></div>
+                    </div>
+
+                    <button onClick={() => handleInteraction(expandedVideo.id, 'like')} className="flex flex-col items-center gap-1 group">
+                        <div className={`p-3.5 rounded-full backdrop-blur-md transition-all ${expandedVideo.is_liked ? 'bg-rose-500/30 text-rose-500 border border-rose-500/50 shadow-[0_0_15px_rgba(244,63,94,0.4)]' : 'bg-black/40 border border-white/10 text-white hover:bg-rose-500/20'}`}>
+                            <Heart size={26} strokeWidth={2.5} className={`${expandedVideo.is_liked ? 'fill-rose-500 scale-110' : 'group-active:scale-75'} transition-all`} />
+                        </div>
+                        <span className="text-[10px] font-black text-white drop-shadow-xl">{expandedVideo.likes_count || 0}</span>
+                    </button>
+                    
+                    <button onClick={() => handleOpenComments(expandedVideo.id)} className="flex flex-col items-center gap-1 group">
+                        <div className="p-3.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white hover:bg-white/20 transition-all active:scale-95">
+                            <MessageCircle size={26} strokeWidth={2.5} />
+                        </div>
+                        <span className="text-[10px] font-black text-white drop-shadow-xl">{expandedVideo.comments_count || 0}</span>
+                    </button>
+                    
+                    <button onClick={() => handleInteraction(expandedVideo.id, 'save')} className="flex flex-col items-center gap-1 group">
+                        <div className={`p-3.5 rounded-full backdrop-blur-md transition-all ${expandedVideo.is_saved ? 'bg-amber-500/30 text-amber-500 border border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.4)]' : 'bg-black/40 border border-white/10 text-white hover:bg-amber-500/20'}`}>
+                            <Bookmark size={26} strokeWidth={2.5} className={`${expandedVideo.is_saved ? 'fill-amber-500 scale-110' : 'group-active:scale-75'} transition-all`} />
+                        </div>
+                        <span className="text-[10px] font-black text-white drop-shadow-xl">{expandedVideo.saves_count || 0}</span>
+                    </button>
+
+                    <button onClick={() => handleInteraction(expandedVideo.id, 'share')} className="flex flex-col items-center gap-1 group">
+                        <div className="p-3.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white hover:bg-white/20 transition-all">
+                            <Share2 size={26} strokeWidth={2.5} />
+                        </div>
+                        <span className="text-[9px] font-black text-white drop-shadow-md uppercase tracking-tighter">Chia sẻ</span>
+                    </button>
+                </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= DRAWER BÌNH LUẬN AN TOÀN (Z-INDEX 200) ================= */}
+      {isCommentModalOpen && (
+        <div className="fixed inset-0 z-[200] pointer-events-none">
+            <div className="pointer-events-auto h-full w-full">
+                <CommentModal 
+                  isOpen={isCommentModalOpen} 
+                  onClose={() => setIsCommentModalOpen(false)} 
+                  videoId={activeCommentVideoId || ""} 
+                  videoAuthorId={profile?.id || ""} 
+                  user={null} // Auth do hệ thống tự check bên trong component
+                  userRole={"USER"} 
+                  onCommentAdded={handleCommentSuccess} 
+                  onCommentDeleted={handleCommentDeleted} 
+                />
+            </div>
+        </div>
+      )}
+
+      {/* ================= MODAL CỬA SỔ ĐẶT LỊCH (ESCROW FLOW) ================= */}
+      {isBookingModalOpen && selectedService && (
+        <div className="fixed inset-0 z-[250] flex justify-center items-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md transition-all duration-500" onClick={() => setIsBookingModalOpen(false)}></div>
+          
+          <div className="relative w-full max-w-lg bg-white/90 dark:bg-zinc-950/90 backdrop-blur-3xl rounded-[2.5rem] p-8 md:p-10 z-10 shadow-[0_20px_60px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.8)] border border-white/50 dark:border-white/10 animate-slide-up">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#80BF84]/10 border border-[#80BF84]/20 rounded-full text-[10px] font-bold text-[#80BF84] mb-3 uppercase tracking-wider">
+                  <Sparkles size={12} /> Đặt lịch dịch vụ
+                </div>
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white leading-tight pr-4">{selectedService.service_name || selectedService.name || selectedService.title}</h3>
+                <p className="text-[#80BF84] font-black text-lg mt-1">{(selectedService.price || 0).toLocaleString()} VND</p>
+              </div>
+              <button onClick={() => setIsBookingModalOpen(false)} className="p-2 rounded-full bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-zinc-400 transition-colors shrink-0"><X size={20}/></button>
+            </div>
+
+            <form onSubmit={handleBookingSubmit} className="flex flex-col gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-500 dark:text-zinc-400 ml-1">Họ và tên</label>
+                      <input type="text" placeholder="Nhập tên của bạn..." className="w-full px-5 py-3.5 bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:border-[#80BF84] focus:ring-1 focus:ring-[#80BF84]/50 transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-600" required value={bookingName} onChange={e => setBookingName(e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-500 dark:text-zinc-400 ml-1">Số điện thoại</label>
+                      <input type="tel" placeholder="09xx..." className="w-full px-5 py-3.5 bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:border-[#80BF84] focus:ring-1 focus:ring-[#80BF84]/50 transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-600" required value={bookingPhone} onChange={e => setBookingPhone(e.target.value)} />
+                  </div>
+              </div>
+
+              <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 dark:text-zinc-400 ml-1">Lời nhắn nhủ (Tùy chọn)</label>
+                  <textarea placeholder="Bạn có yêu cầu đặc biệt gì không?" rows={2} className="w-full px-5 py-3.5 bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:border-[#80BF84] focus:ring-1 focus:ring-[#80BF84]/50 transition-all resize-none placeholder:text-slate-400 dark:placeholder:text-zinc-600" value={bookingNote} onChange={e => setBookingNote(e.target.value)} />
+              </div>
+
+              <div className="mt-4">
+                  <div className="p-4 mb-5 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-xl flex items-start gap-3">
+                      <ShieldCheck size={20} className="text-blue-500 shrink-0 mt-0.5" />
+                      <p className="text-[13px] leading-relaxed text-blue-800 dark:text-blue-300 font-medium">
+                          Bạn <strong>chưa cần thanh toán lúc này</strong>. Tổng tiền <strong className="text-blue-600 dark:text-blue-400">{(selectedService.price || 0).toLocaleString()} VND</strong> sẽ được hệ thống bảo chứng an toàn <strong>sau khi cơ sở xác nhận có lịch trống</strong> dành cho bạn.
+                      </p>
+                  </div>
+                  
+                  <button type="submit" disabled={isSubmitting} className="relative w-full py-4 bg-gradient-to-tr from-slate-800 to-slate-900 dark:from-white dark:to-slate-200 text-white dark:text-zinc-950 font-black text-sm tracking-widest uppercase rounded-2xl active:scale-95 transition-all shadow-xl overflow-hidden group">
+                    <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full skew-x-12 transition-transform duration-500"></div>
+                    {isSubmitting ? "ĐANG GỬI..." : "GỬI YÊU CẦU ĐẶT LỊCH"}
+                  </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
