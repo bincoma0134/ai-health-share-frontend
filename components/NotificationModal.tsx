@@ -47,10 +47,16 @@ export default function NotificationModal() {
       }
     }
 
-    // 2. Đóng Modal & Điều hướng (nếu có action_url)
-    if (notif.action_url) {
+    // 2. Ưu tiên action_url, nếu không có thì đọc metadata để điều hướng động
+    let targetUrl = notif.action_url;
+    if (!targetUrl && notif.metadata) {
+        if (notif.type === "BOOKING" || notif.type === "ESCROW") targetUrl = "/features/calendar";
+        if (notif.type === "SOCIAL" && notif.metadata.video_id) targetUrl = `/features/explore?v=${notif.metadata.video_id}`;
+    }
+
+    if (targetUrl) {
       setIsNotifOpen(false);
-      router.push(notif.action_url);
+      router.push(targetUrl);
     }
   };
 
@@ -74,14 +80,15 @@ export default function NotificationModal() {
 
   const filteredNotifs = activeNotifTab === 'all' ? notifications : notifications.filter(n => !n.is_read);
 
-  // Ánh xạ 4 Nhóm Cốt Lõi
+  // Ánh xạ Nhóm Thông Báo (Đã bổ sung ESCROW)
   const getIcon = (type: string) => {
     switch (type) {
       case 'BOOKING': return { Icon: CalendarDays, color: 'text-emerald-500', bg: 'bg-emerald-500/10' };
+      case 'ESCROW': return { Icon: Zap, color: 'text-amber-500', bg: 'bg-amber-500/10' };
       case 'SOCIAL': return { Icon: MessageSquare, color: 'text-rose-500', bg: 'bg-rose-500/10' };
-      case 'MODERATION': return { Icon: Zap, color: 'text-amber-500', bg: 'bg-amber-500/10' };
+      case 'MODERATION': return { Icon: ShieldCheck, color: 'text-violet-500', bg: 'bg-violet-500/10' };
       case 'SYSTEM': 
-      default: return { Icon: ShieldCheck, color: 'text-blue-500', bg: 'bg-blue-500/10' };
+      default: return { Icon: Bell, color: 'text-blue-500', bg: 'bg-blue-500/10' };
     }
   };
 
@@ -132,18 +139,33 @@ export default function NotificationModal() {
                 <div key={n.id} onClick={() => handleNotificationClick(n)} 
                   className={`p-4 rounded-2xl flex gap-4 items-start transition-all cursor-pointer hover:bg-white dark:hover:bg-white/5 border border-transparent hover:border-slate-200 dark:hover:border-white/10 ${!n.is_read ? 'bg-white/60 dark:bg-white/5' : 'opacity-60 grayscale-[20%]'}`}>
                   
-                  <div className={`p-2.5 rounded-xl ${bg} ${color} shrink-0`}>
-                    <Icon size={20} strokeWidth={2.5} />
-                  </div>
+                  {/* Avatar người gửi HOẶC Icon hệ thống */}
+                  {n.sender ? (
+                    <div className="relative shrink-0">
+                      <img 
+                        src={n.sender.avatar_url || `https://ui-avatars.com/api/?name=${n.sender.full_name || 'U'}&background=80BF84&color=fff`} 
+                        alt="avatar" 
+                        className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-zinc-700 shadow-sm"
+                      />
+                      <div className={`absolute -bottom-1 -right-1 p-1 rounded-full bg-white dark:bg-zinc-900 shadow-sm ${color}`}>
+                        <Icon size={10} strokeWidth={3} />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className={`w-10 h-10 flex items-center justify-center rounded-full ${bg} ${color} shrink-0 shadow-sm`}>
+                      <Icon size={18} strokeWidth={2.5} />
+                    </div>
+                  )}
                   
-                  <div className="flex-1">
-                    <h4 className={`text-sm font-black leading-tight ${!n.is_read ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-zinc-400'}`}>
+                  <div className="flex-1 overflow-hidden">
+                    <h4 className={`text-sm font-black leading-tight truncate ${!n.is_read ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-zinc-400'}`}>
                       {n.title}
                     </h4>
-                    <p className={`text-xs mt-1 mb-2 leading-relaxed ${!n.is_read ? 'text-slate-600 dark:text-zinc-300 font-medium' : 'text-slate-500 dark:text-zinc-500'}`}>
+                    <p className={`text-xs mt-1 mb-1.5 leading-relaxed line-clamp-2 ${!n.is_read ? 'text-slate-600 dark:text-zinc-300 font-medium' : 'text-slate-500 dark:text-zinc-500'}`}>
+                      {n.sender && <span className="font-bold text-slate-800 dark:text-zinc-200 mr-1">{n.sender.full_name}: </span>}
                       {n.message}
                     </p>
-                    <span className="text-[10.5px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-tight">
+                    <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wide">
                       {formatTimeAgo(n.created_at)}
                     </span>
                   </div>
