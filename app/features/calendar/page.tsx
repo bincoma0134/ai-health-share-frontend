@@ -89,6 +89,37 @@ export default function CalendarFeature() {
 
   const metrics = getPartnerMetrics();
 
+  // --- LOGIC SIDE DRAWER CHI TIẾT ---
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [drawerData, setDrawerTitle] = useState({ title: "", type: "" });
+  const [selectedAppointments, setSelectedList] = useState<any[]>([]);
+
+  const openMetricDetails = (type: 'today' | 'checkin' | 'payment' | 'cancelled') => {
+      const now = new Date();
+      const todayStr = now.toDateString();
+      
+      let filtered: any[] = [];
+      let title = "";
+
+      if (type === 'today') {
+          title = "Lịch hẹn hôm nay";
+          filtered = appointments.filter(a => a.start_time && new Date(a.start_time).toDateString() === todayStr);
+      } else if (type === 'checkin') {
+          title = "Danh sách chờ Check-in";
+          filtered = appointments.filter(a => a.status === 'CONFIRMED');
+      } else if (type === 'payment') {
+          title = "Đơn chờ thanh toán";
+          filtered = appointments.filter(a => a.status === 'PENDING_PAYMENT');
+      } else if (type === 'cancelled') {
+          title = "Lịch trình đã hủy";
+          filtered = appointments.filter(a => a.status === 'CANCELLED');
+      }
+
+      setSelectedList(filtered);
+      setDrawerTitle({ title, type });
+      setIsDrawerOpen(true);
+  };
+
   // --- LOGIC GOOGLE CALENDAR GRID ---
   const hours = Array.from({ length: 18 }, (_, i) => i + 5); // Hiển thị từ 5 AM đến 10 PM
   const startOfCurrentWeek = () => {
@@ -288,47 +319,47 @@ export default function CalendarFeature() {
                  <div className="flex flex-col items-center justify-center py-20 text-center"><h3 className="text-xl font-bold">Vui lòng đăng nhập</h3></div>
             ) : isMyClient ? (
                 <div className="animate-fade-in flex flex-col gap-6">
-                    {/* THỐNG KÊ TOP METRICS - PHIÊN BẢN CHUẨN MỰC */}
+                    {/* THỐNG KÊ TOP METRICS - PHIÊN BẢN TƯƠNG TÁC */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
                         {/* 1. Lịch hôm nay */}
-                        <div className="p-5 rounded-[2rem] bg-white dark:bg-[#141416] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-xl hover:border-blue-500/40 group">
+                        <button onClick={() => openMetricDetails('today')} className="p-5 text-left rounded-[2rem] bg-white dark:bg-[#141416] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-xl hover:border-blue-500/40 active:scale-95 group">
                             <div className="flex justify-between items-start mb-2">
                                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Lịch hôm nay</p>
                                 <CalendarDays size={16} className="text-blue-500 opacity-50 group-hover:opacity-100 transition-opacity" />
                             </div>
                             <p className="text-4xl font-black text-slate-900 dark:text-white">{metrics.todayCount}</p>
                             <p className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-tight">Tổng số cuộc hẹn</p>
-                        </div>
+                        </button>
 
                         {/* 2. Chờ Check-in */}
-                        <div className="p-5 rounded-[2rem] bg-white dark:bg-[#141416] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-xl hover:border-emerald-500/40 group">
+                        <button onClick={() => openMetricDetails('checkin')} className="p-5 text-left rounded-[2rem] bg-white dark:bg-[#141416] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-xl hover:border-emerald-500/40 active:scale-95 group">
                             <div className="flex justify-between items-start mb-2">
                                 <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Chờ Check-in</p>
                                 <CheckCircle size={16} className="text-emerald-500 opacity-50 group-hover:opacity-100 transition-opacity" />
                             </div>
                             <p className="text-4xl font-black text-emerald-600 dark:text-emerald-400">{metrics.pendingCheckInCount}</p>
                             <p className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-tight">Khách sắp đến</p>
-                        </div>
+                        </button>
 
                         {/* 3. Chờ thanh toán */}
-                        <div className="p-5 rounded-[2rem] bg-white dark:bg-[#141416] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-xl hover:border-amber-500/40 group">
+                        <button onClick={() => openMetricDetails('payment')} className="p-5 text-left rounded-[2rem] bg-white dark:bg-[#141416] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-xl hover:border-amber-500/40 active:scale-95 group">
                             <div className="flex justify-between items-start mb-2">
                                 <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Chờ thanh toán</p>
                                 <Clock size={16} className="text-amber-500 opacity-50 group-hover:opacity-100 transition-opacity" />
                             </div>
                             <p className="text-4xl font-black text-amber-600 dark:text-amber-400">{metrics.pendingPaymentCount}</p>
                             <p className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-tight">Cần xác nhận bảo chứng</p>
-                        </div>
+                        </button>
 
                         {/* 4. Đơn đã hủy */}
-                        <div className="p-5 rounded-[2rem] bg-white dark:bg-[#141416] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-xl hover:border-rose-500/40 group">
+                        <button onClick={() => openMetricDetails('cancelled')} className="p-5 text-left rounded-[2rem] bg-white dark:bg-[#141416] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-xl hover:border-rose-500/40 active:scale-95 group">
                             <div className="flex justify-between items-start mb-2">
                                 <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest">Đơn đã hủy</p>
                                 <XCircle size={16} className="text-rose-500 opacity-50 group-hover:opacity-100 transition-opacity" />
                             </div>
                             <p className="text-4xl font-black text-rose-600 dark:text-rose-400">{metrics.cancelledTotal}</p>
                             <p className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-tight">Lịch trình thất thoát</p>
-                        </div>
+                        </button>
                     </div>
 
                     {/* VIEW TOGGLE */}
@@ -669,6 +700,85 @@ export default function CalendarFeature() {
         {/* CŨ: <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-max pointer-events-auto">... */}
 
         
+      {/* ================= SIDE DRAWER CHI TIẾT ĐƠN HÀNG ================= */}
+        <div className={`fixed inset-0 z-[120] transition-opacity duration-300 ${isDrawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+            {/* Backdrop mờ */}
+            <div className="absolute inset-0 bg-slate-900/20 dark:bg-black/60 backdrop-blur-[2px]" onClick={() => setIsDrawerOpen(false)}></div>
+            
+            {/* Nội dung Drawer */}
+            <div className={`absolute top-0 right-0 h-full w-full md:w-[450px] bg-white/95 dark:bg-zinc-900/95 backdrop-blur-2xl border-l border-slate-200 dark:border-white/10 shadow-2xl transition-transform duration-500 ease-out flex flex-col ${isDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+                
+                {/* Drawer Header */}
+                <div className="p-8 border-b border-slate-200 dark:border-white/10 flex justify-between items-center bg-slate-50/50 dark:bg-white/5">
+                    <div>
+                        <h3 className="text-2xl font-black text-slate-900 dark:text-white leading-tight">{drawerData.title}</h3>
+                        <p className="text-xs font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest mt-1">Tổng cộng: {selectedAppointments.length} bản ghi</p>
+                    </div>
+                    <button onClick={() => setIsDrawerOpen(false)} className="p-2.5 rounded-full hover:bg-slate-200 dark:hover:bg-white/10 transition-colors text-slate-500 dark:text-white">
+                        <Receipt size={24} />
+                    </button>
+                </div>
+
+                {/* Drawer Body - Danh sách đơn */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar">
+                    {selectedAppointments.length === 0 ? (
+                        <div className="h-full flex flex-col items-center justify-center text-center opacity-40">
+                            <Activity size={48} className="mb-4" />
+                            <p className="font-bold">Không có dữ liệu hiển thị</p>
+                        </div>
+                    ) : (
+                        selectedAppointments.map((appt) => (
+                            <div key={appt.id} className="p-5 rounded-3xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-md transition-all group/item">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-slate-500 overflow-hidden border border-white dark:border-zinc-700 shadow-sm">
+                                            {appt.users?.avatar_url ? <img src={appt.users.avatar_url} className="w-full h-full object-cover" /> : <UserIcon size={20}/>}
+                                        </div>
+                                        <div>
+                                            <p className="font-black text-slate-900 dark:text-white text-sm">{appt.users?.full_name || "Ẩn danh"}</p>
+                                            <p className="text-[10px] font-bold text-slate-500">{appt.users?.phone || "Không có SĐT"}</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="font-black text-slate-900 dark:text-white text-sm">{formatPrice(appt.total_amount || 0)}</p>
+                                        <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase ${
+                                            appt.status === 'CONFIRMED' ? 'bg-emerald-500/10 text-emerald-500' :
+                                            appt.status === 'PENDING_PAYMENT' ? 'bg-amber-500/10 text-amber-500' :
+                                            appt.status === 'CANCELLED' ? 'bg-rose-500/10 text-rose-500' : 'bg-slate-500/10 text-slate-500'
+                                        }`}>{appt.status.replace('_', ' ')}</span>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2 mb-4">
+                                    <div className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-zinc-400">
+                                        <Activity size={14} className="text-[#80BF84]" />
+                                        <span>{appt.services?.service_name}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-zinc-400">
+                                        <Clock size={14} className="text-[#80BF84]" />
+                                        <span>{new Date(appt.start_time).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}</span>
+                                    </div>
+                                </div>
+
+                                {/* Hành động nhanh trong Drawer */}
+                                {appt.status === 'CONFIRMED' && (
+                                    <div className="flex gap-2 pt-2 border-t border-slate-100 dark:border-white/5">
+                                        <input 
+                                            type="text" 
+                                            placeholder="Mã 6 số" 
+                                            className="flex-1 px-4 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black font-black tracking-widest outline-none focus:border-[#80BF84]"
+                                            onChange={(e) => setCheckInCodes({...checkInCodes, [appt.id]: e.target.value})}
+                                        />
+                                        <button onClick={() => handleComplete(appt.id)} className="px-4 py-2 bg-[#80BF84] text-zinc-900 text-xs font-black rounded-xl shadow-lg shadow-[#80BF84]/20 hover:scale-105 transition-transform">Xác nhận</button>
+                                    </div>
+                                )}
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+        </div>
+
       </div>
     </div>
   );
