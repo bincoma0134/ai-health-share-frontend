@@ -58,33 +58,54 @@ export default function CalendarFeature() {
       const revByDay: Record<string, number> = {};
       last7Days.forEach(d => revByDay[d] = 0);
 
+      // Các biến chứa dữ liệu cho Dashboard mở rộng
+      const hourlyData = Array(15).fill(0); // Từ 7:00 đến 21:00
+      let totalCompleted = 0;
+      const serviceMix: Record<string, number> = {};
+      let totalAppointments = 0;
+
       appointments.forEach(a => {
           const startObj = a.start_time ? new Date(a.start_time) : null;
           const dateStr = startObj ? startObj.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) : '';
           const status = a.status?.toUpperCase();
+          totalAppointments++;
           
-          // 1. Đếm lịch hôm nay
           if (startObj && startObj >= today && startObj < new Date(today.getTime() + 86400000)) {
               todayCount++;
               if (status === 'CONFIRMED') pendingCheckInCount++;
           }
           
-          // 2. Đếm đơn chờ thanh toán (Toàn thời gian)
           if (status === 'PENDING_PAYMENT') pendingPaymentCount++;
-          
-          // 3. Đếm đơn đã hủy (Toàn thời gian)
           if (status === 'CANCELLED') cancelledTotal++;
 
-          // 4. Xử lý dữ liệu biểu đồ (Vẫn giữ để không đứt gãy chart)
-          if (status === 'COMPLETED') {
+          // Phân tích Giờ cao điểm (Peak Hours)
+          if (startObj) {
+              const hour = startObj.getHours();
+              if (hour >= 7 && hour <= 21) hourlyData[hour - 7]++;
+          }
+
+          if (status === 'COMPLETED' || status === 'SERVED') {
+              totalCompleted++;
+              // Phân tích Doanh thu 7 ngày
               if (revByDay[dateStr] !== undefined) {
                   revByDay[dateStr] += Number(a.total_amount || 0);
                   weeklyRev += Number(a.total_amount || 0);
               }
+              // Phân tích Cơ cấu dịch vụ (Service Mix)
+              const serviceName = a.services?.service_name || "Dịch vụ khác";
+              serviceMix[serviceName] = (serviceMix[serviceName] || 0) + Number(a.total_amount || 0);
           }
       });
 
-      return { todayCount, pendingCheckInCount, pendingPaymentCount, cancelledTotal, weeklyRev, last7Days, revByDay };
+      const aov = totalCompleted > 0 ? weeklyRev / totalCompleted : 0;
+      
+      // Xử lý Top 4 Dịch vụ có doanh thu cao nhất
+      const topServices = Object.entries(serviceMix).sort((a, b) => b[1] - a[1]).slice(0, 4);
+
+      return { 
+          todayCount, pendingCheckInCount, pendingPaymentCount, cancelledTotal, weeklyRev, last7Days, revByDay,
+          hourlyData, totalCompleted, totalAppointments, aov, topServices
+      };
   };
 
   const metrics = getPartnerMetrics();
@@ -176,19 +197,51 @@ export default function CalendarFeature() {
     });
 };
   
-  // Cấu hình UI cho biểu đồ ApexCharts
-  const chartOptions: any = {
-      chart: { type: 'bar', toolbar: { show: false }, background: 'transparent', fontFamily: 'inherit' },
+  // --- CẤU HÌNH UI CHO DASHBOARD ĐA BIỂU ĐỒ ---
+  const commonOptions = {
+      chart: { toolbar: { show: false }, background: 'transparent', fontFamily: 'inherit', parentHeightOffset: 0 },
       theme: { mode: isDarkMode ? 'dark' : 'light' },
+      grid: { borderColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', strokeDashArray: 4, padding: { top: 0, right: 0, bottom: 0, left: 10 } },
+      dataLabels: { enabled: false },
+  };
+
+  // 1. Biểu đồ Doanh thu (Bar)
+  const revChartOptions: any = {
+      ...commonOptions,
       colors: ['#80BF84'],
       plotOptions: { bar: { borderRadius: 6, columnWidth: '40%' } },
       xaxis: { categories: metrics.last7Days, labels: { style: { colors: isDarkMode ? '#9ca3af' : '#64748b', fontWeight: 600 } }, axisBorder: { show: false }, axisTicks: { show: false } },
       yaxis: { labels: { formatter: (val: number) => new Intl.NumberFormat('vi-VN', { notation: "compact" }).format(val), style: { colors: isDarkMode ? '#9ca3af' : '#64748b', fontWeight: 600 } } },
-      dataLabels: { enabled: false },
-      grid: { borderColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', strokeDashArray: 4 },
+      tooltip: { y: { formatter: (val: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) }, theme: isDarkMode ? 'dark' : 'light' }
+  };
+
+  // 2. Phễu Trạng thái (Donut)
+  const statusChartOptions: any = {
+      ...commonOptions, chart: { type: 'donut', background: 'transparent' },
+      colors: ['#10b981', '#f59e0b', '#f43f5e', '#64748b'],
+      labels: ['Đã xong', 'Chờ xử lý', 'Đã hủy', 'Khác'],
+      plotOptions: { pie: { donut: { size: '75%', labels: { show: true, name: { show: true }, value: { show: true, formatter: (v: string) => v, color: isDarkMode ? '#fff' : '#000', fontSize: '24px', fontWeight: 800 }, total: { show: true, showAlways: true, label: 'Tổng đơn', color: isDarkMode ? '#9ca3af' : '#64748b', formatter: function (w: any) { return w.globals.seriesTotals.reduce((a: any, b: any) => a + b, 0) } } } } } },
+      stroke: { show: true, colors: isDarkMode ? '#0f0f11' : '#ffffff', width: 2 },
+      legend: { show: false }
+  };
+
+  // 3. Giờ Cao Điểm (Heat/Bar)
+  const peakHourOptions: any = {
+      ...commonOptions, colors: ['#3b82f6'],
+      plotOptions: { bar: { borderRadius: 4, columnWidth: '60%' } },
+      xaxis: { categories: ['7h', '8h', '9h', '10h', '11h', '12h', '13h', '14h', '15h', '16h', '17h', '18h', '19h', '20h', '21h'], labels: { style: { colors: isDarkMode ? '#9ca3af' : '#64748b', fontSize: '9px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+      yaxis: { show: false },
+      tooltip: { y: { formatter: (val: number) => `${val} lượt khách` } }
+  };
+
+  // 4. Cơ cấu Dịch vụ (Horizontal Bar)
+  const serviceOptions: any = {
+      ...commonOptions, colors: ['#8b5cf6'],
+      plotOptions: { bar: { borderRadius: 4, horizontal: true, barHeight: '50%' } },
+      xaxis: { labels: { formatter: (val: number) => new Intl.NumberFormat('vi-VN', { notation: "compact" }).format(val), style: { colors: isDarkMode ? '#9ca3af' : '#64748b' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+      yaxis: { labels: { style: { colors: isDarkMode ? '#d1d5db' : '#334155', fontWeight: 600 }, maxWidth: 120 } },
       tooltip: { y: { formatter: (val: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) } }
   };
-  const chartSeries = [{ name: 'Doanh thu', data: metrics.last7Days.map(d => metrics.revByDay[d]) }];
 
   useEffect(() => {
     setIsMounted(true);
@@ -411,12 +464,73 @@ export default function CalendarFeature() {
                         <button onClick={() => setPartnerViewMode('analytics')} className={`px-6 py-2.5 rounded-xl font-bold text-sm flex-shrink-0 transition-all ${partnerViewMode === 'analytics' ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'}`}>Biểu đồ Thống kê</button>
                     </div>
 
-                    {/* RENDER VIEW */}
+                    {/* RENDER VIEW - DASHBOARD QUẢN TRỊ 2.0 */}
                     {partnerViewMode === 'analytics' ? (
-                        <div className="p-6 rounded-[1.5rem] bg-white dark:bg-[#0f0f11] border border-slate-200 dark:border-white/10 shadow-sm animate-fade-in">
-                            <h3 className="text-lg font-black text-slate-900 dark:text-white mb-6 flex items-center gap-2"><Activity className="text-[#80BF84]" size={20} /> Doanh thu 7 ngày qua</h3>
-                            <div className="h-[300px] w-full">
-                                <ReactApexChart options={chartOptions} series={chartSeries} type="bar" height="100%" />
+                        <div className="flex flex-col gap-6 animate-fade-in">
+                            
+                            {/* Dòng 1: High-level KPIs */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="p-5 rounded-[2rem] bg-gradient-to-br from-emerald-500 to-[#80BF84] text-white shadow-lg shadow-emerald-500/20 relative overflow-hidden">
+                                    <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
+                                    <p className="text-xs font-black uppercase tracking-widest opacity-80 mb-1">Tổng doanh thu (7 Ngày)</p>
+                                    <p className="text-3xl font-black">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(metrics.weeklyRev)}</p>
+                                </div>
+                                <div className="p-5 rounded-[2rem] bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 shadow-sm">
+                                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Giá trị đơn trung bình (AOV)</p>
+                                    <p className="text-3xl font-black text-slate-900 dark:text-white">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(metrics.aov)}</p>
+                                </div>
+                                <div className="p-5 rounded-[2rem] bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 shadow-sm">
+                                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Tổng lịch hẹn đã phục vụ</p>
+                                    <p className="text-3xl font-black text-slate-900 dark:text-white">{metrics.totalCompleted} <span className="text-sm font-medium text-slate-500">/ {metrics.totalAppointments} đơn</span></p>
+                                </div>
+                            </div>
+
+                            {/* Dòng 2: Biểu đồ chính */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {/* Doanh thu (Chiếm 2/3) */}
+                                <div className="md:col-span-2 p-6 rounded-[2rem] bg-white dark:bg-[#0f0f11] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-lg">
+                                    <h3 className="text-sm font-black text-slate-900 dark:text-white mb-4 uppercase tracking-widest flex items-center gap-2"><Activity size={16} className="text-[#80BF84]"/> Dòng tiền 7 ngày qua</h3>
+                                    <div className="h-[280px] w-full">
+                                        <ReactApexChart options={revChartOptions} series={[{ name: 'Doanh thu', data: metrics.last7Days.map(d => metrics.revByDay[d]) }]} type="bar" height="100%" />
+                                    </div>
+                                </div>
+                                
+                                {/* Phễu Trạng thái (Chiếm 1/3) */}
+                                <div className="p-6 rounded-[2rem] bg-white dark:bg-[#0f0f11] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-lg flex flex-col">
+                                    <h3 className="text-sm font-black text-slate-900 dark:text-white mb-4 uppercase tracking-widest flex items-center gap-2"><Compass size={16} className="text-blue-500"/> Tỷ lệ trạng thái</h3>
+                                    <div className="flex-1 flex items-center justify-center min-h-[250px]">
+                                        <ReactApexChart 
+                                            options={statusChartOptions} 
+                                            series={[metrics.totalCompleted, metrics.pendingPaymentCount + metrics.pendingCheckInCount, metrics.cancelledTotal, Math.max(0, metrics.totalAppointments - metrics.totalCompleted - metrics.pendingPaymentCount - metrics.pendingCheckInCount - metrics.cancelledTotal)]} 
+                                            type="donut" height="100%" 
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Dòng 3: Insigths sâu */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Giờ cao điểm */}
+                                <div className="p-6 rounded-[2rem] bg-white dark:bg-[#0f0f11] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-lg">
+                                    <h3 className="text-sm font-black text-slate-900 dark:text-white mb-1 uppercase tracking-widest flex items-center gap-2"><Clock size={16} className="text-blue-500"/> Mật độ giờ cao điểm</h3>
+                                    <p className="text-xs text-slate-500 mb-4">Dựa trên thời gian bắt đầu của tất cả lịch hẹn</p>
+                                    <div className="h-[220px] w-full">
+                                        <ReactApexChart options={peakHourOptions} series={[{ name: 'Khách hàng', data: metrics.hourlyData }]} type="bar" height="100%" />
+                                    </div>
+                                </div>
+
+                                {/* Cơ cấu dịch vụ */}
+                                <div className="p-6 rounded-[2rem] bg-white dark:bg-[#0f0f11] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-lg">
+                                    <h3 className="text-sm font-black text-slate-900 dark:text-white mb-1 uppercase tracking-widest flex items-center gap-2"><Receipt size={16} className="text-purple-500"/> Top Dịch vụ mang lại doanh thu</h3>
+                                    <p className="text-xs text-slate-500 mb-4">Các dịch vụ có tỷ trọng dòng tiền lớn nhất</p>
+                                    <div className="h-[220px] w-full">
+                                        <ReactApexChart 
+                                            options={{...serviceOptions, xaxis: { ...serviceOptions.xaxis, categories: metrics.topServices.map(s => s[0]) }}} 
+                                            series={[{ name: 'Doanh thu', data: metrics.topServices.map(s => s[1]) }]} 
+                                            type="bar" height="100%" 
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     ) : (
