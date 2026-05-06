@@ -95,8 +95,9 @@ export default function ModeratorDashboard() {
   const closeModal = () => { setSelectedItem(null); setShowRejectInput(false); setRejectNote(""); };
 
   const filteredQueue = (queue || []).filter(q => {
-      if (filterType === 'service') return q.type === 'service' && q.status === 'PENDING';
-      if (filterType === 'video') return q.type === 'video' && q.status === 'PENDING';
+      // Sửa logic: Tab Dịch vụ/Video phải hiện cả trạng thái PENDING và PENDING_DELETE
+      if (filterType === 'service') return q.type === 'service';
+      if (filterType === 'video') return q.type === 'video';
       if (filterType === 'delete') return q.status === 'PENDING_DELETE';
       if (filterType === 'edit') return q.status === 'PENDING_UPDATE';
       return true;
