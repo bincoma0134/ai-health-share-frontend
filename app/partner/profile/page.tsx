@@ -1025,21 +1025,23 @@ export default function PartnerProfilePage() {
       )}
 
       {/* ================= DRAWER BÌNH LUẬN: ĐỈNH TẦNG HIỂN THỊ (FIX Z-INDEX) ================= */}
-      {/* Bọc lớp z-[200] để đảm bảo Drawer trượt đè lên bản Video z-[140] */}
-      <div className="fixed inset-0 z-[200] pointer-events-none">
-          <div className="pointer-events-auto h-full w-full">
-              <CommentModal 
-                isOpen={isCommentModalOpen} 
-                onClose={() => setIsCommentModalOpen(false)} 
-                videoId={activeCommentVideoId || ""} 
-                videoAuthorId={profileData?.profile?.id || ""} 
-                user={user} 
-                userRole={profileData?.profile?.role || "PARTNER"} 
-                onCommentAdded={handleCommentSuccess} 
-                onCommentDeleted={handleCommentDeleted} 
-              />
-          </div>
-      </div>
+      {/* Chỉ render wrapper khi isCommentModalOpen = true để tránh div tàng hình chặn click toàn trang */}
+      {isCommentModalOpen && (
+        <div className="fixed inset-0 z-[200] pointer-events-none">
+            <div className="pointer-events-auto h-full w-full">
+                <CommentModal 
+                  isOpen={isCommentModalOpen} 
+                  onClose={() => setIsCommentModalOpen(false)} 
+                  videoId={activeCommentVideoId || ""} 
+                  videoAuthorId={profileData?.profile?.id || ""} 
+                  user={user} 
+                  userRole={profileData?.profile?.role || "PARTNER"} 
+                  onCommentAdded={handleCommentSuccess} 
+                  onCommentDeleted={handleCommentDeleted} 
+                />
+            </div>
+        </div>
+      )}
 
     </div>
   );
