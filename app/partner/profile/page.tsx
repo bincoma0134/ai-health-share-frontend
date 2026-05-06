@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { 
   ShieldCheck, Bookmark, LogOut, Play, Clock, CheckCircle2, Edit3, Camera, X, Sun, Moon, 
   Bell, Eye, LayoutGrid, Video, Sparkles, DollarSign, UploadCloud, MapPin, FileText, 
-  Link2, Plus, Trash2, Package, Info, Tag, BadgeCheck, Star, ImageIcon, Shield, Building2, Share2
+  Link2, Plus, Trash2, Package, Info, Tag, BadgeCheck, Star, ImageIcon, Shield, Building2, Share2, MessageCircle, Heart
 } from "lucide-react";
  
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ import NotificationModal from "@/components/NotificationModal";
 import { useUI } from "@/context/UIContext";
 import { supabase } from "@/lib/supabase";
 import dynamic from "next/dynamic";
+import CommentModal from "@/components/CommentModal";
 
 const MiniMapPicker = dynamic(() => import("@/components/MiniMapPicker"), { ssr: false });
 
@@ -58,9 +59,64 @@ export default function PartnerProfilePage() {
   const [studioPreview, setStudioPreview] = useState<string | null>(null);
   const [isStudioUploading, setIsStudioUploading] = useState(false);
 
+  // --- EXPANDED VIEW & INTERACTION STATE ---
+  const [expandedService, setExpandedService] = useState<any>(null);
+  const [expandedVideo, setExpandedVideo] = useState<any>(null);
+  const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
+  const [activeCommentVideoId, setActiveCommentVideoId] = useState<string | null>(null);
+
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const studioInputRef = useRef<HTMLInputElement>(null);
+
+  // --- LOGIC TƯƠNG TÁC THỰC TẾ TRONG STUDIO ---
+  const handleInteraction = async (videoId: string, action: 'like' | 'save' | 'share') => {
+      if (action === 'share') {
+          navigator.clipboard.writeText(`${window.location.origin}/?video=${videoId}`);
+          toast.success("Đã sao chép liên kết!");
+          return;
+      }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      
+      setMyVideos(prev => prev.map(v => {
+          if (v.id === videoId) {
+              if (action === 'like') return { ...v, is_liked: !v.is_liked, likes_count: (v.likes_count || 0) + (v.is_liked ? -1 : 1) };
+              if (action === 'save') return { ...v, is_saved: !v.is_saved, saves_count: (v.saves_count || 0) + (v.is_saved ? -1 : 1) };
+          }
+          return v;
+      }));
+      
+      // Đồng bộ vào View mở rộng nếu đang xem
+      if (expandedVideo && expandedVideo.id === videoId) {
+          setExpandedVideo((prev: any) => {
+              if (action === 'like') return { ...prev, is_liked: !prev.is_liked, likes_count: (prev.likes_count || 0) + (prev.is_liked ? -1 : 1) };
+              if (action === 'save') return { ...prev, is_saved: !prev.is_saved, saves_count: (prev.saves_count || 0) + (prev.is_saved ? -1 : 1) };
+              return prev;
+          });
+      }
+
+      try {
+          await fetch(`${API_URL}/tiktok/feeds/${videoId}/${action}`, {
+              method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` }
+          });
+      } catch (error) { fetchData(); } // Reset nếu API lỗi
+  };
+  
+  const handleOpenComments = (videoId: string) => {
+      setActiveCommentVideoId(videoId);
+      setIsCommentModalOpen(true);
+  };
+  
+  const handleCommentSuccess = () => {
+      setMyVideos(prev => prev.map(v => v.id === activeCommentVideoId ? { ...v, comments_count: (v.comments_count || 0) + 1 } : v));
+      if (expandedVideo && expandedVideo.id === activeCommentVideoId) setExpandedVideo((prev: any) => ({ ...prev, comments_count: (prev.comments_count || 0) + 1 }));
+  };
+
+  const handleCommentDeleted = () => {
+      setMyVideos(prev => prev.map(v => v.id === activeCommentVideoId ? { ...v, comments_count: Math.max((v.comments_count || 0) - 1, 0) } : v));
+      if (expandedVideo && expandedVideo.id === activeCommentVideoId) setExpandedVideo((prev: any) => ({ ...prev, comments_count: Math.max((prev.comments_count || 0) - 1, 0) }));
+  };
 
   const fetchData = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -430,30 +486,33 @@ export default function PartnerProfilePage() {
                                  ) : (
                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                          {myServices.map(svc => (
-                                             <div key={svc.id} className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl rounded-[2rem] border border-slate-200 dark:border-white/10 overflow-hidden shadow-xl hover:-translate-y-1.5 transition-all duration-300 group flex flex-col relative">
+                                             <div key={svc.id} onClick={() => setExpandedService(svc)} className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl rounded-[2rem] border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm hover:shadow-2xl hover:border-blue-500/50 hover:-translate-y-1 transition-all duration-300 group flex flex-col relative cursor-pointer">
                                                 <div className="relative h-44 overflow-hidden shrink-0 bg-slate-100 dark:bg-black">
                                                     {svc.image_url ? ( <img src={svc.image_url} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="service" />
-                                                    ) : svc.video_url ? ( <video src={svc.video_url} className="w-full h-full object-cover" muted playsInline />
+                                                    ) : svc.video_url ? ( <video src={svc.video_url} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" muted playsInline />
                                                     ) : ( <div className="w-full h-full flex items-center justify-center text-slate-400"><Package size={32}/></div> )}
                                                     
+                                                    {/* Nhãn trạng thái */}
+                                                    <div className="absolute top-4 left-4 z-10"><StatusBadge status={svc.status} /></div>
+
                                                     <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
-                                                        <button onClick={() => { 
+                                                        <button onClick={(e) => { 
+                                                            e.stopPropagation();
                                                             let parsedTags = [];
                                                             try { parsedTags = typeof svc.tags === 'string' ? JSON.parse(svc.tags) : svc.tags; } catch {}
                                                             setEditingService({...svc, tags: parsedTags || []}); 
                                                             setIsEditModalOpen(true); 
-                                                        }} className="p-2 bg-white/90 text-blue-600 rounded-lg shadow-lg hover:bg-blue-50 transition-colors"><Edit3 size={16}/></button>
-                                                        <button onClick={() => handleDeleteService(svc.id)} className="p-2 bg-white/90 text-rose-600 rounded-lg shadow-lg hover:bg-rose-50 transition-colors"><Trash2 size={16}/></button>
+                                                        }} className="p-2.5 bg-white/90 dark:bg-black/80 backdrop-blur-md text-blue-600 dark:text-blue-400 rounded-xl shadow-lg hover:bg-blue-50 dark:hover:bg-white/10 transition-colors"><Edit3 size={16}/></button>
+                                                        <button onClick={(e) => { e.stopPropagation(); handleDeleteService(svc.id); }} className="p-2.5 bg-white/90 dark:bg-black/80 backdrop-blur-md text-rose-600 dark:text-rose-400 rounded-xl shadow-lg hover:bg-rose-50 dark:hover:bg-white/10 transition-colors"><Trash2 size={16}/></button>
                                                     </div>
-
-                                                    <div className="absolute bottom-3 left-3 z-10"><StatusBadge status={svc.status} /></div>
                                                 </div>
-                                                <div className="p-5 flex-1 flex flex-col">
-                                                    <h4 className="font-black text-slate-900 dark:text-white line-clamp-2 mb-2">{svc.service_name}</h4>
-                                                    <p className="text-sm text-slate-500 dark:text-zinc-400 line-clamp-2 mb-4 flex-1">{svc.description}</p>
-                                                    <div className="flex flex-wrap gap-2 mb-4">{renderTags(svc.tags)}</div>
-                                                    <div className="text-blue-600 dark:text-blue-400 font-black text-lg border-t border-slate-100 dark:border-white/5 pt-3">
-                                                        {parseFloat(svc.price).toLocaleString('vi-VN')}đ
+                                                <div className="p-6 flex-1 flex flex-col">
+                                                    <h4 className="font-black text-lg text-slate-900 dark:text-white line-clamp-2 mb-2 group-hover:text-blue-500 transition-colors">{svc.service_name}</h4>
+                                                    <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 line-clamp-2 mb-4 flex-1">{svc.description}</p>
+                                                    <div className="flex flex-wrap gap-1.5 mb-4">{renderTags(svc.tags)}</div>
+                                                    <div className="flex items-center justify-between border-t border-slate-100 dark:border-white/5 pt-4">
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Giá trọn gói</span>
+                                                        <span className="text-xl font-black text-blue-600 dark:text-blue-400">{parseFloat(svc.price).toLocaleString('vi-VN')} đ</span>
                                                     </div>
                                                 </div>
                                              </div>
@@ -480,16 +539,24 @@ export default function PartnerProfilePage() {
                                  ) : (
                                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
                                          {myVideos.map(vid => (
-                                             <div key={vid.id} className="aspect-[9/16] rounded-2xl overflow-hidden bg-black relative group shadow-lg border border-slate-200 dark:border-white/10">
-                                                 <video src={vid.video_url} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" muted playsInline />
-                                                 <div className="absolute top-3 left-3 z-10"><StatusBadge status={vid.status} /></div>
-                                                 <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
-                                                    <button onClick={() => { setEditingVideo(vid); setIsEditVideoModalOpen(true); }} className="p-2 bg-white/90 text-blue-600 rounded-lg shadow-lg hover:bg-blue-50 transition-colors"><Edit3 size={16}/></button>
-                                                    <button onClick={() => handleDeleteVideo(vid.id)} className="p-2 bg-white/90 text-rose-600 rounded-lg shadow-lg hover:bg-rose-50 transition-colors"><Trash2 size={16}/></button>
+                                             <div key={vid.id} onClick={() => setExpandedVideo(vid)} className="aspect-[9/16] rounded-[2rem] overflow-hidden bg-black relative group shadow-sm hover:shadow-2xl border border-slate-200 dark:border-white/10 hover:border-blue-500/50 cursor-pointer hover:-translate-y-1 transition-all duration-300">
+                                                 <video src={vid.video_url} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700" muted playsInline />
+                                                 
+                                                 <div className="absolute top-4 left-4 z-10"><StatusBadge status={vid.status} /></div>
+                                                 
+                                                 <div className="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                                                    <button onClick={(e) => { e.stopPropagation(); setEditingVideo(vid); setIsEditVideoModalOpen(true); }} className="p-2.5 bg-white/90 dark:bg-black/80 backdrop-blur-md text-blue-600 dark:text-blue-400 rounded-xl shadow-lg hover:bg-blue-50 dark:hover:bg-white/10 transition-colors"><Edit3 size={16}/></button>
+                                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteVideo(vid.id); }} className="p-2.5 bg-white/90 dark:bg-black/80 backdrop-blur-md text-rose-600 dark:text-rose-400 rounded-xl shadow-lg hover:bg-rose-50 dark:hover:bg-white/10 transition-colors"><Trash2 size={16}/></button>
                                                  </div>
-                                                 <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none">
-                                                     <p className="text-white text-sm font-black line-clamp-2 leading-tight drop-shadow-md">{vid.title}</p>
-                                                     {vid.price && <p className="text-blue-400 text-xs font-bold mt-1 drop-shadow-md">{parseFloat(vid.price).toLocaleString('vi-VN')}đ</p>}
+                                                 
+                                                 <div className="absolute inset-x-0 bottom-0 p-5 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none">
+                                                     <p className="text-white text-sm font-black line-clamp-2 leading-tight drop-shadow-md mb-1">{vid.title}</p>
+                                                     {vid.price ? (
+                                                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-500/20 backdrop-blur-md border border-blue-400/30 rounded-lg">
+                                                            <DollarSign size={12} className="text-blue-400"/>
+                                                            <span className="text-blue-400 text-xs font-black">{parseFloat(vid.price).toLocaleString('vi-VN')} đ</span>
+                                                        </div>
+                                                     ) : null}
                                                  </div>
                                              </div>
                                          ))}
@@ -794,6 +861,142 @@ export default function PartnerProfilePage() {
             </div>
         </div>
       )}
+
+      {/* ================= MODAL: XEM TRƯỚC DỊCH VỤ (EXPANDED VIEW) ================= */}
+      {expandedService && (
+        <div className="fixed inset-0 z-[140] flex justify-center items-center p-4 md:p-6">
+          <div className="absolute inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-xl transition-opacity duration-500 animate-fade-in" onClick={() => setExpandedService(null)}></div>
+          
+          <div className="relative w-full max-w-4xl bg-white dark:bg-[#0a0a0a] rounded-[2.5rem] overflow-hidden flex flex-col md:flex-row shadow-[0_20px_60px_rgba(0,0,0,0.2)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.9)] border border-slate-200 dark:border-white/10 animate-slide-up max-h-[90vh]">
+            
+            {/* Media bên trái */}
+            <div className="w-full md:w-1/2 h-64 md:h-auto bg-slate-100 dark:bg-black relative flex items-center justify-center shrink-0">
+                {expandedService.image_url ? (
+                    <img src={expandedService.image_url} className="w-full h-full object-cover" alt={expandedService.service_name} />
+                ) : expandedService.video_url ? (
+                    <video src={expandedService.video_url} className="w-full h-full object-cover" autoPlay loop muted playsInline />
+                ) : (
+                    <Package size={60} className="text-slate-300 dark:text-zinc-800"/>
+                )}
+                <div className="absolute top-4 left-4"><StatusBadge status={expandedService.status} /></div>
+                <button onClick={() => setExpandedService(null)} className="md:hidden absolute top-4 right-4 p-2 rounded-full bg-black/50 backdrop-blur-md text-white"><X size={20}/></button>
+            </div>
+
+            {/* Thông tin bên phải */}
+            <div className="flex-1 p-6 md:p-10 flex flex-col overflow-y-auto no-scrollbar relative">
+                <button onClick={() => setExpandedService(null)} className="hidden md:flex absolute top-6 right-6 p-2 rounded-full bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-zinc-400 transition-colors"><X size={20}/></button>
+                
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full text-[10px] font-bold text-blue-600 dark:text-blue-400 mb-4 uppercase tracking-wider w-max">
+                  <ShieldCheck size={12} /> Thông tin dịch vụ
+                </div>
+
+                <h2 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white leading-tight mb-4">{expandedService.service_name}</h2>
+                <div className="flex flex-wrap gap-2 mb-6">{renderTags(expandedService.tags)}</div>
+                
+                <div className="flex-1">
+                    <p className="text-sm md:text-base text-slate-600 dark:text-zinc-400 leading-relaxed mb-8 whitespace-pre-wrap">{expandedService.description}</p>
+                </div>
+                
+                <div className="mt-auto pt-6 border-t border-slate-100 dark:border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                    <div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Giá trọn gói</p>
+                        <p className="text-3xl font-black text-blue-600 dark:text-blue-400">{Number(expandedService.price).toLocaleString()} <span className="text-base text-slate-500">đ</span></p>
+                    </div>
+                    {/* Thay nút đặt lịch thành nút Edit */}
+                    <button 
+                        onClick={() => {
+                            let parsedTags = [];
+                            try { parsedTags = typeof expandedService.tags === 'string' ? JSON.parse(expandedService.tags) : expandedService.tags; } catch {}
+                            setEditingService({...expandedService, tags: parsedTags || []}); 
+                            setExpandedService(null);
+                            setIsEditModalOpen(true); 
+                        }} 
+                        className="w-full sm:w-auto px-8 py-4 bg-slate-900 dark:bg-white hover:bg-blue-600 dark:hover:bg-blue-500 text-white dark:text-zinc-950 dark:hover:text-white font-black rounded-2xl shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-xs"
+                    >
+                        <Edit3 size={18}/> Chỉnh sửa dịch vụ
+                    </button>
+                </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: XEM VIDEO STUDIO (EXPANDED VIEW TƯƠNG TÁC THẬT) ================= */}
+      {expandedVideo && (
+        <div className="fixed inset-0 z-[140] flex justify-center items-center p-4 md:p-6">
+          <div className="absolute inset-0 bg-slate-900/80 dark:bg-black/90 backdrop-blur-xl transition-opacity duration-500 animate-fade-in" onClick={() => setExpandedVideo(null)}></div>
+          
+          <div className="relative w-full max-w-[400px] h-[85vh] md:h-[90vh] bg-black rounded-[2.5rem] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.5)] border border-white/10 animate-slide-up flex flex-col">
+            <video src={expandedVideo.video_url} className="absolute inset-0 w-full h-full object-cover" autoPlay loop muted playsInline />
+            
+            {/* Lớp phủ UI */}
+            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none"></div>
+            
+            <button onClick={() => setExpandedVideo(null)} className="absolute top-4 left-4 p-2 rounded-full bg-black/50 backdrop-blur-md text-white hover:bg-rose-500/80 transition-colors z-20"><X size={20}/></button>
+            <div className="absolute top-4 right-4 z-20"><StatusBadge status={expandedVideo.status} /></div>
+
+            {/* Thông tin video */}
+            <div className="absolute bottom-6 left-6 right-20 z-10 pointer-events-auto">
+                <h3 className="text-xl font-black text-white leading-tight drop-shadow-xl mb-2">{expandedVideo.title}</h3>
+                <p className="text-zinc-300 text-sm line-clamp-3 drop-shadow-md font-medium mb-3">{expandedVideo.content}</p>
+                {expandedVideo.price ? (
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/20 backdrop-blur-md border border-blue-400/30 rounded-xl">
+                        <DollarSign size={14} className="text-blue-400"/>
+                        <span className="text-blue-400 text-sm font-black">{parseFloat(expandedVideo.price).toLocaleString('vi-VN')} VND</span>
+                    </div>
+                ) : null}
+            </div>
+
+            {/* Thanh công cụ tương tác */}
+            <div className="absolute bottom-6 right-4 z-20 flex flex-col items-center gap-5 pointer-events-auto">
+                <button onClick={() => handleInteraction(expandedVideo.id, 'like')} className="flex flex-col items-center gap-1 group">
+                    <div className={`p-3 rounded-full backdrop-blur-md transition-all ${expandedVideo.is_liked ? 'bg-rose-500/20 text-rose-500 border border-rose-500/50' : 'bg-black/40 border border-white/20 text-white group-hover:bg-rose-500/30 group-hover:text-rose-400'}`}>
+                        <Heart size={22} strokeWidth={2} className={`group-active:scale-75 transition-transform ${expandedVideo.is_liked ? 'fill-rose-500' : ''}`} />
+                    </div>
+                    <span className="text-xs font-bold text-white drop-shadow-md">{expandedVideo.likes_count || 0}</span>
+                </button>
+                
+                <button onClick={() => handleOpenComments(expandedVideo.id)} className="flex flex-col items-center gap-1 group">
+                    <div className="p-3 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-white group-hover:bg-white/30 transition-all">
+                        <MessageCircle size={22} />
+                    </div>
+                    <span className="text-xs font-bold text-white drop-shadow-md">{expandedVideo.comments_count || 0}</span>
+                </button>
+                
+                <button onClick={() => handleInteraction(expandedVideo.id, 'save')} className="flex flex-col items-center gap-1 group">
+                    <div className={`p-3 rounded-full backdrop-blur-md transition-all ${expandedVideo.is_saved ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50' : 'bg-black/40 border border-white/20 text-white group-hover:bg-amber-500/30 group-hover:text-amber-400'}`}>
+                        <Bookmark size={22} strokeWidth={2} className={`group-active:scale-75 transition-transform ${expandedVideo.is_saved ? 'fill-amber-400' : ''}`} />
+                    </div>
+                    <span className="text-xs font-bold text-white drop-shadow-md">{expandedVideo.saves_count || 0}</span>
+                </button>
+
+                <button onClick={() => {
+                    setEditingVideo(expandedVideo);
+                    setExpandedVideo(null);
+                    setIsEditVideoModalOpen(true);
+                }} className="flex flex-col items-center gap-1 group mt-2">
+                    <div className="p-3 rounded-full bg-blue-600/80 backdrop-blur-md border border-blue-400/50 text-white hover:bg-blue-500 transition-all">
+                        <Edit3 size={20} />
+                    </div>
+                    <span className="text-[10px] font-black text-blue-400 drop-shadow-md uppercase">Sửa</span>
+                </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* COMPONENT BÌNH LUẬN THỜI GIAN THỰC */}
+      <CommentModal 
+        isOpen={isCommentModalOpen} 
+        onClose={() => setIsCommentModalOpen(false)} 
+        videoId={activeCommentVideoId || ""} 
+        videoAuthorId={user?.id || ""} 
+        user={user} 
+        userRole={profileData?.profile?.role || "PARTNER"} 
+        onCommentAdded={handleCommentSuccess} 
+        onCommentDeleted={handleCommentDeleted} 
+      />
+
     </div>
   );
 }
