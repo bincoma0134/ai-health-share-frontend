@@ -11,6 +11,10 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useUI } from "@/context/UIContext";
 import { supabase } from "@/lib/supabase";
+import dynamic from "next/dynamic";
+
+// Khởi tạo ApexCharts an toàn trong Next.js
+const ReactApexChart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -31,6 +35,64 @@ export default function CalendarFeature() {
   
   // State quản lý UI Modal xác nhận hủy lịch
   const [cancelConfirmId, setCancelConfirmId] = useState<string | null>(null);
+
+  // --- TRẠNG THÁI & HÀM XỬ LÝ CHO PARTNER HUB ---
+  const [partnerViewMode, setPartnerViewMode] = useState<'timeline' | 'analytics'>('timeline');
+
+  // Hàm "Ma thuật" gom nhóm dữ liệu để vẽ biểu đồ mà không cần gọi thêm API Backend
+  const getPartnerMetrics = () => {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      let todayCount = 0; let pendingCheckInCount = 0; let weeklyRev = 0;
+      let completedCount = 0; let cancelledCount = 0;
+
+      const last7Days = Array.from({length: 7}, (_, i) => {
+          const d = new Date(today); d.setDate(d.getDate() - i);
+          return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+      }).reverse();
+
+      const revByDay: Record<string, number> = {};
+      last7Days.forEach(d => revByDay[d] = 0);
+
+      appointments.forEach(a => {
+          const startObj = a.start_time ? new Date(a.start_time) : null;
+          const dateStr = startObj ? startObj.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) : '';
+          
+          if (startObj && startObj >= today && startObj < new Date(today.getTime() + 86400000)) {
+              todayCount++;
+              if (a.status === 'CONFIRMED') pendingCheckInCount++;
+          }
+          if (a.status === 'COMPLETED') {
+              completedCount++;
+              if (revByDay[dateStr] !== undefined) {
+                  revByDay[dateStr] += Number(a.total_amount || 0);
+                  weeklyRev += Number(a.total_amount || 0);
+              }
+          }
+          if (a.status === 'CANCELLED') cancelledCount++;
+      });
+
+      const successRate = (completedCount + cancelledCount) > 0 
+          ? Math.round((completedCount / (completedCount + cancelledCount)) * 100) : 100;
+      return { todayCount, pendingCheckInCount, weeklyRev, successRate, last7Days, revByDay };
+  };
+
+  const metrics = getPartnerMetrics();
+  
+  // Cấu hình UI cho biểu đồ ApexCharts
+  const chartOptions: any = {
+      chart: { type: 'bar', toolbar: { show: false }, background: 'transparent', fontFamily: 'inherit' },
+      theme: { mode: isDarkMode ? 'dark' : 'light' },
+      colors: ['#80BF84'],
+      plotOptions: { bar: { borderRadius: 6, columnWidth: '40%' } },
+      xaxis: { categories: metrics.last7Days, labels: { style: { colors: isDarkMode ? '#9ca3af' : '#64748b', fontWeight: 600 } }, axisBorder: { show: false }, axisTicks: { show: false } },
+      yaxis: { labels: { formatter: (val: number) => new Intl.NumberFormat('vi-VN', { notation: "compact" }).format(val), style: { colors: isDarkMode ? '#9ca3af' : '#64748b', fontWeight: 600 } } },
+      dataLabels: { enabled: false },
+      grid: { borderColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', strokeDashArray: 4 },
+      tooltip: { y: { formatter: (val: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) } }
+  };
+  const chartSeries = [{ name: 'Doanh thu', data: metrics.last7Days.map(d => metrics.revByDay[d]) }];
 
   useEffect(() => {
     setIsMounted(true);
@@ -188,6 +250,106 @@ export default function CalendarFeature() {
 
             {!user ? (
                  <div className="flex flex-col items-center justify-center py-20 text-center"><h3 className="text-xl font-bold">Vui lòng đăng nhập</h3></div>
+            ) : isMyClient ? (
+                <div className="animate-fade-in flex flex-col gap-6">
+                    {/* THỐNG KÊ TOP METRICS */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
+                        <div className="p-4 rounded-2xl bg-white dark:bg-[#141416] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-md hover:border-[#80BF84]/50">
+                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Lịch hôm nay</p>
+                            <p className="text-4xl font-black text-slate-900 dark:text-white">{metrics.todayCount}</p>
+                        </div>
+                        <div className="p-4 rounded-2xl bg-white dark:bg-[#141416] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-md hover:border-emerald-500/50">
+                            <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">Chờ Check-in</p>
+                            <p className="text-4xl font-black text-emerald-600 dark:text-emerald-400">{metrics.pendingCheckInCount}</p>
+                        </div>
+                        <div className="p-4 rounded-2xl bg-white dark:bg-[#141416] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-md hover:border-[#80BF84]/50">
+                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Doanh thu 7 ngày</p>
+                            <p className="text-2xl mt-1 font-black text-[#80BF84] truncate">{formatPrice(metrics.weeklyRev)}</p>
+                        </div>
+                        <div className="p-4 rounded-2xl bg-white dark:bg-[#141416] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-md hover:border-blue-500/50">
+                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Tỷ lệ hoàn thành</p>
+                            <p className="text-4xl font-black text-blue-500">{metrics.successRate}%</p>
+                        </div>
+                    </div>
+
+                    {/* VIEW TOGGLE */}
+                    <div className="flex p-1.5 bg-white dark:bg-white/5 shadow-sm rounded-2xl w-full md:w-max border border-slate-200 dark:border-white/10">
+                        <button onClick={() => setPartnerViewMode('timeline')} className={`px-6 py-2.5 rounded-xl font-bold text-sm flex-shrink-0 transition-all ${partnerViewMode === 'timeline' ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'}`}>Trục thời gian</button>
+                        <button onClick={() => setPartnerViewMode('analytics')} className={`px-6 py-2.5 rounded-xl font-bold text-sm flex-shrink-0 transition-all ${partnerViewMode === 'analytics' ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'}`}>Biểu đồ Thống kê</button>
+                    </div>
+
+                    {/* RENDER VIEW */}
+                    {partnerViewMode === 'analytics' ? (
+                        <div className="p-6 rounded-[1.5rem] bg-white dark:bg-[#0f0f11] border border-slate-200 dark:border-white/10 shadow-sm animate-fade-in">
+                            <h3 className="text-lg font-black text-slate-900 dark:text-white mb-6 flex items-center gap-2"><Activity className="text-[#80BF84]" size={20} /> Doanh thu 7 ngày qua</h3>
+                            <div className="h-[300px] w-full">
+                                <ReactApexChart options={chartOptions} series={chartSeries} type="bar" height="100%" />
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="bg-white dark:bg-[#0f0f11] rounded-[1.5rem] p-6 border border-slate-200 dark:border-white/10 shadow-sm animate-fade-in">
+                            <h3 className="text-lg font-black text-slate-900 dark:text-white mb-6 flex items-center gap-2"><Clock className="text-[#80BF84]" size={20} /> Lịch trình phục vụ</h3>
+                            <div className="flex flex-col gap-0">
+                                {appointments.filter(a => ['CONFIRMED', 'SERVED', 'COMPLETED'].includes(a.status)).length === 0 ? (
+                                    <div className="py-10 text-center text-slate-500 font-medium">Bạn chưa có lịch trình nào cần phục vụ.</div>
+                                ) : (
+                                    appointments
+                                        .filter(a => ['CONFIRMED', 'SERVED', 'COMPLETED'].includes(a.status))
+                                        .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime())
+                                        .map((appt) => {
+                                            const startObj = appt.start_time ? new Date(appt.start_time) : new Date();
+                                            const dateStr = startObj.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                                            const timeStr = startObj.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                                            const isConfirmed = appt.status === 'CONFIRMED';
+                                            const isServed = appt.status === 'SERVED';
+                                            
+                                            return (
+                                                <div key={appt.id} className="relative pl-8 md:pl-10 py-5 border-l-2 border-slate-200 dark:border-white/10 group">
+                                                    {/* Timeline Dot */}
+                                                    <div className={`absolute left-[-11px] top-6 w-5 h-5 rounded-full bg-white dark:bg-zinc-900 border-4 transition-transform group-hover:scale-125 ${isConfirmed ? 'border-emerald-500' : isServed ? 'border-blue-500' : 'border-slate-300 dark:border-zinc-700'}`}></div>
+                                                    
+                                                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                                                        <div>
+                                                            <div className="flex items-center gap-3 mb-1">
+                                                                <span className="text-xl font-black text-slate-900 dark:text-white tracking-tight">{timeStr}</span>
+                                                                <span className="text-[10px] font-black tracking-widest text-slate-500 dark:text-zinc-400 bg-slate-100 dark:bg-white/5 px-2.5 py-1 rounded-md border border-slate-200 dark:border-white/10">{dateStr}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-2 mt-3 mb-1">
+                                                                <div className="w-7 h-7 rounded-full bg-slate-200 dark:bg-zinc-800 flex items-center justify-center text-slate-500 shrink-0 border border-white dark:border-zinc-700 shadow-sm"><UserIcon size={14}/></div>
+                                                                <span className="font-bold text-sm text-slate-800 dark:text-zinc-200">{appt.users?.full_name || "Khách hàng"}</span>
+                                                                {appt.users?.phone && <span className="text-xs font-medium text-slate-400 dark:text-zinc-500 ml-1">· {appt.users.phone}</span>}
+                                                            </div>
+                                                            <p className="text-sm font-bold text-slate-500 dark:text-zinc-400 flex items-center gap-1.5"><CheckCircle size={14} className="text-[#80BF84]"/> {appt.services?.service_name}</p>
+                                                        </div>
+                                                        
+                                                        {isConfirmed && (
+                                                            <div className="bg-slate-50 dark:bg-white/5 p-3 rounded-2xl border border-slate-200 dark:border-white/10 flex flex-col gap-2 w-full md:w-64 shadow-sm">
+                                                                <input 
+                                                                    type="text" 
+                                                                    placeholder="Mã Check-in" 
+                                                                    className="px-3 py-2.5 text-sm rounded-xl border border-slate-300 dark:border-white/20 bg-white dark:bg-black text-center font-black tracking-widest outline-none focus:border-[#80BF84] focus:ring-2 focus:ring-[#80BF84]/20 w-full transition-all"
+                                                                    value={checkInCodes[appt.id] || ''}
+                                                                    onChange={(e) => setCheckInCodes({...checkInCodes, [appt.id]: e.target.value})}
+                                                                />
+                                                                <button onClick={() => handleComplete(appt.id)} className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#80BF84] text-zinc-950 text-xs font-black rounded-xl hover:scale-105 active:scale-95 transition-transform shadow-lg shadow-[#80BF84]/30 uppercase tracking-wide">
+                                                                    <CheckCircle size={16}/> Xác nhận
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                        {isServed && (
+                                                            <div className="px-4 py-3 rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 text-xs font-bold border border-blue-200 dark:border-blue-500/20 flex items-center justify-center gap-2 w-full md:w-64">
+                                                                <Clock size={16} className="animate-spin-slow"/> Chờ khách xác nhận
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
             ) : (
                 <div className="animate-fade-in">
                     
