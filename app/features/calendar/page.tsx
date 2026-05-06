@@ -167,16 +167,23 @@ export default function CalendarFeature() {
       });
 
       return groups.flatMap(group => {
+          const groupSize = group.length;
           return group.map((event, idx) => {
               const start = new Date(event.start_time);
               const end = new Date(event.end_time);
               const duration = (end.getTime() - start.getTime()) / (1000 * 60);
+              
+              // Thuật toán Stacking: Thẻ sau sẽ thò ra ít nhất 30% diện tích để đọc được text
+              // Nếu quá nhiều thẻ (n > 2), chúng ta mới bắt đầu bóp nhỏ chiều rộng
+              const width = groupSize > 1 ? (100 / (groupSize * 0.8)) : 100;
+              const left = idx * (100 / (groupSize + 1));
+
               return {
                   ...event,
                   top: (start.getHours() - 5) * 100 + (start.getMinutes() / 60) * 100,
-                  height: Math.max((duration / 60) * 100, 25), // Tối thiểu 25px để vẫn đọc được tên
-                  width: 100 / group.length,
-                  left: idx * (100 / group.length)
+                  height: Math.max((duration / 60) * 100, 20),
+                  width: Math.min(width, 95), // Không cho phép rộng quá 95% để tránh dính lề
+                  left: groupSize > 1 ? left : 0
               };
           });
       });
@@ -488,42 +495,37 @@ export default function CalendarFeature() {
                                                 return (
                                                     <div 
                                                         key={appt.id}
-                                                        className={`absolute rounded-xl px-3 py-2 border-l-[6px] shadow-lg transition-all hover:scale-[1.03] hover:z-[30] cursor-pointer group/card overflow-hidden select-none
-                                                            ${isConfirmed ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 text-emerald-800 dark:text-emerald-300' : 
-                                                              isServed ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-500 text-blue-800 dark:text-blue-300' : 
-                                                              'bg-slate-100 dark:bg-white/5 border-slate-400 text-slate-600 dark:text-slate-400 opacity-60'}`}
+                                                        className={`absolute rounded-lg px-2 py-1.5 border border-white/20 dark:border-white/5 transition-all hover:z-[50] hover:shadow-2xl cursor-pointer group/card overflow-hidden select-none ring-1 ring-black/5
+                                                            ${isConfirmed ? 'bg-emerald-500/90 text-white shadow-[0_4px_12px_-2px_rgba(16,185,129,0.3)]' : 
+                                                              isServed ? 'bg-blue-500/90 text-white shadow-[0_4px_12px_-2px_rgba(59,130,246,0.3)]' : 
+                                                              'bg-slate-400/80 text-white opacity-60'}`}
                                                         style={{ 
                                                             top: `${appt.top}px`, 
                                                             height: `${appt.height}px`, 
                                                             left: `calc(${dIdx * (100/7)}% + ${appt.left}%)`, 
-                                                            width: `calc(${(100/7) * (appt.width/100)}% - 4px)` 
+                                                            width: `calc(${(100/7) * (appt.width/100)}% - 2px)` 
                                                         }}
                                                         onClick={() => openAppointmentDetail(appt)}
                                                     >
-                                                        {/* Header của thẻ sự kiện */}
-                                                        <div className="flex justify-between items-start gap-1">
-                                                            <p className="text-[11px] font-black uppercase leading-none truncate mb-1">{appt.services?.service_name}</p>
-                                                            <div className="opacity-0 group-hover/card:opacity-100 transition-opacity">
-                                                                <Phone size={10} className="text-slate-400" />
-                                                            </div>
+                                                        {/* Google Style: Ưu tiên Title và tối giản hóa khi hẹp */}
+                                                        <div className="flex flex-col h-full">
+                                                            <p className={`font-black leading-tight truncate tracking-tight ${appt.height < 40 ? 'text-[9px]' : 'text-[11px]'}`}>
+                                                                {appt.services?.service_name}
+                                                            </p>
+                                                            
+                                                            {appt.height > 45 && (
+                                                                <div className="flex items-center gap-1 mt-1 opacity-90 transition-all group-hover/card:translate-x-0.5">
+                                                                    <span className="text-[9px] font-bold truncate">
+                                                                        {appt.users?.full_name} • {new Date(appt.start_time).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}
+                                                                    </span>
+                                                                </div>
+                                                            )}
                                                         </div>
 
-                                                        {/* Thông tin khách & Giờ */}
-                                                        <div className="flex items-center gap-1.5 mt-1">
-                                                            <div className="w-5 h-5 rounded-lg bg-white/60 dark:bg-black/40 flex items-center justify-center shrink-0 shadow-sm border border-black/5 dark:border-white/5">
-                                                                <UserIcon size={10}/>
-                                                            </div>
-                                                            <p className="text-[10px] font-bold truncate">{appt.users?.full_name}</p>
+                                                        {/* Subtle Indicator: Chỉ hiện khi hover để tránh rối mắt */}
+                                                        <div className="absolute bottom-1 right-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
+                                                            <Activity size={10} className="text-white/50" />
                                                         </div>
-                                                        
-                                                        {appt.height > 60 && (
-                                                            <div className="mt-2 flex items-center gap-1 opacity-60">
-                                                                <Clock size={9} />
-                                                                <span className="text-[9px] font-bold">
-                                                                    {new Date(appt.start_time).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}
-                                                                </span>
-                                                            </div>
-                                                        )}
                                                     </div>
                                                 );
                                             });
