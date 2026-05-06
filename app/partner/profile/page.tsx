@@ -924,11 +924,15 @@ export default function PartnerProfilePage() {
       {/* ================= MODAL: XEM VIDEO STUDIO (CHUẨN TIKTOK 9:16 + CENTERED) ================= */}
       {expandedVideo && (
         <div className="fixed inset-0 z-[140] flex justify-center items-center overflow-hidden transition-all duration-500">
-          {/* Backdrop mờ cực đại bao phủ toàn trang */}
+          {/* Backdrop mờ cực đại: Click để dọn sạch toàn bộ Video & Bình luận */}
           <div className="absolute inset-0 bg-black/95 backdrop-blur-3xl animate-fade-in" 
-               onClick={() => { setExpandedVideo(null); setIsCommentModalOpen(false); }}>
+               onClick={() => { 
+                   setExpandedVideo(null); 
+                   setIsCommentModalOpen(false);
+                   setActiveCommentVideoId(null);
+               }}>
                {/* Background mờ chuyển động từ chính video */}
-               <video src={expandedVideo.video_url} className="absolute inset-0 w-full h-full object-cover opacity-30 blur-[100px] scale-110" muted playsInline autoPlay loop />
+               <video src={expandedVideo.video_url} className="absolute inset-0 w-full h-full object-cover opacity-20 blur-[100px] scale-110" muted playsInline autoPlay loop />
           </div>
           
           {/* Cấu trúc Container chuẩn 9:16 căn giữa */}
@@ -941,9 +945,13 @@ export default function PartnerProfilePage() {
                 {/* Overlay Đen mờ dưới chân để nổi text */}
                 <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/95 via-black/20 to-transparent pointer-events-none"></div>
                 
-                {/* Nút thoát (Góc trái) & Badge trạng thái */}
+                {/* Nút thoát (Góc trái): Đảm bảo đóng cả video và bình luận */}
                 <div className="absolute top-6 left-6 z-30 flex items-center gap-3">
-                    <button onClick={() => { setExpandedVideo(null); setIsCommentModalOpen(false); }} 
+                    <button onClick={() => { 
+                                setExpandedVideo(null); 
+                                setIsCommentModalOpen(false); 
+                                setActiveCommentVideoId(null);
+                            }} 
                             className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-white hover:bg-rose-500/30 hover:text-rose-400 transition-all active:scale-90 flex items-center justify-center shadow-lg">
                         <X size={20} strokeWidth={3}/>
                     </button>
@@ -1016,18 +1024,22 @@ export default function PartnerProfilePage() {
         </div>
       )}
 
-      {/* ================= DRAWER BÌNH LUẬN TRÊN LỚP VIDEO (Z-INDEX 150) ================= */}
-      {/* Drawer này sẽ trượt từ phải vào và che một phần Video khi mở */}
-      <CommentModal 
-        isOpen={isCommentModalOpen} 
-        onClose={() => setIsCommentModalOpen(false)} 
-        videoId={activeCommentVideoId || ""} 
-        videoAuthorId={profileData?.profile?.id || ""} 
-        user={user} 
-        userRole={profileData?.profile?.role || "PARTNER"} 
-        onCommentAdded={handleCommentSuccess} 
-        onCommentDeleted={handleCommentDeleted} 
-      />
+      {/* ================= DRAWER BÌNH LUẬN: ĐỈNH TẦNG HIỂN THỊ (FIX Z-INDEX) ================= */}
+      {/* Bọc lớp z-[200] để đảm bảo Drawer trượt đè lên bản Video z-[140] */}
+      <div className="fixed inset-0 z-[200] pointer-events-none">
+          <div className="pointer-events-auto h-full w-full">
+              <CommentModal 
+                isOpen={isCommentModalOpen} 
+                onClose={() => setIsCommentModalOpen(false)} 
+                videoId={activeCommentVideoId || ""} 
+                videoAuthorId={profileData?.profile?.id || ""} 
+                user={user} 
+                userRole={profileData?.profile?.role || "PARTNER"} 
+                onCommentAdded={handleCommentSuccess} 
+                onCommentDeleted={handleCommentDeleted} 
+              />
+          </div>
+      </div>
 
     </div>
   );
