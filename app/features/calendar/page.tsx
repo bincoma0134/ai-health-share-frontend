@@ -39,13 +39,16 @@ export default function CalendarFeature() {
   // --- TRẠNG THÁI & HÀM XỬ LÝ CHO PARTNER HUB ---
   const [partnerViewMode, setPartnerViewMode] = useState<'timeline' | 'analytics'>('timeline');
 
-  // Hàm "Ma thuật" gom nhóm dữ liệu để vẽ biểu đồ mà không cần gọi thêm API Backend
+  // Hàm "Ma thuật" nâng cấp: Chuyển đổi sang các chỉ số vận hành chuẩn mực
   const getPartnerMetrics = () => {
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       
-      let todayCount = 0; let pendingCheckInCount = 0; let weeklyRev = 0;
-      let completedCount = 0; let cancelledCount = 0;
+      let todayCount = 0; 
+      let pendingCheckInCount = 0; 
+      let pendingPaymentCount = 0; 
+      let cancelledTotal = 0;
+      let weeklyRev = 0;
 
       const last7Days = Array.from({length: 7}, (_, i) => {
           const d = new Date(today); d.setDate(d.getDate() - i);
@@ -58,24 +61,30 @@ export default function CalendarFeature() {
       appointments.forEach(a => {
           const startObj = a.start_time ? new Date(a.start_time) : null;
           const dateStr = startObj ? startObj.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) : '';
+          const status = a.status?.toUpperCase();
           
+          // 1. Đếm lịch hôm nay
           if (startObj && startObj >= today && startObj < new Date(today.getTime() + 86400000)) {
               todayCount++;
-              if (a.status === 'CONFIRMED') pendingCheckInCount++;
+              if (status === 'CONFIRMED') pendingCheckInCount++;
           }
-          if (a.status === 'COMPLETED') {
-              completedCount++;
+          
+          // 2. Đếm đơn chờ thanh toán (Toàn thời gian)
+          if (status === 'PENDING_PAYMENT') pendingPaymentCount++;
+          
+          // 3. Đếm đơn đã hủy (Toàn thời gian)
+          if (status === 'CANCELLED') cancelledTotal++;
+
+          // 4. Xử lý dữ liệu biểu đồ (Vẫn giữ để không đứt gãy chart)
+          if (status === 'COMPLETED') {
               if (revByDay[dateStr] !== undefined) {
                   revByDay[dateStr] += Number(a.total_amount || 0);
                   weeklyRev += Number(a.total_amount || 0);
               }
           }
-          if (a.status === 'CANCELLED') cancelledCount++;
       });
 
-      const successRate = (completedCount + cancelledCount) > 0 
-          ? Math.round((completedCount / (completedCount + cancelledCount)) * 100) : 100;
-      return { todayCount, pendingCheckInCount, weeklyRev, successRate, last7Days, revByDay };
+      return { todayCount, pendingCheckInCount, pendingPaymentCount, cancelledTotal, weeklyRev, last7Days, revByDay };
   };
 
   const metrics = getPartnerMetrics();
@@ -279,23 +288,46 @@ export default function CalendarFeature() {
                  <div className="flex flex-col items-center justify-center py-20 text-center"><h3 className="text-xl font-bold">Vui lòng đăng nhập</h3></div>
             ) : isMyClient ? (
                 <div className="animate-fade-in flex flex-col gap-6">
-                    {/* THỐNG KÊ TOP METRICS */}
+                    {/* THỐNG KÊ TOP METRICS - PHIÊN BẢN CHUẨN MỰC */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
-                        <div className="p-4 rounded-2xl bg-white dark:bg-[#141416] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-md hover:border-[#80BF84]/50">
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Lịch hôm nay</p>
+                        {/* 1. Lịch hôm nay */}
+                        <div className="p-5 rounded-[2rem] bg-white dark:bg-[#141416] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-xl hover:border-blue-500/40 group">
+                            <div className="flex justify-between items-start mb-2">
+                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Lịch hôm nay</p>
+                                <CalendarDays size={16} className="text-blue-500 opacity-50 group-hover:opacity-100 transition-opacity" />
+                            </div>
                             <p className="text-4xl font-black text-slate-900 dark:text-white">{metrics.todayCount}</p>
+                            <p className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-tight">Tổng số cuộc hẹn</p>
                         </div>
-                        <div className="p-4 rounded-2xl bg-white dark:bg-[#141416] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-md hover:border-emerald-500/50">
-                            <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">Chờ Check-in</p>
+
+                        {/* 2. Chờ Check-in */}
+                        <div className="p-5 rounded-[2rem] bg-white dark:bg-[#141416] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-xl hover:border-emerald-500/40 group">
+                            <div className="flex justify-between items-start mb-2">
+                                <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Chờ Check-in</p>
+                                <CheckCircle size={16} className="text-emerald-500 opacity-50 group-hover:opacity-100 transition-opacity" />
+                            </div>
                             <p className="text-4xl font-black text-emerald-600 dark:text-emerald-400">{metrics.pendingCheckInCount}</p>
+                            <p className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-tight">Khách sắp đến</p>
                         </div>
-                        <div className="p-4 rounded-2xl bg-white dark:bg-[#141416] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-md hover:border-[#80BF84]/50">
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Doanh thu 7 ngày</p>
-                            <p className="text-2xl mt-1 font-black text-[#80BF84] truncate">{formatPrice(metrics.weeklyRev)}</p>
+
+                        {/* 3. Chờ thanh toán */}
+                        <div className="p-5 rounded-[2rem] bg-white dark:bg-[#141416] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-xl hover:border-amber-500/40 group">
+                            <div className="flex justify-between items-start mb-2">
+                                <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Chờ thanh toán</p>
+                                <Clock size={16} className="text-amber-500 opacity-50 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                            <p className="text-4xl font-black text-amber-600 dark:text-amber-400">{metrics.pendingPaymentCount}</p>
+                            <p className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-tight">Cần xác nhận bảo chứng</p>
                         </div>
-                        <div className="p-4 rounded-2xl bg-white dark:bg-[#141416] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-md hover:border-blue-500/50">
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Tỷ lệ hoàn thành</p>
-                            <p className="text-4xl font-black text-blue-500">{metrics.successRate}%</p>
+
+                        {/* 4. Đơn đã hủy */}
+                        <div className="p-5 rounded-[2rem] bg-white dark:bg-[#141416] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-xl hover:border-rose-500/40 group">
+                            <div className="flex justify-between items-start mb-2">
+                                <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest">Đơn đã hủy</p>
+                                <XCircle size={16} className="text-rose-500 opacity-50 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                            <p className="text-4xl font-black text-rose-600 dark:text-rose-400">{metrics.cancelledTotal}</p>
+                            <p className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-tight">Lịch trình thất thoát</p>
                         </div>
                     </div>
 
