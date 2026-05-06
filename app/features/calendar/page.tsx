@@ -143,51 +143,38 @@ export default function CalendarFeature() {
       return monday;
   });
 
-  // Hàm tính toán vị trí và xử lý chồng lấn (Collision Detection)
+  // Hàm tính toán vị trí: Thuật toán Xếp Lớp (Layered Stacking) chuẩn Google Calendar
   const getPositionedEvents = (dayAppointments: any[]) => {
-      const sorted = [...dayAppointments].sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
-      const groups: any[][] = [];
-      
-      sorted.forEach(event => {
-          let placed = false;
-          for (let group of groups) {
-              if (group.some(e => {
-                  const startA = new Date(e.start_time).getTime();
-                  const endA = new Date(e.end_time).getTime();
-                  const startB = new Date(event.start_time).getTime();
-                  const endB = new Date(event.end_time).getTime();
-                  return (startB < endA && endB > startA);
-              })) {
-                  group.push(event);
-                  placed = true;
-                  break;
-              }
-          }
-          if (!placed) groups.push([event]);
-      });
+    const events = [...dayAppointments].sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+    
+    return events.map((event, i) => {
+        const start = new Date(event.start_time).getTime();
+        const end = new Date(event.end_time).getTime();
+        
+        // Tìm các sự kiện BẮT ĐẦU TRƯỚC và chồng lấn lên sự kiện này để tính khoảng thò ra (offset)
+        const overlappingBefore = events.filter((other, j) => {
+            if (j >= i) return false;
+            const startOther = new Date(other.start_time).getTime();
+            const endOther = new Date(other.end_time).getTime();
+            return (start < endOther && end > startOther);
+        });
 
-      return groups.flatMap(group => {
-          const groupSize = group.length;
-          return group.map((event, idx) => {
-              const start = new Date(event.start_time);
-              const end = new Date(event.end_time);
-              const duration = (end.getTime() - start.getTime()) / (1000 * 60);
-              
-              // Thuật toán Stacking: Thẻ sau sẽ thò ra ít nhất 30% diện tích để đọc được text
-              // Nếu quá nhiều thẻ (n > 2), chúng ta mới bắt đầu bóp nhỏ chiều rộng
-              const width = groupSize > 1 ? (100 / (groupSize * 0.8)) : 100;
-              const left = idx * (100 / (groupSize + 1));
+        const offset = Math.min(overlappingBefore.length, 4); // Lệch tối đa 4 lớp để không tràn cột
+        const duration = (end - start) / (1000 * 60);
+        
+        // Kiểm tra xem sự kiện này có bị trùng với BẤT KỲ sự kiện nào khác không
+        const hasOverlap = events.some((other, j) => i !== j && (new Date(other.start_time).getTime() < end && new Date(other.end_time).getTime() > start));
 
-              return {
-                  ...event,
-                  top: (start.getHours() - 5) * 100 + (start.getMinutes() / 60) * 100,
-                  height: Math.max((duration / 60) * 100, 20),
-                  width: Math.min(width, 95), // Không cho phép rộng quá 95% để tránh dính lề
-                  left: groupSize > 1 ? left : 0
-              };
-          });
-      });
-  };
+        return {
+            ...event,
+            top: (new Date(event.start_time).getHours() - 5) * 100 + (new Date(event.start_time).getMinutes() / 60) * 100,
+            height: Math.max((duration / 60) * 100, 25),
+            offsetLeftPx: hasOverlap ? (offset * 14) + 2 : 2, // Mỗi lớp thụt vào 14px để lộ chữ
+            widthPercent: hasOverlap ? 85 : 100, // Nếu trùng thì thẻ rộng 85%, đứng một mình rộng 100%
+            zIndex: 10 + offset // Thẻ sau đè lên thẻ trước
+        };
+    });
+};
   
   // Cấu hình UI cho biểu đồ ApexCharts
   const chartOptions: any = {
@@ -495,15 +482,16 @@ export default function CalendarFeature() {
                                                 return (
                                                     <div 
                                                         key={appt.id}
-                                                        className={`absolute rounded-lg px-2 py-1.5 border border-white/20 dark:border-white/5 transition-all hover:z-[50] hover:shadow-2xl cursor-pointer group/card overflow-hidden select-none ring-1 ring-black/5
-                                                            ${isConfirmed ? 'bg-emerald-500/90 text-white shadow-[0_4px_12px_-2px_rgba(16,185,129,0.3)]' : 
-                                                              isServed ? 'bg-blue-500/90 text-white shadow-[0_4px_12px_-2px_rgba(59,130,246,0.3)]' : 
-                                                              'bg-slate-400/80 text-white opacity-60'}`}
+                                                        className={`absolute rounded-lg px-2 py-1.5 border-[1.5px] border-white dark:border-[#0a0a0c] transition-all hover:shadow-2xl cursor-pointer group/card overflow-hidden select-none
+                                                            ${isConfirmed ? 'bg-emerald-500 text-white shadow-sm hover:bg-emerald-400' : 
+                                                              isServed ? 'bg-blue-500 text-white shadow-sm hover:bg-blue-400' : 
+                                                              'bg-slate-400 text-white opacity-80 hover:bg-slate-300'}`}
                                                         style={{ 
                                                             top: `${appt.top}px`, 
                                                             height: `${appt.height}px`, 
-                                                            left: `calc(${dIdx * (100/7)}% + ${appt.left}%)`, 
-                                                            width: `calc(${(100/7) * (appt.width/100)}% - 2px)` 
+                                                            left: `calc(${dIdx * (100/7)}% + ${appt.offsetLeftPx}px)`, 
+                                                            width: `calc(${(100/7)}% * ${appt.widthPercent / 100} - 4px)`,
+                                                            zIndex: appt.zIndex || 10
                                                         }}
                                                         onClick={() => openAppointmentDetail(appt)}
                                                     >
@@ -835,12 +823,12 @@ export default function CalendarFeature() {
                                                 {appt.users?.avatar_url ? <img src={appt.users.avatar_url} className="w-full h-full object-cover" /> : <UserIcon size={20}/>}
                                             </div>
                                             <div>
-                                                <p className="font-black text-slate-900 dark:text-white text-sm line-clamp-1">{appt.users?.full_name || "Ẩn danh"}</p>
-                                                <p className="text-[10px] font-bold text-slate-500">{appt.users?.phone || "Không có SĐT"}</p>
+                                                <p className="font-black text-slate-900 dark:text-white text-sm line-clamp-1">{appt.customer_name || appt.users?.full_name || "Khách hàng ẩn danh"}</p>
+                                                <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-400">{appt.customer_phone || appt.users?.phone || "Không có SĐT"}</p>
                                             </div>
                                         </div>
                                         <div className="text-right shrink-0">
-                                            <p className="font-black text-slate-900 dark:text-white text-sm">{formatPrice(appt.total_amount || 0)}</p>
+                                            <p className="font-black text-[#80BF84] dark:text-[#80BF84] text-sm">{formatPrice(appt.total_amount || 0)}</p>
                                             <span className={`text-[9px] font-black uppercase ${
                                                 appt.status === 'CONFIRMED' ? 'text-emerald-500' :
                                                 appt.status === 'PENDING_PAYMENT' ? 'text-amber-500' :
@@ -904,7 +892,7 @@ export default function CalendarFeature() {
                                         <div className="w-10 h-10 rounded-full bg-white dark:bg-black/40 flex items-center justify-center shadow-sm"><Activity size={18} className="text-[#80BF84]" /></div>
                                         <span className="font-bold text-sm line-clamp-2">{selectedDetail.services?.service_name}</span>
                                     </div>
-                                    <span className="font-black text-lg">{formatPrice(selectedDetail.total_amount || 0)}</span>
+                                    <span className="font-black text-lg text-[#80BF84] dark:text-[#80BF84] drop-shadow-sm">{formatPrice(selectedDetail.total_amount || 0)}</span>
                                 </div>
 
                                 <div className="flex justify-between items-center">
