@@ -89,10 +89,12 @@ export default function CalendarFeature() {
 
   const metrics = getPartnerMetrics();
 
-  // --- LOGIC SIDE DRAWER CHI TIẾT ---
+  // --- LOGIC SIDE DRAWER: DANH SÁCH & CHI TIẾT ---
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [drawerMode, setDrawerMode] = useState<'list' | 'detail'>('list');
   const [drawerData, setDrawerTitle] = useState({ title: "", type: "" });
   const [selectedAppointments, setSelectedList] = useState<any[]>([]);
+  const [selectedDetail, setSelectedDetail] = useState<any>(null);
 
   const openMetricDetails = (type: 'today' | 'checkin' | 'payment' | 'cancelled') => {
       const now = new Date();
@@ -117,6 +119,15 @@ export default function CalendarFeature() {
 
       setSelectedList(filtered);
       setDrawerTitle({ title, type });
+      setDrawerMode('list');
+      setIsDrawerOpen(true);
+  };
+
+  const openAppointmentDetail = (appt: any, fromList = false) => {
+      setSelectedDetail(appt);
+      setDrawerMode('detail');
+      // Nếu mở trực tiếp từ Grid, xóa thông tin Title của list cũ để ẩn nút "Quay lại"
+      if (!fromList) setDrawerTitle({ title: "", type: "" }); 
       setIsDrawerOpen(true);
   };
 
@@ -487,11 +498,7 @@ export default function CalendarFeature() {
                                                             left: `calc(${dIdx * (100/7)}% + ${appt.left}%)`, 
                                                             width: `calc(${(100/7) * (appt.width/100)}% - 4px)` 
                                                         }}
-                                                        onClick={() => {
-                                                            if (isConfirmed) {
-                                                                toast.info(`Khách: ${appt.users?.full_name}. Nhấn vào Header Metrics để nhập mã.`);
-                                                            }
-                                                        }}
+                                                        onClick={() => openAppointmentDetail(appt)}
                                                     >
                                                         {/* Header của thẻ sự kiện */}
                                                         <div className="flex justify-between items-start gap-1">
@@ -773,80 +780,181 @@ export default function CalendarFeature() {
         {/* CŨ: <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-max pointer-events-auto">... */}
 
         
-      {/* ================= SIDE DRAWER CHI TIẾT ĐƠN HÀNG ================= */}
-        <div className={`fixed inset-0 z-[120] transition-opacity duration-300 ${isDrawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-            {/* Backdrop mờ */}
-            <div className="absolute inset-0 bg-slate-900/20 dark:bg-black/60 backdrop-blur-[2px]" onClick={() => setIsDrawerOpen(false)}></div>
+      {/* ================= THIẾT KẾ FLOATING SIDE DRAWER (ĐA NĂNG) ================= */}
+        <div className={`fixed inset-0 z-[120] transition-all duration-500 ${isDrawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+            {/* Backdrop mờ mềm mại */}
+            <div className="absolute inset-0 bg-slate-900/10 dark:bg-black/40 backdrop-blur-sm transition-opacity duration-500" onClick={() => setIsDrawerOpen(false)}></div>
             
-            {/* Nội dung Drawer */}
-            <div className={`absolute top-0 right-0 h-full w-full md:w-[450px] bg-white/95 dark:bg-zinc-900/95 backdrop-blur-2xl border-l border-slate-200 dark:border-white/10 shadow-2xl transition-transform duration-500 ease-out flex flex-col ${isDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+            {/* Nội dung Drawer - Thiết kế nổi (Floating), bo góc siêu mềm */}
+            <div className={`absolute top-2 right-2 md:top-4 md:right-4 bottom-2 md:bottom-4 w-[calc(100%-16px)] md:w-[450px] bg-white/95 dark:bg-[#121214]/95 backdrop-blur-3xl rounded-[2.5rem] border border-white/40 dark:border-white/10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] transition-transform duration-500 ease-out flex flex-col overflow-hidden ${isDrawerOpen ? 'translate-x-0' : 'translate-x-[120%]'}`}>
                 
-                {/* Drawer Header */}
-                <div className="p-8 border-b border-slate-200 dark:border-white/10 flex justify-between items-center bg-slate-50/50 dark:bg-white/5">
+                {/* Header Dùng chung */}
+                <div className="px-8 py-6 flex justify-between items-start border-b border-slate-100 dark:border-white/5 bg-gradient-to-b from-slate-50/50 to-transparent dark:from-white/[0.02]">
                     <div>
-                        <h3 className="text-2xl font-black text-slate-900 dark:text-white leading-tight">{drawerData.title}</h3>
-                        <p className="text-xs font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest mt-1">Tổng cộng: {selectedAppointments.length} bản ghi</p>
+                        <h3 className="text-2xl font-black text-slate-900 dark:text-white leading-tight">
+                            {drawerMode === 'list' ? drawerData.title : "Chi tiết Lịch hẹn"}
+                        </h3>
+                        {drawerMode === 'list' && (
+                            <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest mt-1">Tổng cộng: {selectedAppointments.length} bản ghi</p>
+                        )}
+                        {drawerMode === 'detail' && selectedDetail && (
+                            <p className={`text-[10px] font-black uppercase tracking-widest mt-2 px-2.5 py-1 rounded-full inline-block ${
+                                selectedDetail.status === 'CONFIRMED' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' :
+                                selectedDetail.status === 'PENDING_PAYMENT' ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400' :
+                                selectedDetail.status === 'SERVED' ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400' :
+                                selectedDetail.status === 'CANCELLED' ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400' : 
+                                'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300'
+                            }`}>
+                                {selectedDetail.status.replace('_', ' ')}
+                            </p>
+                        )}
                     </div>
-                    <button onClick={() => setIsDrawerOpen(false)} className="p-2.5 rounded-full hover:bg-slate-200 dark:hover:bg-white/10 transition-colors text-slate-500 dark:text-white">
-                        <Receipt size={24} />
+                    <button onClick={() => setIsDrawerOpen(false)} className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 flex items-center justify-center transition-all text-slate-500 dark:text-white active:scale-95">
+                        <XCircle size={20} />
                     </button>
                 </div>
 
-                {/* Drawer Body - Danh sách đơn */}
+                {/* Nội dung bên trong (Cuộn độc lập) */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar">
-                    {selectedAppointments.length === 0 ? (
-                        <div className="h-full flex flex-col items-center justify-center text-center opacity-40">
-                            <Activity size={48} className="mb-4" />
-                            <p className="font-bold">Không có dữ liệu hiển thị</p>
-                        </div>
-                    ) : (
-                        selectedAppointments.map((appt) => (
-                            <div key={appt.id} className="p-5 rounded-3xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-md transition-all group/item">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-slate-500 overflow-hidden border border-white dark:border-zinc-700 shadow-sm">
-                                            {appt.users?.avatar_url ? <img src={appt.users.avatar_url} className="w-full h-full object-cover" /> : <UserIcon size={20}/>}
+                    
+                    {/* CHẾ ĐỘ 1: XEM DANH SÁCH METRICS */}
+                    {drawerMode === 'list' && (
+                        selectedAppointments.length === 0 ? (
+                            <div className="h-full flex flex-col items-center justify-center text-center opacity-40">
+                                <Activity size={48} className="mb-4" />
+                                <p className="font-bold">Không có dữ liệu hiển thị</p>
+                            </div>
+                        ) : (
+                            selectedAppointments.map((appt) => (
+                                <div key={appt.id} onClick={() => openAppointmentDetail(appt, true)} className="p-5 rounded-[1.5rem] bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-white/10 transition-all group/item cursor-pointer">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-slate-500 overflow-hidden border border-white dark:border-zinc-700 shadow-sm shrink-0">
+                                                {appt.users?.avatar_url ? <img src={appt.users.avatar_url} className="w-full h-full object-cover" /> : <UserIcon size={20}/>}
+                                            </div>
+                                            <div>
+                                                <p className="font-black text-slate-900 dark:text-white text-sm line-clamp-1">{appt.users?.full_name || "Ẩn danh"}</p>
+                                                <p className="text-[10px] font-bold text-slate-500">{appt.users?.phone || "Không có SĐT"}</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="font-black text-slate-900 dark:text-white text-sm">{appt.users?.full_name || "Ẩn danh"}</p>
-                                            <p className="text-[10px] font-bold text-slate-500">{appt.users?.phone || "Không có SĐT"}</p>
+                                        <div className="text-right shrink-0">
+                                            <p className="font-black text-slate-900 dark:text-white text-sm">{formatPrice(appt.total_amount || 0)}</p>
+                                            <span className={`text-[9px] font-black uppercase ${
+                                                appt.status === 'CONFIRMED' ? 'text-emerald-500' :
+                                                appt.status === 'PENDING_PAYMENT' ? 'text-amber-500' :
+                                                appt.status === 'CANCELLED' ? 'text-rose-500' : 'text-slate-500'
+                                            }`}>{appt.status.replace('_', ' ')}</span>
                                         </div>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="font-black text-slate-900 dark:text-white text-sm">{formatPrice(appt.total_amount || 0)}</p>
-                                        <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase ${
-                                            appt.status === 'CONFIRMED' ? 'bg-emerald-500/10 text-emerald-500' :
-                                            appt.status === 'PENDING_PAYMENT' ? 'bg-amber-500/10 text-amber-500' :
-                                            appt.status === 'CANCELLED' ? 'bg-rose-500/10 text-rose-500' : 'bg-slate-500/10 text-slate-500'
-                                        }`}>{appt.status.replace('_', ' ')}</span>
+                                    <div className="space-y-2">
+                                        <div className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-zinc-400">
+                                            <Activity size={14} className="text-[#80BF84]" />
+                                            <span className="line-clamp-1">{appt.services?.service_name}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-zinc-400">
+                                            <Clock size={14} className="text-[#80BF84]" />
+                                            <span>{new Date(appt.start_time).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}</span>
+                                        </div>
                                     </div>
                                 </div>
+                            ))
+                        )
+                    )}
 
-                                <div className="space-y-2 mb-4">
-                                    <div className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-zinc-400">
-                                        <Activity size={14} className="text-[#80BF84]" />
-                                        <span>{appt.services?.service_name}</span>
+                    {/* CHẾ ĐỘ 2: CHI TIẾT 1 ĐƠN HÀNG */}
+                    {drawerMode === 'detail' && selectedDetail && (
+                        <div className="animate-fade-in space-y-6">
+                            {/* Thông tin Khách hàng */}
+                            <div className="p-6 rounded-[2rem] bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Thông tin khách hàng</p>
+                                <div className="flex items-center gap-4">
+                                    <div className="w-14 h-14 rounded-[1.25rem] bg-white dark:bg-zinc-800 flex items-center justify-center text-slate-500 overflow-hidden border-2 border-white dark:border-zinc-700 shadow-sm shrink-0">
+                                        {selectedDetail.users?.avatar_url ? <img src={selectedDetail.users.avatar_url} className="w-full h-full object-cover" /> : <UserIcon size={24}/>}
                                     </div>
-                                    <div className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-zinc-400">
-                                        <Clock size={14} className="text-[#80BF84]" />
-                                        <span>{new Date(appt.start_time).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}</span>
+                                    <div>
+                                        <p className="font-black text-xl text-slate-900 dark:text-white">{selectedDetail.users?.full_name || "Khách hàng ẩn danh"}</p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className="text-xs font-bold text-slate-500">{selectedDetail.users?.phone || "Không có SĐT"}</span>
+                                            {selectedDetail.users?.phone && (
+                                                <a href={`tel:${selectedDetail.users.phone}`} className="w-6 h-6 rounded-full bg-[#80BF84]/20 flex items-center justify-center text-[#80BF84] hover:bg-[#80BF84] hover:text-white transition-colors">
+                                                    <Phone size={10} />
+                                                </a>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-
-                                {/* Hành động nhanh trong Drawer */}
-                                {appt.status === 'CONFIRMED' && (
-                                    <div className="flex gap-2 pt-2 border-t border-slate-100 dark:border-white/5">
-                                        <input 
-                                            type="text" 
-                                            placeholder="Mã 6 số" 
-                                            className="flex-1 px-4 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black font-black tracking-widest outline-none focus:border-[#80BF84]"
-                                            onChange={(e) => setCheckInCodes({...checkInCodes, [appt.id]: e.target.value})}
-                                        />
-                                        <button onClick={() => handleComplete(appt.id)} className="px-4 py-2 bg-[#80BF84] text-zinc-900 text-xs font-black rounded-xl shadow-lg shadow-[#80BF84]/20 hover:scale-105 transition-transform">Xác nhận</button>
+                                {selectedDetail.note && (
+                                    <div className="mt-4 p-4 rounded-2xl bg-white dark:bg-black/20 text-sm font-medium text-slate-600 dark:text-zinc-400 italic">
+                                        "{selectedDetail.note}"
                                     </div>
                                 )}
                             </div>
-                        ))
+
+                            {/* Thông tin Dịch vụ & Thời gian */}
+                            <div className="p-6 rounded-[2rem] bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 space-y-4">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Chi tiết dịch vụ</p>
+                                
+                                <div className="flex justify-between items-center">
+                                    <div className="flex items-center gap-3 text-slate-700 dark:text-zinc-300">
+                                        <div className="w-10 h-10 rounded-full bg-white dark:bg-black/40 flex items-center justify-center shadow-sm"><Activity size={18} className="text-[#80BF84]" /></div>
+                                        <span className="font-bold text-sm line-clamp-2">{selectedDetail.services?.service_name}</span>
+                                    </div>
+                                    <span className="font-black text-lg">{formatPrice(selectedDetail.total_amount || 0)}</span>
+                                </div>
+
+                                <div className="flex justify-between items-center">
+                                    <div className="flex items-center gap-3 text-slate-700 dark:text-zinc-300">
+                                        <div className="w-10 h-10 rounded-full bg-white dark:bg-black/40 flex items-center justify-center shadow-sm"><Clock size={18} className="text-[#80BF84]" /></div>
+                                        <div>
+                                            <p className="font-bold text-sm">
+                                                {new Date(selectedDetail.start_time).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})} - {new Date(selectedDetail.end_time).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}
+                                            </p>
+                                            <p className="text-[10px] font-bold text-slate-400 mt-0.5">{new Date(selectedDetail.start_time).toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Khu vực Xử lý Trạng thái đặc biệt */}
+                            {selectedDetail.status === 'CONFIRMED' && (
+                                <div className="p-6 rounded-[2rem] bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/30 text-center">
+                                    <p className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-4">Hoàn tất dịch vụ</p>
+                                    <input 
+                                        type="text" 
+                                        placeholder="Nhập 6 số mã khách" 
+                                        className="w-full px-4 py-4 text-center rounded-[1.5rem] border border-emerald-200 dark:border-emerald-800/50 bg-white dark:bg-black/50 font-black text-xl tracking-[0.3em] outline-none focus:ring-2 focus:ring-emerald-500/50 mb-4 transition-all"
+                                        value={checkInCodes[selectedDetail.id] || ''}
+                                        onChange={(e) => setCheckInCodes({...checkInCodes, [selectedDetail.id]: e.target.value})}
+                                    />
+                                    <button 
+                                        onClick={() => handleComplete(selectedDetail.id)} 
+                                        className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-[1.5rem] shadow-lg shadow-emerald-500/30 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
+                                    >
+                                        <CheckCircle size={20} /> Xác nhận mã & Check-in
+                                    </button>
+                                </div>
+                            )}
+
+                            {selectedDetail.status === 'CANCELLED' && selectedDetail.rejection_reason && (
+                                <div className="p-5 rounded-[1.5rem] bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 text-rose-700 dark:text-rose-400">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <AlertCircle size={16} />
+                                        <span className="text-xs font-black uppercase">Lý do từ chối/Hủy</span>
+                                    </div>
+                                    <p className="text-sm font-medium">{selectedDetail.rejection_reason}</p>
+                                </div>
+                            )}
+
+                            {/* Điều hướng luồng quay lại nếu đi vào từ Danh sách */}
+                            {drawerData.title && (
+                                <button 
+                                    onClick={() => setDrawerMode('list')}
+                                    className="w-full py-3 mt-4 text-slate-500 hover:text-slate-700 dark:text-zinc-500 dark:hover:text-white font-bold text-sm transition-colors"
+                                >
+                                    &larr; Quay lại danh sách
+                                </button>
+                            )}
+                        </div>
                     )}
                 </div>
             </div>
