@@ -921,76 +921,99 @@ export default function PartnerProfilePage() {
         </div>
       )}
 
-      {/* ================= MODAL: XEM VIDEO STUDIO (EXPANDED VIEW TƯƠNG TÁC THẬT) ================= */}
+      {/* ================= MODAL: XEM VIDEO STUDIO (CHUẨN TIKTOK FLOW) ================= */}
       {expandedVideo && (
-        <div className="fixed inset-0 z-[140] flex justify-center items-center p-4 md:p-6">
-          <div className="absolute inset-0 bg-slate-900/80 dark:bg-black/90 backdrop-blur-xl transition-opacity duration-500 animate-fade-in" onClick={() => setExpandedVideo(null)}></div>
+        <div className="fixed inset-0 z-[140] flex justify-center items-center p-0 md:p-6 transition-all duration-500">
+          <div className="absolute inset-0 bg-slate-950/90 dark:bg-black/95 backdrop-blur-2xl animate-fade-in" onClick={() => setExpandedVideo(null)}></div>
           
-          <div className="relative w-full max-w-[400px] h-[85vh] md:h-[90vh] bg-black rounded-[2.5rem] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.5)] border border-white/10 animate-slide-up flex flex-col">
+          <div className="relative w-full h-full md:h-[94vh] md:aspect-[9/16] md:rounded-[2.5rem] bg-black overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.8)] border-x border-white/5 animate-slide-up flex flex-col">
+            
+            {/* Video Player */}
             <video src={expandedVideo.video_url} className="absolute inset-0 w-full h-full object-cover" autoPlay loop muted playsInline />
             
-            {/* Lớp phủ UI */}
-            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none"></div>
+            {/* UI Overlays */}
+            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/95 via-black/20 to-transparent pointer-events-none"></div>
             
-            <button onClick={() => setExpandedVideo(null)} className="absolute top-4 left-4 p-2 rounded-full bg-black/50 backdrop-blur-md text-white hover:bg-rose-500/80 transition-colors z-20"><X size={20}/></button>
-            <div className="absolute top-4 right-4 z-20"><StatusBadge status={expandedVideo.status} /></div>
-
-            {/* Thông tin video */}
-            <div className="absolute bottom-6 left-6 right-20 z-10 pointer-events-auto">
-                <h3 className="text-xl font-black text-white leading-tight drop-shadow-xl mb-2">{expandedVideo.title}</h3>
-                <p className="text-zinc-300 text-sm line-clamp-3 drop-shadow-md font-medium mb-3">{expandedVideo.content}</p>
-                {expandedVideo.price ? (
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/20 backdrop-blur-md border border-blue-400/30 rounded-xl">
-                        <DollarSign size={14} className="text-blue-400"/>
-                        <span className="text-blue-400 text-sm font-black">{parseFloat(expandedVideo.price).toLocaleString('vi-VN')} VND</span>
-                    </div>
-                ) : null}
+            {/* Nút thoát & Status */}
+            <div className="absolute top-6 left-6 z-30 flex items-center gap-3">
+                <button onClick={() => setExpandedVideo(null)} className="p-2.5 rounded-full bg-white/10 backdrop-blur-xl border border-white/10 text-white hover:bg-rose-500/20 hover:text-rose-400 hover:border-rose-500/30 transition-all active:scale-90"><X size={22}/></button>
+                <StatusBadge status={expandedVideo.status} />
             </div>
 
-            {/* Thanh công cụ tương tác */}
-            <div className="absolute bottom-6 right-4 z-20 flex flex-col items-center gap-5 pointer-events-auto">
-                <button onClick={() => handleInteraction(expandedVideo.id, 'like')} className="flex flex-col items-center gap-1 group">
-                    <div className={`p-3 rounded-full backdrop-blur-md transition-all ${expandedVideo.is_liked ? 'bg-rose-500/20 text-rose-500 border border-rose-500/50' : 'bg-black/40 border border-white/20 text-white group-hover:bg-rose-500/30 group-hover:text-rose-400'}`}>
-                        <Heart size={22} strokeWidth={2} className={`group-active:scale-75 transition-transform ${expandedVideo.is_liked ? 'fill-rose-500' : ''}`} />
+            {/* Thông tin bên trái (Dưới cùng) */}
+            <div className="absolute bottom-[40px] left-6 z-20 max-w-[75%] pointer-events-auto animate-slide-up">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#80BF84]/20 backdrop-blur-md border border-[#80BF84]/30 rounded-full text-[10px] font-black text-[#80BF84] mb-4 uppercase tracking-widest shadow-sm">
+                  <ShieldCheck size={12} /> Dịch vụ xác thực
+                </div>
+                <h3 className="text-2xl md:text-3xl font-black text-white leading-tight drop-shadow-2xl mb-2">{expandedVideo.title}</h3>
+                <p className="text-zinc-200 text-xs md:text-sm line-clamp-2 drop-shadow-md font-medium mb-5 pr-4 opacity-90">{expandedVideo.content}</p>
+                
+                {expandedVideo.price && (
+                  <div className="flex items-center gap-3 pl-2 pr-6 py-2 bg-white/10 backdrop-blur-xl border border-white/20 text-white rounded-full w-max shadow-xl">
+                    <div className="w-10 h-10 bg-[#80BF84] rounded-full flex items-center justify-center text-zinc-950 shadow-inner"><DollarSign size={20} strokeWidth={3} /></div>
+                    <div className="flex flex-col"><span className="text-[10px] font-black text-[#80BF84] uppercase tracking-tighter leading-none mb-0.5">Giá tham khảo</span><span className="font-black text-lg leading-none tracking-tight">{parseFloat(expandedVideo.price).toLocaleString()} VND</span></div>
+                  </div>
+                )}
+            </div>
+
+            {/* Dải công cụ tương tác (Bên phải) */}
+            <div className="absolute bottom-[40px] right-4 z-20 flex flex-col items-center gap-6 pointer-events-auto">
+                
+                {/* NÚT CHỈNH SỬA (VỊ TRÍ TINH TẾ) */}
+                <button onClick={() => { setEditingVideo(expandedVideo); setExpandedVideo(null); setIsEditVideoModalOpen(true); }} className="flex flex-col items-center gap-1 group mb-2 scale-110">
+                    <div className="p-3.5 rounded-full bg-blue-600/90 backdrop-blur-xl border border-blue-400/50 text-white shadow-[0_0_20px_rgba(37,99,235,0.4)] hover:bg-blue-500 hover:scale-110 transition-all active:scale-95">
+                        <Edit3 size={24} strokeWidth={2.5} />
                     </div>
-                    <span className="text-xs font-bold text-white drop-shadow-md">{expandedVideo.likes_count || 0}</span>
+                    <span className="text-[9px] font-black text-blue-400 drop-shadow-xl uppercase tracking-tighter">Chỉnh sửa</span>
+                </button>
+
+                {/* Avatar Partner */}
+                <div className="relative mb-2">
+                  <div className="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-zinc-800 shadow-xl">
+                     <img src={profileData?.profile?.avatar_url || `https://ui-avatars.com/api/?name=${profileData?.profile?.full_name}&background=3b82f6&color=fff`} className="w-full h-full object-cover"/>
+                  </div>
+                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-5 h-5 bg-[#80BF84] rounded-full flex items-center justify-center border-2 border-zinc-900 shadow-lg"><Plus size={12} className="text-zinc-950" strokeWidth={4} /></div>
+                </div>
+
+                {/* Tương tác Xã hội */}
+                <button onClick={() => handleInteraction(expandedVideo.id, 'like')} className="flex flex-col items-center gap-1 group">
+                    <div className={`p-3.5 rounded-full backdrop-blur-xl transition-all ${expandedVideo.is_liked ? 'bg-rose-500/20 text-rose-500 border border-rose-500/50 shadow-[0_0_15px_rgba(244,63,94,0.3)]' : 'bg-white/10 border border-white/20 text-white group-hover:bg-rose-500/20 group-hover:text-rose-400'}`}>
+                        <Heart size={26} strokeWidth={2.5} className={`transition-transform ${expandedVideo.is_liked ? 'fill-rose-500 scale-110' : 'group-active:scale-75'}`} />
+                    </div>
+                    <span className="text-xs font-black text-white drop-shadow-2xl">{expandedVideo.likes_count || 0}</span>
                 </button>
                 
                 <button onClick={() => handleOpenComments(expandedVideo.id)} className="flex flex-col items-center gap-1 group">
-                    <div className="p-3 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-white group-hover:bg-white/30 transition-all">
-                        <MessageCircle size={22} />
+                    <div className="p-3.5 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white hover:bg-white/20 transition-all active:scale-95">
+                        <MessageCircle size={26} strokeWidth={2.5} />
                     </div>
-                    <span className="text-xs font-bold text-white drop-shadow-md">{expandedVideo.comments_count || 0}</span>
+                    <span className="text-xs font-black text-white drop-shadow-2xl">{expandedVideo.comments_count || 0}</span>
                 </button>
                 
                 <button onClick={() => handleInteraction(expandedVideo.id, 'save')} className="flex flex-col items-center gap-1 group">
-                    <div className={`p-3 rounded-full backdrop-blur-md transition-all ${expandedVideo.is_saved ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50' : 'bg-black/40 border border-white/20 text-white group-hover:bg-amber-500/30 group-hover:text-amber-400'}`}>
-                        <Bookmark size={22} strokeWidth={2} className={`group-active:scale-75 transition-transform ${expandedVideo.is_saved ? 'fill-amber-400' : ''}`} />
+                    <div className={`p-3.5 rounded-full backdrop-blur-xl transition-all ${expandedVideo.is_saved ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.3)]' : 'bg-white/10 border border-white/20 text-white group-hover:bg-amber-500/20 group-hover:text-amber-400'}`}>
+                        <Bookmark size={26} strokeWidth={2.5} className={`transition-transform ${expandedVideo.is_saved ? 'fill-amber-400 scale-110' : 'group-active:scale-75'}`} />
                     </div>
-                    <span className="text-xs font-bold text-white drop-shadow-md">{expandedVideo.saves_count || 0}</span>
+                    <span className="text-xs font-black text-white drop-shadow-2xl">{expandedVideo.saves_count || 0}</span>
                 </button>
 
-                <button onClick={() => {
-                    setEditingVideo(expandedVideo);
-                    setExpandedVideo(null);
-                    setIsEditVideoModalOpen(true);
-                }} className="flex flex-col items-center gap-1 group mt-2">
-                    <div className="p-3 rounded-full bg-blue-600/80 backdrop-blur-md border border-blue-400/50 text-white hover:bg-blue-500 transition-all">
-                        <Edit3 size={20} />
+                <button onClick={() => handleInteraction(expandedVideo.id, 'share')} className="flex flex-col items-center gap-1 group">
+                    <div className="p-3.5 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white hover:bg-white/20 transition-all active:scale-95">
+                        <Share2 size={26} strokeWidth={2.5} />
                     </div>
-                    <span className="text-[10px] font-black text-blue-400 drop-shadow-md uppercase">Sửa</span>
+                    <span className="text-[10px] font-black text-white drop-shadow-2xl uppercase tracking-tighter">Chia sẻ</span>
                 </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* COMPONENT BÌNH LUẬN THỜI GIAN THỰC */}
+      {/* ================= DRAWER BÌNH LUẬN THỜI GIAN THỰC ================= */}
       <CommentModal 
         isOpen={isCommentModalOpen} 
         onClose={() => setIsCommentModalOpen(false)} 
         videoId={activeCommentVideoId || ""} 
-        videoAuthorId={user?.id || ""} 
+        videoAuthorId={profileData?.profile?.id || ""} // Tác giả chính là Partner này
         user={user} 
         userRole={profileData?.profile?.role || "PARTNER"} 
         onCommentAdded={handleCommentSuccess} 
