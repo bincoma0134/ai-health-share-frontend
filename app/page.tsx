@@ -381,12 +381,12 @@ useEffect(() => {
   const filteredNotifs = activeNotifTab === 'all' ? notifications : notifications.filter(n => !n.isRead);
 
   return (
-    <div className="h-[100dvh] w-full bg-slate-50 dark:bg-[#09090b] overflow-hidden flex relative transition-colors duration-500 z-0">
+    <div className="h-[100dvh] w-full bg-slate-50 dark:bg-[#020617] overflow-hidden flex relative transition-colors duration-500 z-0">
       {/* CANVAS NỀN NGHỆ THUẬT: Giải phóng nền phẳng, bơm ánh sáng ngầm khúc xạ cho toàn bộ hệ thống Kính */}
       
-      {/* Glow Orbs - Tầng ánh sáng ngầm khúc xạ đa sắc (Z-0) */}
-      <div className="absolute top-[-10%] left-[-5%] w-[45%] h-[45%] bg-gradient-to-br from-violet-500/15 to-fuchsia-500/10 dark:from-violet-600/20 dark:to-fuchsia-600/15 blur-[120px] rounded-full pointer-events-none z-0 transform -rotate-12"></div>
-      <div className="absolute bottom-[5%] left-[15%] w-[35%] h-[35%] bg-gradient-to-tr from-emerald-400/10 to-cyan-400/10 dark:from-[#80BF84]/15 dark:to-cyan-500/10 blur-[100px] rounded-full pointer-events-none z-0"></div>
+      {/* Glow Orbs: Dịch chuyển sâu về lề trái (Z-0) để hắt sáng thẳng vào thấu kính Sidebar */}
+      <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-gradient-to-br from-violet-600/25 via-fuchsia-500/15 to-transparent blur-[140px] rounded-full pointer-events-none z-0 transform -rotate-12 animate-pulse" style={{ animationDuration: '8s' }}></div>
+      <div className="absolute bottom-[-5%] left-[-5%] w-[45%] h-[45%] bg-gradient-to-tr from-emerald-500/20 via-cyan-400/15 to-transparent blur-[120px] rounded-full pointer-events-none z-0"></div>
       <div className="absolute top-[20%] right-[-5%] w-[40%] h-[40%] bg-blue-500/10 dark:bg-blue-600/10 blur-[120px] rounded-full pointer-events-none z-0"></div>
 
       {/* ================= MAIN FEED AREA ================= */}
