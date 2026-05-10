@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import CommentModal from "@/components/CommentModal";  
 import FeedVideoPlayer from "@/components/FeedVideoPlayer"; 
+// 1. IMPORT THÊM USEAUTH TỪ CONTEXT TOÀN CỤC ĐỂ ĐỒNG BỘ 100% TRẠNG THÁI
+import { useAuth } from "@/context/AuthContext";
 
 
 
@@ -38,10 +40,10 @@ export default function UserFeed() {
   const [videos, setVideos] = useState<StudioVideo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  // --- AUTH & ROLE STATE ---
-  const [user, setUser] = useState<any>(null);
+  // 2. KẾ THỪA TRỰC TIẾP USER VÀ USERROLE TỪ AUTHCONTEXT TOÀN CỤC
+  const { user, userRole } = useAuth();
   const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [userRole, setUserRole] = useState<string>("USER");
+  
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [email, setEmail] = useState("");
@@ -130,9 +132,9 @@ useEffect(() => {
   return () => observerRef.current?.disconnect();
 }, [videos]); // Chạy lại khi danh sách video thay đổi
 
+  // 3. ĐỒNG BỘ TOKEN VÀ DANH SÁCH VIDEO THEO TRẠNG THÁI TOÀN CỤC (Thay thế hoàn toàn authListener cục bộ)
   useEffect(() => {
     setIsMounted(true); 
-    let isSubscribed = true;
     
     const storedTheme = localStorage.getItem('theme') || 'dark';
     if (storedTheme === 'light') {
@@ -143,37 +145,14 @@ useEffect(() => {
       document.documentElement.classList.add('dark');
     }
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, curSession) => {
-      if (!isSubscribed) return;
-
-      if (curSession?.user) {
-        setUser(curSession.user);
-        setAccessToken(curSession.access_token);
-        // GỌI VIDEO KÈM USER ID ĐỂ HIỆN TIM/SAVE
-        fetchVideos(curSession.user.id); 
-
-        const { data: userData } = await supabase.from("users").select("role, theme_preference").eq("id", curSession.user.id).single();
-        if (userData && isSubscribed) {
-           setUserRole(userData.role);
-           if (userData.theme_preference === 'light') {
-              setIsDarkMode(false);
-              document.documentElement.classList.remove('dark');
-              localStorage.setItem('theme', 'light');
-           }
-        }
-      } else {
-        setUser(null);
-        setAccessToken(null);
-        setUserRole("USER");
-        fetchVideos(); 
-      }
-    });
-
-    return () => {
-      isSubscribed = false;
-      authListener.subscription.unsubscribe();
+    const syncWithGlobalAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setAccessToken(session?.access_token || null);
+      fetchVideos(user?.id);
     };
-  }, []);
+
+    syncWithGlobalAuth();
+  }, [user]);
 
   // --- AUTH LOGIC ---
   const handleAuth = async (e: React.FormEvent) => {
@@ -223,22 +202,24 @@ useEffect(() => {
     setIsUserMenuOpen(false);
     const toastId = toast.loading("Đang đăng xuất...");
     try {
-      // Dọn sạch State của React ngay lập tức
-      setUser(null);
+      // 1. Dọn dẹp Access Token nội bộ của trang
       setAccessToken(null);
-      setUserRole("USER");
       
-      // Gọi lệnh xóa Session của Supabase
+      // 2. Gọi lệnh xóa Session của Supabase
+      // LƯU Ý: Lệnh này sẽ kích hoạt AuthContext listener để tự động reset user và userRole toàn cục
       await supabase.auth.signOut();
       
       toast.success("Đã đăng xuất thành công!", { id: toastId });
       
-      // Cho trình duyệt 500ms để ghi nhận việc xóa Cookie trước khi chuyển hướng
+      // Cho trình duyệt một lát để dọn dẹp Cookie/Session hoàn toàn trước khi điều hướng
       setTimeout(() => {
         window.location.href = "/";
       }, 500);
       
-    } catch (error: any) { toast.error("Lỗi đăng xuất!", { id: toastId }); }
+    } catch (error: any) { 
+      console.error("Logout Error:", error);
+      toast.error("Lỗi đăng xuất!", { id: toastId }); 
+    }
   };
 
   // --- INTERACTION LOGIC (Gọi API Studio) ---
