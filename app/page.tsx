@@ -381,16 +381,11 @@ useEffect(() => {
   const filteredNotifs = activeNotifTab === 'all' ? notifications : notifications.filter(n => !n.isRead);
 
   return (
-    <div className="h-[100dvh] w-full bg-slate-50 dark:bg-[#020617] overflow-hidden flex relative transition-colors duration-500 z-0">
-      {/* CANVAS NỀN NGHỆ THUẬT: Giải phóng nền phẳng, bơm ánh sáng ngầm khúc xạ cho toàn bộ hệ thống Kính */}
-      
-      {/* Glow Orbs: Dịch chuyển sâu về lề trái (Z-0) để hắt sáng thẳng vào thấu kính Sidebar */}
-      <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-gradient-to-br from-violet-600/25 via-fuchsia-500/15 to-transparent blur-[140px] rounded-full pointer-events-none z-0 transform -rotate-12 animate-pulse" style={{ animationDuration: '8s' }}></div>
-      <div className="absolute bottom-[-5%] left-[-5%] w-[45%] h-[45%] bg-gradient-to-tr from-emerald-500/20 via-cyan-400/15 to-transparent blur-[120px] rounded-full pointer-events-none z-0"></div>
-      <div className="absolute top-[20%] right-[-5%] w-[40%] h-[40%] bg-blue-500/10 dark:bg-blue-600/10 blur-[120px] rounded-full pointer-events-none z-0"></div>
+    <div className="h-full w-full bg-transparent overflow-hidden flex relative transition-colors duration-500">
+      {/* NỀN CỤC BỘ ĐÃ XÓA - ĐÃ CHUYỂN LÊN LAYOUT ĐỂ SIDEBAR CÓ THỂ NHÌN XUYÊN THẤU XUỐNG ĐÁY */}
 
       {/* ================= MAIN FEED AREA ================= */}
-      <div className="flex-1 relative h-[100dvh] z-10">
+      <div className="flex-1 relative h-full z-10">
         <div className="md:hidden absolute top-0 w-full z-40 p-6 flex justify-between items-center pointer-events-none transition-all">
           <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-lg flex items-center gap-1 transition-colors duration-500">AI<span className="text-[#80BF84]">HEALTH</span></h1>
         </div>
@@ -417,9 +412,11 @@ useEffect(() => {
           {videos.map((item, index) => {
             const fallbackVideo = `/video-${(index % 3) + 1}.mp4`;
             return (
-              <div key={item.id} className="relative h-[100dvh] w-full snap-start snap-always bg-slate-100 dark:bg-black overflow-hidden flex items-center justify-center transition-colors duration-500">
-                <div className="hidden md:block absolute inset-0 w-full h-full">
-                  <video src={item.video_url || fallbackVideo} className="w-full h-full object-cover opacity-10 dark:opacity-30 blur-[60px] scale-125 transition-opacity duration-500" loop autoPlay muted playsInline />
+              <div key={item.id} className="relative h-[100dvh] w-full snap-start snap-always bg-transparent overflow-hidden flex items-center justify-center transition-colors duration-500">
+                {/* DYNAMIC AMBILIGHT: Video mờ phủ toàn màn hình, đóng vai trò nền chung cho cả Sidebar và Feed */}
+                <div className="hidden md:block fixed inset-0 w-full h-full pointer-events-none z-[-1]">
+                  <video src={item.video_url || fallbackVideo} className="w-full h-full object-cover opacity-20 dark:opacity-40 blur-[100px] scale-150 transition-opacity duration-1000" loop autoPlay muted playsInline />
+                  <div className="absolute inset-0 bg-black/30"></div>
                 </div>
                 <div data-index={index} className="video-snap-item relative w-full h-full md:h-[94vh] md:w-auto md:aspect-[9/16] md:rounded-[2.5rem] overflow-hidden bg-black md:border border-slate-200 dark:border-white/10 md:shadow-[0_0_50px_rgba(0,0,0,0.1)] dark:md:shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-all duration-500">
     

@@ -132,7 +132,7 @@ export default function Sidebar() {
 
   // KIỂN TRÚC UI SHELL: Hiển thị ngay lập tức ở mili giây thứ 0, không chờ đợi (Loại bỏ blur-sm, delay)
   return (
-    <div className="hidden md:flex flex-col w-[280px] h-[calc(100dvh-2.5rem)] my-5 ml-5 rounded-[2.5rem] bg-white/15 dark:bg-white/[0.04] backdrop-blur-[64px] border border-white/40 dark:border-white/[0.08] z-50 pt-8 shrink-0 shadow-[0_10px_40px_rgba(0,0,0,0.04)] dark:shadow-[0_20px_80px_rgba(0,0,0,0.3)] transition-all duration-500 overflow-hidden relative group/sidebar">
+    <div className="hidden md:flex flex-col w-[280px] h-[calc(100dvh-2.5rem)] my-5 ml-5 rounded-[2.8rem] bg-white/[0.02] dark:bg-black/[0.05] backdrop-blur-[100px] border border-white/20 dark:border-white/10 z-50 pt-8 shrink-0 shadow-none transition-all duration-500 overflow-hidden relative group/sidebar">
       
       {/* Lớp viền sáng mỏng (Clear Glass Refraction) góc Top-Left đặc trưng */}
       <div className="absolute inset-0 rounded-[2.5rem] pointer-events-none border border-gradient-to-br from-white/80 via-white/20 to-transparent dark:from-white/20 dark:via-white/5 dark:to-transparent z-50"></div>

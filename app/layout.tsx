@@ -33,11 +33,16 @@ export default function RootLayout({
         {/* Bọc toàn bộ ứng dụng bằng các Provider */}
         <AuthProvider>
           <UIProvider>
-          <div className="flex h-[100dvh] w-full overflow-hidden bg-slate-50 dark:bg-black font-be-vietnam pb-[80px] md:pb-0">
-              {/* Sidebar (Chỉ hiện trên Desktop, bản thân Sidebar đã có class hidden md:flex) */}
-              <Sidebar />
-              {/* Vùng chứa nội dung chính */}
-              <main className="flex-1 h-full overflow-hidden relative">
+          <div className="h-[100dvh] w-full overflow-hidden bg-black font-be-vietnam relative z-0 transition-colors duration-500">
+              {/* Sidebar: Chuyển sang lớp nổi (Fixed) để đè lên nền Ambilight của Page */}
+              <div className="hidden md:block fixed inset-y-0 left-0 z-50 pointer-events-none">
+                <div className="pointer-events-auto h-full">
+                  <Sidebar />
+                </div>
+              </div>
+
+              {/* Vùng chứa nội dung chính: Mở rộng toàn màn hình để Video Feed làm nền cho cả Sidebar */}
+              <main className="h-full w-full overflow-hidden relative bg-transparent md:pl-[300px]">
                 {children}
               </main>
               {/* Thanh điều hướng Mobile (Tự động ẩn trên Desktop) */}
