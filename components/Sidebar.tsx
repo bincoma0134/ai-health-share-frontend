@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { 
-  Home, Compass, CalendarDays, Heart, Sparkles, Crown, Settings, 
-  LogOut, ShieldCheck, LayoutDashboard, User as UserIcon, MapPin, MessageSquare,
+  Home, Compass, CalendarDays, Sparkles, Crown, Settings, 
+  LogOut, LayoutDashboard, User as UserIcon, MapPin, MessageSquare,
   ChevronRight, Layout
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
@@ -132,8 +132,11 @@ export default function Sidebar() {
 
   // KIỂN TRÚC UI SHELL: Hiển thị ngay lập tức ở mili giây thứ 0, không chờ đợi (Loại bỏ blur-sm, delay)
   return (
-    <div className={`hidden md:flex flex-col w-[280px] h-full bg-white/70 dark:bg-zinc-950/80 backdrop-blur-2xl border-r border-slate-200 dark:border-white/5 z-50 pt-8 shrink-0 shadow-[25px_0_60px_rgba(0,0,0,0.03)] dark:shadow-[25px_0_60px_rgba(0,0,0,0.3)] transition-all duration-300 opacity-100`}>
+    <div className="hidden md:flex flex-col w-[280px] h-[calc(100dvh-2.5rem)] my-5 ml-5 rounded-[2.5rem] bg-white/50 dark:bg-white/[0.02] backdrop-blur-[40px] border border-white/80 dark:border-white/10 z-50 pt-8 shrink-0 shadow-[0_20px_50px_rgba(0,0,0,0.05)] dark:shadow-[0_25px_65px_rgba(0,0,0,0.5)] transition-all duration-500 overflow-hidden relative group/sidebar">
       
+      {/* Lớp viền sáng mỏng (Clear Glass Refraction) góc Top-Left đặc trưng */}
+      <div className="absolute inset-0 rounded-[2.5rem] pointer-events-none border border-gradient-to-br from-white/80 via-white/20 to-transparent dark:from-white/20 dark:via-white/5 dark:to-transparent z-50"></div>
+
       {/* LOGO AREA */}
       <div className="px-7 mb-10 cursor-pointer group" onClick={() => router.push('/')}>
         <div className="flex items-center gap-2">
@@ -144,40 +147,42 @@ export default function Sidebar() {
         </div>
       </div>
       
-      <div className="flex flex-col gap-1.5 flex-1 overflow-y-auto no-scrollbar px-4">
-        {/* MAIN NAVIGATION */}
-        <div className="space-y-1">
+      <div className="flex flex-col gap-2 flex-1 overflow-y-auto no-scrollbar px-4 relative z-10">
+        {/* MAIN NAVIGATION: Glass-Pill Active States */}
+        <div className="space-y-1.5">
             {mainLinks.map((item) => (
             <button 
                 key={item.path} 
                 onClick={() => router.push(item.path)} 
-                className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl font-bold transition-all group ${
+                className={`w-full flex items-center justify-between px-4 py-3.5 rounded-[1.4rem] font-black transition-all duration-500 group/btn ${
                     pathname === item.path 
-                    ? 'bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-md border border-slate-200 dark:border-white/10' 
-                    : 'text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-white/5'
+                    ? 'bg-white/80 dark:bg-white/10 text-slate-900 dark:text-white shadow-[0_8px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_20px_rgba(0,0,0,0.3)] border border-white dark:border-white/20 scale-[1.02]' 
+                    : 'text-slate-500 dark:text-zinc-400 hover:bg-white/30 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
                 }`}
             >
-                <div className="flex items-center gap-4">
-                    <item.icon size={20} className={`${pathname === item.path ? 'text-[#80BF84]' : 'group-hover:text-slate-900 dark:group-hover:text-white'} transition-colors`} />
+                <div className="flex items-center gap-3.5">
+                    <div className={`p-2 rounded-xl transition-all duration-300 ${pathname === item.path ? 'bg-[#80BF84] text-zinc-950 shadow-lg shadow-[#80BF84]/30' : 'bg-slate-100 dark:bg-zinc-800/50 text-slate-500 dark:text-zinc-400 group-hover/btn:text-[#80BF84]'}`}>
+                        <item.icon size={18} strokeWidth={pathname === item.path ? 2.5 : 2} />
+                    </div>
                     <span className="text-sm tracking-tight">{item.name}</span>
                 </div>
-                {pathname === item.path && <div className="w-1.5 h-1.5 rounded-full bg-[#80BF84] shadow-[0_0_8px_#80BF84]"></div>}
+                {pathname === item.path && <div className="w-1.5 h-1.5 rounded-full bg-[#80BF84] shadow-[0_0_10px_#80BF84] animate-pulse"></div>}
             </button>
             ))}
         </div>
 
-        {/* AI ASSISTANT BUTTON */}
+        {/* AI ASSISTANT BUTTON: Elevated Premium Glow */}
         <div className="mt-6 mb-2">
-            <button onClick={() => router.push('/features/AI')} className="w-full relative group">
-              <div className="absolute inset-0 bg-[#80BF84] rounded-2xl blur-md opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
-              <div className="relative flex items-center justify-center gap-3 px-4 py-4 rounded-2xl bg-gradient-to-br from-[#80BF84] to-[#6da871] text-zinc-950 shadow-lg group-hover:shadow-[#80BF84]/30 group-hover:-translate-y-0.5 transition-all active:scale-95 border border-white/20">
+            <button onClick={() => router.push('/features/AI')} className="w-full relative group/ai">
+              <div className="absolute inset-0 bg-gradient-to-r from-[#80BF84] to-emerald-500 rounded-[1.5rem] blur-xl opacity-30 group-hover/ai:opacity-60 transition-opacity duration-500"></div>
+              <div className="relative flex items-center justify-center gap-3 px-4 py-4 rounded-[1.5rem] bg-gradient-to-br from-[#80BF84] via-[#75b479] to-[#5e9662] text-zinc-950 font-black shadow-lg group-hover/ai:shadow-[#80BF84]/50 group-hover/ai:-translate-y-0.5 transition-all duration-300 active:scale-95 border border-white/40 dark:border-white/20">
                 <Sparkles size={18} strokeWidth={3} className="animate-pulse" />
-                <span className="font-black text-sm tracking-wide uppercase">AI Trợ lý</span>
+                <span className="text-sm tracking-widest uppercase font-black">AI Trợ lý</span>
               </div>
             </button>
         </div>
 
-        {/* ADMIN AREA */}
+        {/* ADMIN AREA: Refined Kính Chìm/Nổi */}
         {userRole !== "USER" && mgmt.profilePath && mgmt.dashboardPath && (
           <div className="animate-fade-in mt-6 pb-6">
             <div className="px-4 py-3 flex items-center gap-3">
@@ -186,12 +191,18 @@ export default function Sidebar() {
                 <div className={`h-[1px] flex-1 bg-gradient-to-l from-transparent to-slate-200 dark:to-white/10`}></div>
             </div>
             
-            <div className="space-y-1">
-                <button onClick={() => router.push(mgmt.profilePath as string)} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl font-bold transition-all border ${pathname === mgmt.profilePath ? `${mgmt.bgClass} ${mgmt.colorClass} border-${mgmt.colorClass.split('-')[1]}-500/20 shadow-lg ${mgmt.glowClass}` : 'text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-white/5 border-transparent'}`}>
-                    <Crown size={20} /> <span className="text-sm tracking-tight">{mgmt.profileLabel}</span>
+            <div className="space-y-1.5">
+                <button onClick={() => router.push(mgmt.profilePath as string)} className={`w-full flex items-center gap-3.5 px-4 py-3.5 rounded-[1.4rem] font-black transition-all duration-500 border ${pathname === mgmt.profilePath ? `${mgmt.bgClass} ${mgmt.colorClass} border-white/40 dark:border-white/20 shadow-lg ${mgmt.glowClass} scale-[1.02] bg-white/80 dark:bg-white/10` : 'text-slate-500 dark:text-zinc-400 hover:bg-white/30 dark:hover:bg-white/5 border-transparent'}`}>
+                    <div className={`p-2 rounded-xl ${pathname === mgmt.profilePath ? 'bg-white/20 dark:bg-white/10 text-current' : 'bg-slate-100 dark:bg-zinc-800/50 text-slate-500 dark:text-zinc-400'}`}>
+                        <Crown size={18} strokeWidth={pathname === mgmt.profilePath ? 2.5 : 2} />
+                    </div>
+                    <span className="text-sm tracking-tight">{mgmt.profileLabel}</span>
                 </button>
-                <button onClick={() => router.push(mgmt.dashboardPath as string)} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl font-bold transition-all border ${pathname === mgmt.dashboardPath ? `${mgmt.bgClass} ${mgmt.colorClass} border-${mgmt.colorClass.split('-')[1]}-500/20 shadow-lg ${mgmt.glowClass}` : 'text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-white/5 border-transparent'}`}>
-                    <LayoutDashboard size={20} /> <span className="text-sm tracking-tight">{mgmt.dashboardLabel}</span>
+                <button onClick={() => router.push(mgmt.dashboardPath as string)} className={`w-full flex items-center gap-3.5 px-4 py-3.5 rounded-[1.4rem] font-black transition-all duration-500 border ${pathname === mgmt.dashboardPath ? `${mgmt.bgClass} ${mgmt.colorClass} border-white/40 dark:border-white/20 shadow-lg ${mgmt.glowClass} scale-[1.02] bg-white/80 dark:bg-white/10` : 'text-slate-500 dark:text-zinc-400 hover:bg-white/30 dark:hover:bg-white/5 border-transparent'}`}>
+                    <div className={`p-2 rounded-xl ${pathname === mgmt.dashboardPath ? 'bg-white/20 dark:bg-white/10 text-current' : 'bg-slate-100 dark:bg-zinc-800/50 text-slate-500 dark:text-zinc-400'}`}>
+                        <LayoutDashboard size={18} strokeWidth={pathname === mgmt.dashboardPath ? 2.5 : 2} />
+                    </div>
+                    <span className="text-sm tracking-tight">{mgmt.dashboardLabel}</span>
                 </button>
             </div>
           </div>
@@ -220,17 +231,17 @@ export default function Sidebar() {
         {user ? (
             <button 
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)} 
-                className={`w-full flex items-center gap-3 p-3.5 rounded-[2.5rem] transition-all border group relative z-10 ${
+                className={`w-full flex items-center gap-3.5 p-3 rounded-[2rem] transition-all duration-500 border group relative z-10 ${
                     isUserMenuOpen 
-                    ? 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-amber-500/30 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.2)] scale-[1.02]' 
-                    : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 shadow-[0_15px_30px_-10px_rgba(0,0,0,0.1)] hover:border-slate-300 dark:hover:border-white/20 hover:scale-[1.02] active:scale-95'
+                    ? 'bg-white/80 dark:bg-white/10 backdrop-blur-xl border-white dark:border-white/20 shadow-[0_15px_30px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_40px_rgba(0,0,0,0.4)] scale-[1.02]' 
+                    : 'bg-white/40 dark:bg-white/[0.03] backdrop-blur-md border-white/60 dark:border-white/10 shadow-[0_8px_20px_rgba(0,0,0,0.05)] hover:border-white dark:hover:border-white/20 hover:bg-white/60 dark:hover:bg-white/[0.06] hover:shadow-[0_15px_30px_rgba(0,0,0,0.08)] hover:scale-[1.02] active:scale-95'
                 }`}
             >
                 {/* Avatar API Thật */}
-                <div className={`w-12 h-12 rounded-full p-0.5 bg-gradient-to-tr ${userRole === "SUPER_ADMIN" ? "from-amber-400 to-amber-600 shadow-amber-500/20" : "from-slate-200 to-slate-100 dark:from-zinc-800 dark:to-zinc-700"} shadow-lg shrink-0 overflow-hidden transition-transform ${isUserMenuOpen ? 'scale-90' : 'group-hover:scale-105'}`}>
+                <div className={`w-11 h-11 rounded-full p-0.5 bg-gradient-to-tr ${userRole === "SUPER_ADMIN" ? "from-amber-400 to-amber-600 shadow-amber-500/20" : "from-slate-300 to-white dark:from-zinc-700 dark:to-zinc-600"} shadow-md shrink-0 overflow-hidden transition-transform duration-500 ${isUserMenuOpen ? 'scale-90' : 'group-hover:scale-105'}`}>
                     <img 
-                        src={dbProfile?.avatar_url || `https://ui-avatars.com/api/?name=${dbProfile?.full_name || user.email}&background=80BF84&color=fff`} 
-                        className="w-full h-full object-cover rounded-full border-2 border-white dark:border-zinc-900"
+                        src={dbProfile?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(dbProfile?.full_name || user?.email || 'User')}&background=80BF84&color=fff`} 
+                        className="w-full h-full object-cover rounded-full border border-white dark:border-zinc-800"
                         alt="avatar"
                     />
                 </div>
@@ -239,18 +250,18 @@ export default function Sidebar() {
                 <div className="flex flex-col flex-1 overflow-hidden text-left">
                     <span className={`text-[9px] font-black uppercase tracking-widest ${mgmt.colorClass}`}>{mgmt.roleName}</span>
                     <span className="text-sm font-black text-slate-900 dark:text-white truncate leading-tight mt-0.5">
-                        {dbProfile?.full_name || user.user_metadata?.full_name || user.email.split('@')[0]}
+                        {dbProfile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || "User"}
                     </span>
-                    <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 truncate opacity-70">
+                    <span className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 truncate opacity-80">
                         @{dbProfile?.username || user.user_metadata?.username || 'user'}
                     </span>
                 </div>
                 
-                <ChevronRight size={14} className={`text-slate-300 transition-transform duration-300 ${isUserMenuOpen ? 'rotate-90' : 'group-hover:translate-x-1'}`} />
+                <ChevronRight size={14} className={`text-slate-400 transition-transform duration-300 ${isUserMenuOpen ? 'rotate-90' : 'group-hover:translate-x-1'}`} />
             </button>
         ) : (
-            <button onClick={() => setIsAuthModalOpen(true)} className="w-full flex items-center justify-center gap-3 p-4 rounded-[2.5rem] bg-[#80BF84] text-zinc-950 shadow-xl shadow-[#80BF84]/30 hover:scale-[1.02] active:scale-95 transition-all font-black group border border-white/20">
-                <UserIcon size={18} strokeWidth={3} /> <span className="text-sm uppercase tracking-wide">Đăng nhập</span>
+            <button onClick={() => setIsAuthModalOpen(true)} className="w-full flex items-center justify-center gap-3 p-4 rounded-[2rem] bg-gradient-to-br from-[#80BF84] to-[#6da871] text-zinc-950 font-black shadow-lg shadow-[#80BF84]/30 hover:shadow-[#80BF84]/50 hover:scale-[1.02] active:scale-95 transition-all border border-white/40 dark:border-white/20">
+                <UserIcon size={18} strokeWidth={3} /> <span className="text-sm uppercase tracking-wider font-black">Đăng nhập</span>
             </button>
         )}
       </div>
