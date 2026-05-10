@@ -6,15 +6,12 @@ import {
   Sun, Moon, Bell, Play, CalendarPlus, ShieldCheck, Search, SlidersHorizontal,
   LogOut, MapPin, Star, Activity, Filter, X
 } from "lucide-react";
-import { createClient } from "@supabase/supabase-js";
+// 1. IMPORT SUPABASE CHUẨN VÀ USEAUTH TOÀN CỤC
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useUI } from "@/context/UIContext"; 
-
-// --- SUPABASE CONFIG ---
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+import { useAuth } from "@/context/AuthContext";
 
 interface Service {
   id: string;
@@ -32,9 +29,8 @@ export default function ExploreFeature() {
   const router = useRouter();
   const { setIsNotifOpen } = useUI();
   
-  // --- STATE HỆ THỐNG & AUTH ---
-  const [user, setUser] = useState<any>(null);
-  const [userRole, setUserRole] = useState<string>("USER");
+  // 2. KẾ THỪA TRỰC TIẾP STATE HỆ THỐNG & AUTH TỪ CONTEXT TOÀN CỤC
+  const { user, userRole } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -66,19 +62,9 @@ export default function ExploreFeature() {
       document.documentElement.classList.add('dark');
     }
 
-    const loadData = async () => {
+    // 3. CHỈ CẦN TẢI DỮ LIỆU DỊCH VỤ (Toàn bộ phiên Auth đã được AuthContext tự động xử lý)
+    const loadServices = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-            setUser(session.user);
-            const profileRes = await fetch("https://ai-health-share-backend.onrender.com/user/profile", {
-                headers: { "Authorization": `Bearer ${session.access_token}` }
-            });
-            const profileResult = await profileRes.json();
-            if (profileResult.status === "success") setUserRole(profileResult.data.profile.role);
-        }
-
-        // Fetch Dịch vụ (Data Mock hoặc API thật)
         const res = await fetch("https://ai-health-share-backend.onrender.com/services");
         if (res.ok) {
             const result = await res.json();
@@ -87,12 +73,11 @@ export default function ExploreFeature() {
       } catch (error) {
         console.error("Fetch Error:", error);
       } finally {
-        // Giả lập delay một chút để xem hiệu ứng Skeleton đẹp mắt
         setTimeout(() => setIsLoading(false), 800);
       }
     };
 
-    loadData();
+    loadServices();
   }, []);
 
   // --- HANDLERS ---
