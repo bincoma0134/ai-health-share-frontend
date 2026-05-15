@@ -182,8 +182,7 @@ useEffect(() => {
             email,
             username: email.split('@')[0],
             password,
-            full_name: "Thành viên mới",
-            role: "USER"
+            full_name: "Thành viên mới"
           })
         });
         const result = await res.json();
@@ -214,7 +213,8 @@ useEffect(() => {
     if (userRole === "SUPER_ADMIN") router.push("/admin/profile");
     else if (userRole === "MODERATOR") router.push("/moderator/profile");
     else if (userRole === "PARTNER_ADMIN") router.push("/partner/profile");
-    else router.push("/user/profile");
+    else if (user?.username) router.push(`/${user.username}`);
+    else router.push("/");
   };
 
   const handleLogout = async () => {
