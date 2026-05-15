@@ -5,24 +5,19 @@ import {
   User as UserIcon, ShieldCheck, Bookmark, LogOut, Play, Clock, 
   CheckCircle2, Edit3, Camera, X, Sun, Moon, Bell, Eye, LayoutGrid
 } from "lucide-react";
-import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import NotificationModal from "@/components/NotificationModal";
 import Loading from "@/app/loading"; // <--- Bổ sung Import Loading của hệ thống
 import { useUI } from "@/context/UIContext";
-
-// --- KHỞI TẠO SUPABASE ---
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-if (!supabaseUrl || !supabaseAnonKey) throw new Error("Thiếu biến môi trường Supabase!");
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+import { useAuth } from "@/context/AuthContext";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 export default function PrivateProfilePage() {
   const router = useRouter();
   const { isNotifOpen, setIsNotifOpen, theme, toggleTheme } = useUI();
+  const { refreshProfile } = useAuth();
   
   const [isLoading, setIsLoading] = useState(true);
   const [profileData, setProfileData] = useState<any>(null);
@@ -39,21 +34,21 @@ export default function PrivateProfilePage() {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+      if (!token) {
         toast.error("Vui lòng đăng nhập để xem hồ sơ!");
         router.push("/");
         return;
       }
-      setUser(session.user);
 
       try {
         const res = await fetch(`${API_URL}/user/profile`, {
-          headers: { "Authorization": `Bearer ${session.access_token}` }
+          headers: { "Authorization": `Bearer ${token}` }
         });
         const result = await res.json();
         
-        if (result.status === "success") {
+        if (result.status === "success" && result.data?.profile) {
+          setUser(result.data.profile);
           setProfileData(result.data);
         } else {
           throw new Error("Lỗi tải dữ liệu");
@@ -68,7 +63,8 @@ export default function PrivateProfilePage() {
   }, [router]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    if (typeof window !== "undefined") localStorage.removeItem("ai-health-token");
+    await refreshProfile();
     toast.success("Đã đăng xuất an toàn.");
     router.push("/");
   };
@@ -87,10 +83,10 @@ export default function PrivateProfilePage() {
     setIsUpdating(true);
     const toastId = toast.loading("Đang cập nhật hồ sơ...");
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
       const res = await fetch(`${API_URL}/user/profile`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify(editForm)
       });
       const result = await res.json();
@@ -115,19 +111,22 @@ export default function PrivateProfilePage() {
 
     const toastId = toast.loading(`Đang tải lên ảnh đại diện...`);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-avatar-${Math.random()}.${fileExt}`;
+      const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+      const formData = new FormData();
+      formData.append("file", file);
       
-      const { error: uploadError } = await supabase.storage.from('avatars').upload(fileName, file, { cacheControl: '3600', upsert: true });
-      if (uploadError) throw new Error("Lỗi kết nối Storage Supabase!");
-
-      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName);
-
-      const { data: { session } } = await supabase.auth.getSession();
+      const uploadRes = await fetch(`${API_URL}/media/upload`, {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${token}` },
+          body: formData
+      });
+      const uploadResult = await uploadRes.json();
+      if (!uploadRes.ok || uploadResult.status !== "success") throw new Error("Lỗi tải ảnh lên Cloudflare R2");
+      const publicUrl = uploadResult.url;
       
       const res = await fetch(`${API_URL}/user/profile`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify({ avatar_url: publicUrl })
       });
       

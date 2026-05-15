@@ -6,19 +6,10 @@ import {
   Sun, Moon, Bell, LogOut, PlayCircle, MapPin, 
   ShieldCheck, DollarSign, BookmarkMinus, Bookmark
 } from "lucide-react";
-import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useUI } from "@/context/UIContext"; // IMPORT CONTEXT THÔNG BÁO
-
-// --- KHỞI TẠO SUPABASE CLIENT ---
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error("Thiếu biến môi trường Supabase!");
-}
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+import { useAuth } from "@/context/AuthContext";
 
 interface Service {
   id: string;
@@ -34,6 +25,7 @@ interface Service {
 export default function FavoriteFeature() {
   const router = useRouter();
   const { setIsNotifOpen } = useUI(); // LẤY HÀM MỞ THÔNG BÁO
+  const { refreshProfile } = useAuth();
   
   // --- STATE HỆ THỐNG & AUTH ---
   const [user, setUser] = useState<any>(null);
@@ -60,20 +52,18 @@ export default function FavoriteFeature() {
     }
 
     const loadData = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
       
-      if (session?.user) {
-        setUser(session.user);
-        
+      if (token) {
         try {
             const res = await fetch("https://ai-health-share-backend.onrender.com/user/profile", {
-                headers: { "Authorization": `Bearer ${session.access_token}` }
+                headers: { "Authorization": `Bearer ${token}` }
             });
             const result = await res.json();
             
-            if (result.status === "success") {
+            if (result.status === "success" && result.data?.profile) {
+                setUser(result.data.profile);
                 setUserRole(result.data.profile.role);
-                // Lấy danh sách đã lưu từ profile
                 if (result.data.saved_services) {
                     setSavedServices(result.data.saved_services);
                 }
@@ -96,12 +86,12 @@ export default function FavoriteFeature() {
       setSavedServices(prev => prev.filter(s => s.id !== serviceId));
       
       try {
-          const { data: { session } } = await supabase.auth.getSession();
+          const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
           await fetch(`https://ai-health-share-backend.onrender.com/interactions/save`, {
               method: "POST",
               headers: { 
                   "Content-Type": "application/json", 
-                  "Authorization": `Bearer ${session?.access_token}` 
+                  "Authorization": `Bearer ${token}` 
               },
               body: JSON.stringify({ service_id: serviceId })
           });
@@ -120,10 +110,10 @@ export default function FavoriteFeature() {
     localStorage.setItem('theme', themeStr);
 
     if (user) {
-        const { data: { session } } = await supabase.auth.getSession();
+        const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
         await fetch("https://ai-health-share-backend.onrender.com/user/profile", {
           method: "PATCH",
-          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` },
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
           body: JSON.stringify({ theme_preference: themeStr })
         });
     }
@@ -133,7 +123,8 @@ export default function FavoriteFeature() {
     setIsUserMenuOpen(false);
     const toastId = toast.loading("Đang đăng xuất...");
     try {
-      await supabase.auth.signOut();
+      if (typeof window !== "undefined") localStorage.removeItem("ai-health-token");
+      await refreshProfile();
       toast.success("Đã đăng xuất thành công!", { id: toastId });
       router.push("/");
     } catch (error) {
