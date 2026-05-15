@@ -7,7 +7,6 @@ import {
   Star, Package, BadgeCheck, TrendingUp, Building2, X, DollarSign, CalendarPlus, Sparkles, Plus
 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
 import DashboardButton from "./DashboardButton";
 import CommentModal from "@/components/CommentModal";
 
@@ -33,8 +32,8 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
           toast.success("Đã sao chép liên kết!");
           return;
       }
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { toast.info("Vui lòng đăng nhập để thao tác!"); return; }
+      const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+      if (!token) { toast.info("Vui lòng đăng nhập để thao tác!"); return; }
       
       setLocalVideos(prev => prev.map(v => {
           if (v.id === videoId) {
@@ -54,7 +53,7 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
 
       try {
           await fetch(`${API_URL}/tiktok/feeds/${videoId}/${action}`, {
-              method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` }
+              method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
           });
       } catch (error) { } 
   };
@@ -79,9 +78,8 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
   const [followersCount, setFollowersCount] = useState(profile?.followers_count || 0);
 
   const handleToggleFollow = async () => {
-    if (!supabase) return toast.error("Hệ thống chưa sẵn sàng!");
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return toast.error("Vui lòng đăng nhập để quan tâm cơ sở này!");
+    const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+    if (!token) return toast.error("Vui lòng đăng nhập để quan tâm cơ sở này!");
     
     // Optimistic Update (Cập nhật giao diện trước)
     const wasFollowing = isFollowing;
@@ -91,7 +89,7 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
     try {
         const res = await fetch(`${API_URL}/user/follow/${profile.id}`, {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${session.access_token}` }
+            headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || "Lỗi server");
@@ -124,9 +122,8 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
     const tid = toast.loading("Đang gửi yêu cầu đến cơ sở...");
     
     try {
-        if (!supabase) throw new Error("Lỗi cấu hình hệ thống!");
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) throw new Error("Vui lòng đăng nhập để đặt lịch!");
+        const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+        if (!token) throw new Error("Vui lòng đăng nhập để đặt lịch!");
 
         const payload: any = {
             partner_id: profile.id,
@@ -145,7 +142,7 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
 
         const res = await fetch(`${API_URL}/appointments/request`, {
             method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
             body: JSON.stringify(payload)
         });
         

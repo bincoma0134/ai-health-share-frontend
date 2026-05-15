@@ -9,9 +9,7 @@ import {
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useUI } from "@/context/UIContext";
-import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -40,9 +38,31 @@ export default function Sidebar() {
     const getFullProfile = async () => {
         if (!user) return;
         try {
-            const { data: { session } } = await supabase.auth.getSession();
+            const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+            if (!token) return;
             const res = await fetch(`${API_URL}/user/profile`, {
-                headers: { "Authorization": `Bearer ${session?.access_token}` }
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const result = await res.json();
+            if (result.status === "success") {
+                setDbProfile(result.data.profile);
+            }
+        } catch (err) {
+            console.error("Lỗi đồng bộ Avatar Sidebar:", err);
+        }
+    };
+    getFullProfile();
+  }, [user]);
+
+  // Lấy dữ liệu profile thật từ API Backend để lấy Avatar mới nhất
+  useEffect(() => {
+    const getFullProfile = async () => {
+        if (!user) return;
+        try {
+            const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+            if (!token) return;
+            const res = await fetch(`${API_URL}/user/profile`, {
+                headers: { "Authorization": `Bearer ${token}` }
             });
             const result = await res.json();
             if (result.status === "success") {
@@ -57,10 +77,9 @@ export default function Sidebar() {
 
   const handleLogout = async () => {
     const toastId = toast.loading("Đang đăng xuất an toàn...");
-    await supabase.auth.signOut();
+    if (typeof window !== "undefined") localStorage.removeItem("ai-health-token");    
     router.push("/");
     toast.success("Hẹn gặp lại bạn!", { id: toastId });
-    // AuthContext Listener sẽ tự động cập nhật UI mà không cần reload trang
   };
 
   const getManagementConfig = (role: string): RoleConfig => {

@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { supabase } from "@/lib/supabase";
 
 // 1. Thêm biến môi trường để trỏ về đúng Backend đang chạy
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -20,67 +19,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [userRole, setUserRole] = useState<string>("USER");
   const [isLoading, setIsLoading] = useState(true);
 
-  const loadProfile = async (session?: any) => {
-    let currentSession = session;
-
-    // Nếu không có session truyền vào (trường hợp gọi refreshProfile), tự đi lấy
-    if (!currentSession) {
-      const { data } = await supabase.auth.getSession();
-      currentSession = data.session;
+  const refreshProfile = async (explicitToken?: string) => {
+    setIsLoading(true);
+    const token = explicitToken || (typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null);
+    if (!token) {
+      setUser(null);
+      setUserRole("USER");
+      setIsLoading(false);
+      return;
     }
 
-    if (currentSession?.user) {
-      const currentUser = currentSession.user;
-      setUser(currentUser);
-      
-      // 2. Xác thực tức thì từ JWT Metadata (Tốc độ mili giây)
-      const cachedRole = currentUser.user_metadata?.role || "USER";
-      setUserRole(cachedRole);
-
-      // 3. Chạy ngầm đồng bộ với Backend (Không block UI)
-      fetch(`${API_URL}/user/profile`, {
-        headers: { "Authorization": `Bearer ${session.access_token}` }
-      })
-        .then(res => res.json())
-        .then(result => {
-          if (result.status === "success") {
-            const realRole = result.data?.profile?.role || "USER";
-            if (realRole !== cachedRole) {
-               setUserRole(realRole);
-               supabase.auth.updateUser({ data: { role: realRole } });
-            }
-          }
-        })
-        .catch(e => console.error("AuthContext: Lỗi đồng bộ role ngầm", e));
-    } else {
-       // Reset state nếu không có session (Đăng xuất)
-       setUser(null);
-       setUserRole("USER");
+    try {
+      const res = await fetch(`${API_URL}/user/profile`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      const result = await res.json();
+      if (result.status === "success" && result.data?.profile) {
+        const profile = result.data.profile;
+        // Đúc lại object user chuẩn hóa thông tin để đánh lừa các file frontend khác không bị lỗi cấu trúc dữ liệu
+        setUser({
+          ...profile,
+          id: profile.id,
+          email: profile.email,
+          user_metadata: { role: profile.role }
+        });
+        setUserRole(profile.role || "USER");
+      } else {
+        if (typeof window !== "undefined") localStorage.removeItem("ai-health-token");
+        setUser(null);
+        setUserRole("USER");
+      }
+    } catch (e) {
+      console.error("AuthContext: Lỗi đồng bộ profile", e);
+      setUser(null);
+      setUserRole("USER");
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   useEffect(() => { 
-    // 1. Chạy lần đầu khi F5
-    supabase.auth.getSession().then(({ data: { session } }) => {
-       loadProfile(session);
-    });
-
-    // 2. ĐẶT TRẠM GÁC LẮNG NGHE SỰ KIỆN TỰ ĐỘNG (Bảo đảm Soft Routing hoạt động)
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        // Mỗi khi đăng nhập/đăng xuất thành công, hàm này tự động chạy
-        loadProfile(session);
-      }
-    );
-
-    return () => {
-       authListener.subscription.unsubscribe();
-    };
+    refreshProfile();
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, userRole, isLoading, refreshProfile: loadProfile }}>
+    <AuthContext.Provider value={{ user, userRole, isLoading, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

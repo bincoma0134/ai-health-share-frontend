@@ -8,9 +8,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
-
-// --- KHỞI TẠO SUPABASE CLIENT & API ---
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -51,27 +48,30 @@ export default function PartnerDashboard() {
   // Khởi tạo Theme & Fetch Dữ liệu an toàn
   const fetchData = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { router.push("/"); return; }
+      const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+      if (!token) { router.push("/"); return; }
 
       // 1. Lấy dữ liệu Đơn hàng Escrow
-      const resBookings = await fetch(`${API_URL}/partner/bookings`, { headers: { "Authorization": `Bearer ${session.access_token}` } });
+      const resBookings = await fetch(`${API_URL}/partner/bookings`, { headers: { "Authorization": `Bearer ${token}` } });
       const dataBookings = await resBookings.json();
       if (resBookings.ok && dataBookings.status === "success") setBookings(dataBookings.data || []); 
 
       // 2. Lấy dữ liệu Lịch hẹn (Dành cho Tab mới)
-      const resAppts = await fetch(`${API_URL}/appointments/me`, { headers: { "Authorization": `Bearer ${session.access_token}` } });
+      const resAppts = await fetch(`${API_URL}/appointments/me`, { headers: { "Authorization": `Bearer ${token}` } });
       const dataAppts = await resAppts.json();
       if (resAppts.ok && dataAppts.status === "success") setAppointments(dataAppts.data || []); 
 
-      // 3. Lấy dữ liệu Ví nội bộ của Partner
-      const resWallet = await supabase.from("wallets").select("*").eq("user_id", session.user.id).single();
-      if (resWallet.data) setWalletInfo({ balance: Number(resWallet.data.balance), total_earned: Number(resWallet.data.total_earned) });
-
       // 4. Lấy lịch sử rút tiền
-      const resWith = await fetch(`${API_URL}/partner/withdrawals`, { headers: { "Authorization": `Bearer ${session.access_token}` } });
+      const resWith = await fetch(`${API_URL}/partner/withdrawals`, { headers: { "Authorization": `Bearer ${token}` } });
       const dataWith = await resWith.json();
       if (resWith.ok && dataWith.status === "success") setMyWithdrawals(dataWith.data || []);
+
+      // 3. Tính toán Ví nội bộ từ dữ liệu đơn hàng và lịch sử rút tiền thực tế để đồng bộ lõi tự chủ
+      const listBookings = dataBookings.data || [];
+      const listWithdrawals = dataWith.data || [];
+      const totalEarned = listBookings.filter((b: any) => b.service_status === "COMPLETED").reduce((sum: number, b: any) => sum + (Number(b.partner_revenue) || 0), 0);
+      const totalWithdrawn = listWithdrawals.filter((w: any) => w.status === "APPROVED" || w.status === "PENDING").reduce((sum: number, w: any) => sum + Number(w.amount), 0);
+      setWalletInfo({ balance: Math.max(0, totalEarned - totalWithdrawn), total_earned: totalEarned });
 
     } catch (error) {
       toast.error("Không thể kết nối đến máy chủ.");
@@ -98,9 +98,9 @@ export default function PartnerDashboard() {
   const handleCompleteService = async (bookingId: string) => {
     const toastId = toast.loading("Đang kết nối trung tâm đối soát Escrow...");
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
       const res = await fetch(`${API_URL}/bookings/${bookingId}/complete`, {
-        method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` }
+        method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
       });
       const result = await res.json();
       if (res.ok && result.status === "success") {
@@ -121,9 +121,9 @@ export default function PartnerDashboard() {
       if (!code || code.length !== 6) return toast.error("Vui lòng nhập đúng mã Check-in 6 số!");
       const tid = toast.loading("Đang xác thực Check-in...");
       try {
-          const { data: { session } } = await supabase.auth.getSession();
+          const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
           const res = await fetch(`${API_URL}/appointments/${appointmentId}/check-in`, {
-              method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` },
+              method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
               body: JSON.stringify({ check_in_code: code })
           });
           const result = await res.json();
@@ -135,10 +135,10 @@ export default function PartnerDashboard() {
   const handleWithdrawal = async () => {
     const tid = toast.loading("Đang gửi yêu cầu giải ngân...");
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
       const res = await fetch(`${API_URL}/partner/withdraw`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify({
           amount: Number(withdrawalForm.amount),
           bank_name: withdrawalForm.bank_name,
@@ -164,7 +164,7 @@ export default function PartnerDashboard() {
       const form = respondForms[appointmentId] || {};
       const tid = toast.loading("Đang gửi phản hồi...");
       try {
-          const { data: { session } } = await supabase.auth.getSession();
+          const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
           const payload: any = { action };
           
           if (action === 'ACCEPT') {
@@ -178,7 +178,7 @@ export default function PartnerDashboard() {
 
           const res = await fetch(`${API_URL}/appointments/${appointmentId}/respond`, {
               method: "PATCH", 
-              headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` },
+              headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
               body: JSON.stringify(payload)
           });
           const result = await res.json();

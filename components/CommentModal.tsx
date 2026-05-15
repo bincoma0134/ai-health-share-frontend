@@ -5,7 +5,6 @@ import { X, Send, User as UserIcon, Sparkles, MoreHorizontal, AlertTriangle, Eye
 import { toast } from "sonner";
 
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -67,10 +66,10 @@ export default function CommentModal({ isOpen, onClose, videoId, videoAuthorId, 
 
     const tid = toast.loading("Đang gửi...");
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
       const payload = { content: newComment.trim(), parent_id: replyingTo?.id || null };
       const res = await fetch(`${API_URL}/tiktok/feeds/${videoId}/comments`, {
-        method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` },
+        method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify(payload)
       });
       const data = await res.json();
@@ -87,9 +86,9 @@ export default function CommentModal({ isOpen, onClose, videoId, videoAuthorId, 
       if (!confirm("Bạn có chắc chắn muốn xóa bình luận này? Thao tác không thể hoàn tác.")) return;
       const tid = toast.loading("Đang xóa bình luận...");
       try {
-          const { data: { session } } = await supabase.auth.getSession();
+          const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
           const res = await fetch(`${API_URL}/tiktok/feeds/comments/${commentId}`, {
-              method: "DELETE", headers: { "Authorization": `Bearer ${session?.access_token}` }
+              method: "DELETE", headers: { "Authorization": `Bearer ${token}` }
           });
           if (res.ok) {
               setRawComments(prev => prev.filter(c => c.id !== commentId && c.parent_id !== commentId));

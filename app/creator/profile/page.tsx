@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import NotificationModal from "@/components/NotificationModal";
 import { useUI } from "@/context/UIContext";
-import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/context/AuthContext";
 
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -29,6 +29,7 @@ interface SocialLink { platform: SocialPlatform; url: string; }
 export default function CreatorProfile() {
   const router = useRouter();
   const { isNotifOpen, setIsNotifOpen, theme, toggleTheme } = useUI() as unknown as LocalUIContext;
+  const { refreshProfile } = useAuth();
   
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -66,12 +67,11 @@ export default function CreatorProfile() {
   const postInputRef = useRef<HTMLInputElement>(null);
 
   const fetchData = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) { router.push("/"); return; }
-    setUser(session.user);
+    const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+    if (!token) { router.push("/"); return; }
     
     try {
-      const fetchOpts = { headers: { "Authorization": `Bearer ${session.access_token}` } };
+      const fetchOpts = { headers: { "Authorization": `Bearer ${token}` } };
       let pData = null, sData = null, cData = null;
 
       try { pData = await (await fetch(`${API_URL}/user/profile`, fetchOpts)).json(); } catch (e) {}
@@ -85,6 +85,7 @@ export default function CreatorProfile() {
               router.push("/");
               return;
           }
+          setUser(p);
           setProfileData(p);
           setEditForm({ username: p.username || "", full_name: p.full_name || "", bio: p.bio || "" });
           try { setSocials(JSON.parse(p.social_links || "[]")); } catch { setSocials([]); }
@@ -102,7 +103,11 @@ export default function CreatorProfile() {
 
   useEffect(() => { fetchData(); }, [router]);
 
-  const handleLogout = async () => { await supabase.auth.signOut(); router.push("/"); };
+  const handleLogout = async () => { 
+    if (typeof window !== "undefined") localStorage.removeItem("ai-health-token");
+    await refreshProfile();
+    router.push("/"); 
+  };
 
   const handleShareProfile = () => {
       const url = `${window.location.origin}/${profileData?.username}`;
@@ -114,11 +119,11 @@ export default function CreatorProfile() {
     setIsUpdating(true);
     const tid = toast.loading("Đang lưu hồ sơ...");
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
       const payload = { ...editForm, social_links: JSON.stringify(socials) };
       const res = await fetch(`${API_URL}/user/profile`, { 
           method: "PATCH", 
-          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` }, 
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, 
           body: JSON.stringify(payload) 
       });
       if (!res.ok) throw new Error("Lỗi lưu hồ sơ");
@@ -136,16 +141,22 @@ export default function CreatorProfile() {
       setIsUploadingImage(true);
       const tid = toast.loading(`Đang tải ảnh ${type === 'avatar' ? 'đại diện' : 'bìa'}...`);
       try {
-          const fileName = `${user.id}-${type}-${Date.now()}.${file.name.split('.').pop()}`;
-          const { error: upErr } = await supabase.storage.from('avatars').upload(fileName, file, { upsert: true });
-          if (upErr) throw new Error("Lỗi tải ảnh lên Storage");
+          const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+          const formData = new FormData();
+          formData.append("file", file);
           
-          const publicUrl = supabase.storage.from('avatars').getPublicUrl(fileName).data.publicUrl;
-          const { data: { session } } = await supabase.auth.getSession();
+          const uploadRes = await fetch(`${API_URL}/media/upload`, {
+              method: "POST",
+              headers: { "Authorization": `Bearer ${token}` },
+              body: formData
+          });
+          const uploadResult = await uploadRes.json();
+          if (!uploadRes.ok || uploadResult.status !== "success") throw new Error("Lỗi tải ảnh lên Cloudflare R2");
+          const publicUrl = uploadResult.url;
           
           const payload = type === 'avatar' ? { avatar_url: publicUrl } : { cover_url: publicUrl };
           const res = await fetch(`${API_URL}/user/profile`, { 
-              method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` }, 
+              method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, 
               body: JSON.stringify(payload) 
           });
           
@@ -162,14 +173,20 @@ export default function CreatorProfile() {
     setIsStudioUploading(true);
     const tid = toast.loading("Đang gửi video đi kiểm duyệt...");
     try {
-        const fileName = `studio-${Date.now()}.${studioFile.name.split('.').pop()}`;
-        const { error: upErr } = await supabase.storage.from('media').upload(fileName, studioFile);
-        if (upErr) throw new Error("Lỗi tải video lên Storage");
-        const videoUrl = supabase.storage.from('media').getPublicUrl(fileName).data.publicUrl;
+        const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+        const formData = new FormData();
+        formData.append("file", studioFile);
+        const uploadRes = await fetch(`${API_URL}/media/upload`, {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${token}` },
+            body: formData
+          });
+        const uploadResult = await uploadRes.json();
+        if (!uploadRes.ok || uploadResult.status !== "success") throw new Error("Lỗi tải video lên Cloudflare R2");
+        const videoUrl = uploadResult.url;
         
-        const { data: { session } } = await supabase.auth.getSession();
         const payload = { title: studioData.title, content: studioData.content, price: studioData.price ? parseFloat(studioData.price) : null, video_url: videoUrl };
-        const res = await fetch(`${API_URL}/tiktok/feeds`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` }, body: JSON.stringify(payload) });
+        const res = await fetch(`${API_URL}/tiktok/feeds`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, body: JSON.stringify(payload) });
         if (!res.ok) throw new Error("Lỗi đăng bài");
 
         toast.success("Video đã được gửi đi chờ duyệt!", { id: tid });
@@ -185,17 +202,23 @@ export default function CreatorProfile() {
     setIsPostUploading(true);
     const tid = toast.loading("Đang tạo bài viết...");
     try {
+        const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
         let imageUrl = null;
         if (postFile) {
-            const fileName = `posts-${Date.now()}.${postFile.name.split('.').pop()}`;
-            const { error: upErr } = await supabase.storage.from('media').upload(fileName, postFile);
-            if (upErr) throw new Error("Lỗi tải ảnh lên Storage");
-            imageUrl = supabase.storage.from('media').getPublicUrl(fileName).data.publicUrl;
+            const formData = new FormData();
+            formData.append("file", postFile);
+            const uploadRes = await fetch(`${API_URL}/media/upload`, {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${token}` },
+                body: formData
+            });
+            const uploadResult = await uploadRes.json();
+            if (!uploadRes.ok || uploadResult.status !== "success") throw new Error("Lỗi tải ảnh lên Cloudflare R2");
+            imageUrl = uploadResult.url;
         }
 
-        const { data: { session } } = await supabase.auth.getSession();
         const payload = { content: postData.content, image_url: imageUrl };
-        const res = await fetch(`${API_URL}/community/posts`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` }, body: JSON.stringify(payload) });
+        const res = await fetch(`${API_URL}/community/posts`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, body: JSON.stringify(payload) });
         if (!res.ok) throw new Error("Lỗi đăng bài");
 
         toast.success("Bài viết đã được đăng!", { id: tid });

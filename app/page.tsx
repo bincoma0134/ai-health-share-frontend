@@ -6,7 +6,6 @@ import {
   Heart, MessageCircle, Bookmark, Share2, Plus,
   Sun, Moon, Bell, LogOut, CheckCircle, Video
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import CommentModal from "@/components/CommentModal";  
@@ -41,7 +40,7 @@ export default function UserFeed() {
   const [isLoading, setIsLoading] = useState(true);
   
   // 2. KẾ THỪA TRỰC TIẾP USER VÀ USERROLE TỪ AUTHCONTEXT TOÀN CỤC
-  const { user, userRole } = useAuth();
+  const { user, userRole, refreshProfile } = useAuth();
   const [accessToken, setAccessToken] = useState<string | null>(null);
   
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -146,8 +145,8 @@ useEffect(() => {
     }
 
     const syncWithGlobalAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setAccessToken(session?.access_token || null);
+      const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+      setAccessToken(token);
       fetchVideos(user?.id);
     };
 
@@ -161,13 +160,36 @@ useEffect(() => {
     const toastId = toast.loading("Đang kết nối không gian an toàn..."); 
     try {
       if (isLoginMode) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        const res = await fetch(`${API_URL}/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.detail || "Sai tài khoản hoặc mật khẩu!");
+        
+        if (typeof window !== "undefined") {
+          localStorage.setItem("ai-health-token", result.access_token);
+        }
+        await refreshProfile(result.access_token);
+        setAccessToken(result.access_token);
         toast.success("Chào mừng bạn trở lại!", { id: toastId });
       } else {
-        const { error } = await supabase.auth.signUp({ email, password });
-        if (error) throw error;
-        toast.success("Khởi tạo thành công! Hãy bắt đầu hành trình.", { id: toastId });
+        const res = await fetch(`${API_URL}/auth/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email,
+            username: email.split('@')[0],
+            password,
+            full_name: "Thành viên mới",
+            role: "USER"
+          })
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.detail || "Đăng ký không thành công!");
+        toast.success("Khởi tạo thành công! Hãy đăng nhập.", { id: toastId });
+        setIsLoginMode(true);
       }
       setIsAuthModalOpen(false);
       setEmail(""); setPassword("");
@@ -179,10 +201,7 @@ useEffect(() => {
   };
 
   const handleGoogleLogin = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}` } });
-      if (error) throw error;
-    } catch (error: any) { toast.error(`Lỗi đăng nhập Google: ${error.message}`); }
+    toast.error("Đăng nhập Google hiện đang bảo trì hệ thống, vui lòng dùng tài khoản mật khẩu!");
   };
 
   const handleUserAvatarClick = () => {
@@ -202,20 +221,15 @@ useEffect(() => {
     setIsUserMenuOpen(false);
     const toastId = toast.loading("Đang đăng xuất...");
     try {
-      // 1. Dọn dẹp Access Token nội bộ của trang
       setAccessToken(null);
-      
-      // 2. Gọi lệnh xóa Session của Supabase
-      // LƯU Ý: Lệnh này sẽ kích hoạt AuthContext listener để tự động reset user và userRole toàn cục
-      await supabase.auth.signOut();
-      
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("ai-health-token");
+      }
+      await refreshProfile();
       toast.success("Đã đăng xuất thành công!", { id: toastId });
-      
-      // Cho trình duyệt một lát để dọn dẹp Cookie/Session hoàn toàn trước khi điều hướng
       setTimeout(() => {
         window.location.href = "/";
       }, 500);
-      
     } catch (error: any) { 
       console.error("Logout Error:", error);
       toast.error("Lỗi đăng xuất!", { id: toastId }); 

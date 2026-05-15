@@ -11,8 +11,8 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import NotificationModal from "@/components/NotificationModal";
 import { useUI } from "@/context/UIContext";
-import { supabase } from "@/lib/supabase";
 import dynamic from "next/dynamic";
+import { useAuth } from "@/context/AuthContext";
 import CommentModal from "@/components/CommentModal";
 
 const MiniMapPicker = dynamic(() => import("@/components/MiniMapPicker"), { ssr: false });
@@ -26,6 +26,7 @@ interface SocialLink { platform: SocialPlatform; url: string; }
 export default function PartnerProfilePage() {
   const router = useRouter();
   const { isNotifOpen, setIsNotifOpen, theme, toggleTheme } = useUI() as any;
+  const { refreshProfile } = useAuth();
   
   const [isLoading, setIsLoading] = useState(true);
   const [profileData, setProfileData] = useState<any>(null);
@@ -76,8 +77,8 @@ export default function PartnerProfilePage() {
           toast.success("Đã sao chép liên kết!");
           return;
       }
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+      if (!token) return;
       
       setMyVideos(prev => prev.map(v => {
           if (v.id === videoId) {
@@ -98,7 +99,7 @@ export default function PartnerProfilePage() {
 
       try {
           await fetch(`${API_URL}/tiktok/feeds/${videoId}/${action}`, {
-              method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` }
+              method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
           });
       } catch (error) { fetchData(); } // Reset nếu API lỗi
   };
@@ -119,29 +120,31 @@ export default function PartnerProfilePage() {
   };
 
   const fetchData = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) { router.push("/"); return; }
-    setUser(session.user);
+    const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+    if (!token) { router.push("/"); return; }
 
     try {
       const [resP, resS, resV] = await Promise.all([
-        fetch(`${API_URL}/user/profile`, { headers: { "Authorization": `Bearer ${session.access_token}` } }),
-        fetch(`${API_URL}/partner/my-services`, { headers: { "Authorization": `Bearer ${session.access_token}` } }),
-        fetch(`${API_URL}/partner/my-tiktok-feeds`, { headers: { "Authorization": `Bearer ${session.access_token}` } })
+        fetch(`${API_URL}/user/profile`, { headers: { "Authorization": `Bearer ${token}` } }),
+        fetch(`${API_URL}/partner/my-services`, { headers: { "Authorization": `Bearer ${token}` } }),
+        fetch(`${API_URL}/partner/my-tiktok-feeds`, { headers: { "Authorization": `Bearer ${token}` } })
       ]);
       
       const [dataP, dataS, dataV] = await Promise.all([resP.json(), resS.json(), resV.json()]);
 
       if (dataP.status === "success") {
         setProfileData(dataP.data);
-        setEditForm({
-          username: dataP.data.profile.username || "",
-          full_name: dataP.data.profile.full_name || "",
-          bio: dataP.data.profile.bio || "",
-          physical_address: dataP.data.profile.physical_address || "",
-          latitude: dataP.data.profile.latitude || 21.028511,
-          longitude: dataP.data.profile.longitude || 105.804817
-        });
+        if (dataP.data.profile) {
+          setUser(dataP.data.profile);
+          setEditForm({
+            username: dataP.data.profile.username || "",
+            full_name: dataP.data.profile.full_name || "",
+            bio: dataP.data.profile.bio || "",
+            physical_address: dataP.data.profile.physical_address || "",
+            latitude: dataP.data.profile.latitude || 21.028511,
+            longitude: dataP.data.profile.longitude || 105.804817
+          });
+        }
         try {
           const parsed = dataP.data.profile.social_links ? JSON.parse(dataP.data.profile.social_links) : [];
           setSocials(Array.isArray(parsed) ? parsed : []);
@@ -157,7 +160,11 @@ export default function PartnerProfilePage() {
 
   useEffect(() => { fetchData(); }, [router]);
 
-  const handleLogout = async () => { await supabase.auth.signOut(); router.push("/"); };
+  const handleLogout = async () => { 
+    if (typeof window !== "undefined") localStorage.removeItem("ai-health-token");
+    await refreshProfile();
+    router.push("/"); 
+  };
 
   const handleGeocode = async () => {
     if (!editForm.physical_address) return toast.error("Vui lòng nhập địa chỉ để tìm kiếm!");
@@ -186,9 +193,9 @@ export default function PartnerProfilePage() {
     setIsUpdating(true);
     const tid = toast.loading("Đang lưu hồ sơ...");
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
       const payload = { ...editForm, social_links: JSON.stringify(socials) };
-      const res = await fetch(`${API_URL}/user/profile`, { method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` }, body: JSON.stringify(payload) });
+      const res = await fetch(`${API_URL}/user/profile`, { method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, body: JSON.stringify(payload) });
       const result = await res.json();
       if (!res.ok || result.status !== "success") throw new Error(result.detail || "Lỗi lưu hồ sơ");
       
@@ -206,16 +213,22 @@ export default function PartnerProfilePage() {
       setIsUploadingImage(true);
       const tid = toast.loading(`Đang tải ảnh ${type === 'avatar' ? 'đại diện' : 'bìa'}...`);
       try {
-          const fileName = `${user.id}-${type}-${Date.now()}.${file.name.split('.').pop()}`;
-          const { error: upErr } = await supabase.storage.from('avatars').upload(fileName, file, { upsert: true });
-          if (upErr) throw new Error("Lỗi tải ảnh lên Storage");
+          const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+          const formData = new FormData();
+          formData.append("file", file);
           
-          const publicUrl = supabase.storage.from('avatars').getPublicUrl(fileName).data.publicUrl;
-          const { data: { session } } = await supabase.auth.getSession();
+          const uploadRes = await fetch(`${API_URL}/media/upload`, {
+              method: "POST",
+              headers: { "Authorization": `Bearer ${token}` },
+              body: formData
+          });
+          const uploadResult = await uploadRes.json();
+          if (!uploadRes.ok || uploadResult.status !== "success") throw new Error("Lỗi tải ảnh lên Cloudflare R2");
+          const publicUrl = uploadResult.url;
           
           const payload = type === 'avatar' ? { avatar_url: publicUrl } : { cover_url: publicUrl };
           const res = await fetch(`${API_URL}/user/profile`, { 
-              method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` }, 
+              method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, 
               body: JSON.stringify(payload) 
           });
           
@@ -236,16 +249,22 @@ export default function PartnerProfilePage() {
     setIsUploading(true);
     const tid = toast.loading("Đang gửi dịch vụ đi kiểm duyệt...");
     try {
+        const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
         let mediaUrl = null;
         if (mediaFile) {
-            const fileName = `services/${user.id}-${Date.now()}.${mediaFile.name.split('.').pop()}`;
-            const { error: upErr } = await supabase.storage.from('media').upload(fileName, mediaFile);
-            if (upErr) throw new Error("Lỗi tải tệp minh họa");
-            mediaUrl = supabase.storage.from('media').getPublicUrl(fileName).data.publicUrl;
+            const formData = new FormData();
+            formData.append("file", mediaFile);
+            const uploadRes = await fetch(`${API_URL}/media/upload`, {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${token}` },
+                body: formData
+            });
+            const uploadResult = await uploadRes.json();
+            if (!uploadRes.ok || uploadResult.status !== "success") throw new Error("Lỗi tải tệp minh họa lên Cloudflare R2");
+            mediaUrl = uploadResult.url;
         }
-        const { data: { session } } = await supabase.auth.getSession();
         const payload = { ...newService, price: parseFloat(newService.price), tags: newService.tags.split(',').map(t => t.trim()).filter(Boolean), [mediaType === 'video' ? 'video_url' : 'image_url']: mediaUrl };
-        const res = await fetch(`${API_URL}/services`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` }, body: JSON.stringify(payload) });
+        const res = await fetch(`${API_URL}/services`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, body: JSON.stringify(payload) });
         const result = await res.json();
         if (!res.ok || result.status !== "success") throw new Error(result.detail || "Lỗi tạo dịch vụ");
         toast.success("Đã gửi dịch vụ đi chờ kiểm duyệt!", { id: tid });
@@ -260,9 +279,9 @@ export default function PartnerProfilePage() {
     setIsUploading(true);
     const tid = toast.loading("Đang gửi bản sửa đổi...");
     try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
         const payload = { service_name: editingService.service_name, description: editingService.description, price: parseFloat(editingService.price), tags: Array.isArray(editingService.tags) ? editingService.tags : editingService.tags.split(',').map((t: string) => t.trim()).filter(Boolean) };
-        const res = await fetch(`${API_URL}/partner/my-services/${editingService.id}`, { method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` }, body: JSON.stringify(payload) });
+        const res = await fetch(`${API_URL}/partner/my-services/${editingService.id}`, { method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, body: JSON.stringify(payload) });
         const result = await res.json();
         if (!res.ok || result.status !== "success") throw new Error(result.detail || "Lỗi chỉnh sửa");
         toast.success("Bản sửa đổi đã được gửi đi chờ kiểm duyệt!", { id: tid });
@@ -275,8 +294,8 @@ export default function PartnerProfilePage() {
     if (!confirm("Bạn muốn gửi yêu cầu xóa dịch vụ này?")) return;
     const tid = toast.loading("Đang gửi yêu cầu xóa...");
     try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const res = await fetch(`${API_URL}/partner/my-services/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${session?.access_token}` } });
+        const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+        const res = await fetch(`${API_URL}/partner/my-services/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${token}` } });
         if (!res.ok) throw new Error("Lỗi xóa");
         toast.success("Yêu cầu xóa đã được gửi chờ duyệt!", { id: tid }); fetchData();
     } catch (e: any) { toast.error(e.message, { id: tid }); }
@@ -288,13 +307,20 @@ export default function PartnerProfilePage() {
     setIsStudioUploading(true);
     const tid = toast.loading("Đang gửi video đi kiểm duyệt...");
     try {
-        const fileName = `studio-${Date.now()}.${studioFile.name.split('.').pop()}`;
-        const { error: upErr } = await supabase.storage.from('media').upload(fileName, studioFile);
-        if (upErr) throw new Error("Lỗi tải video lên Storage");
-        const videoUrl = supabase.storage.from('media').getPublicUrl(fileName).data.publicUrl;
-        const { data: { session } } = await supabase.auth.getSession();
+        const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+        const formData = new FormData();
+        formData.append("file", studioFile);
+        const uploadRes = await fetch(`${API_URL}/media/upload`, {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${token}` },
+            body: formData
+        });
+        const uploadResult = await uploadRes.json();
+        if (!uploadRes.ok || uploadResult.status !== "success") throw new Error("Lỗi tải video lên Cloudflare R2");
+        const videoUrl = uploadResult.url;
+        
         const payload = { title: studioData.title, content: studioData.content, price: studioData.price ? parseFloat(studioData.price) : null, video_url: videoUrl };
-        const res = await fetch(`${API_URL}/tiktok/feeds`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` }, body: JSON.stringify(payload) });
+        const res = await fetch(`${API_URL}/tiktok/feeds`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, body: JSON.stringify(payload) });
         if (!res.ok) throw new Error("Lỗi đăng bài");
         toast.success("Video đã được gửi đi chờ duyệt!", { id: tid });
         setStudioData({ title: "", content: "", price: "" }); setStudioFile(null); setStudioPreview(null);
@@ -308,9 +334,9 @@ export default function PartnerProfilePage() {
     setIsStudioUploading(true);
     const tid = toast.loading("Đang gửi bản sửa đổi video...");
     try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
         const payload = { title: editingVideo.title, content: editingVideo.content, price: editingVideo.price ? parseFloat(editingVideo.price) : null };
-        const res = await fetch(`${API_URL}/partner/my-tiktok-feeds/${editingVideo.id}`, { method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` }, body: JSON.stringify(payload) });
+        const res = await fetch(`${API_URL}/partner/my-tiktok-feeds/${editingVideo.id}`, { method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, body: JSON.stringify(payload) });
         if (!res.ok) throw new Error("Lỗi chỉnh sửa video");
         toast.success("Bản sửa đổi video đã được gửi đi chờ duyệt!", { id: tid });
         setIsEditVideoModalOpen(false); fetchData();
@@ -322,8 +348,8 @@ export default function PartnerProfilePage() {
     if (!confirm("Bạn muốn gửi yêu cầu gỡ video này khỏi Trang chủ?")) return;
     const tid = toast.loading("Đang gửi yêu cầu gỡ...");
     try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const res = await fetch(`${API_URL}/partner/my-tiktok-feeds/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${session?.access_token}` } });
+        const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+        const res = await fetch(`${API_URL}/partner/my-tiktok-feeds/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${token}` } });
         if (!res.ok) throw new Error("Lỗi gỡ video");
         toast.success("Yêu cầu gỡ video đã được gửi chờ duyệt!", { id: tid }); fetchData();
     } catch (e: any) { toast.error(e.message, { id: tid }); }

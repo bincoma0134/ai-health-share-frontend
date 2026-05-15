@@ -6,7 +6,6 @@ import {
   Lock, Play, Heart, Bookmark, LayoutGrid, Sparkles, Clock, CheckCircle
 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
 import DashboardButton from "./DashboardButton";
 
 
@@ -20,14 +19,14 @@ export default function CreatorView({ profile, videoTiktokFeeds = [], communityP
   const [followersCount, setFollowersCount] = useState(profile?.followers_count || 0);
 
   const handleToggleFollow = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return toast.error("Vui lòng đăng nhập!");
+    const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+    if (!token) return toast.error("Vui lòng đăng nhập!");
     const wasFollowing = isFollowing;
     setIsFollowing(!wasFollowing);
     setFollowersCount((prev: number) => wasFollowing ? Math.max(0, prev - 1) : prev + 1);
 
     try {
-        const res = await fetch(`${API_URL}/user/follow/${profile.id}`, { method: 'POST', headers: { 'Authorization': `Bearer ${session.access_token}` }});
+        const res = await fetch(`${API_URL}/user/follow/${profile.id}`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }});
         if (!res.ok) throw new Error("Lỗi");
     } catch {
         setIsFollowing(wasFollowing);

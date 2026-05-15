@@ -6,8 +6,6 @@ import {
   Sun, Moon, Bell, Play, CalendarPlus, ShieldCheck, Search, SlidersHorizontal,
   LogOut, MapPin, Star, Activity, Filter, X
 } from "lucide-react";
-// 1. IMPORT SUPABASE CHUẨN VÀ USEAUTH TOÀN CỤC
-import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useUI } from "@/context/UIContext"; 
@@ -30,7 +28,7 @@ export default function ExploreFeature() {
   const { setIsNotifOpen } = useUI();
   
   // 2. KẾ THỪA TRỰC TIẾP STATE HỆ THỐNG & AUTH TỪ CONTEXT TOÀN CỤC
-  const { user, userRole } = useAuth();
+  const { user, userRole, refreshProfile } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -94,7 +92,8 @@ export default function ExploreFeature() {
     setIsUserMenuOpen(false);
     const toastId = toast.loading("Đang đăng xuất...");
     try {
-        await supabase.auth.signOut();
+        if (typeof window !== "undefined") localStorage.removeItem("ai-health-token");
+        await refreshProfile();
         toast.success("Đã đăng xuất thành công!", { id: toastId });
         router.push("/");
     } catch { toast.error("Lỗi đăng xuất!", { id: toastId }); }
@@ -134,13 +133,13 @@ export default function ExploreFeature() {
     const toastId = toast.loading("Đang gửi yêu cầu đến cơ sở...");
     
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Phiên đăng nhập hết hạn!");
+      const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+      if (!token) throw new Error("Vui lòng đăng nhập để đặt lịch!");
 
       const code = affiliateCode.trim();
       if (code !== "") {
         const validateRes = await fetch(`https://ai-health-share-backend.onrender.com/affiliates/validate?code=${code}`, {
-          headers: { "Authorization": `Bearer ${session.access_token}` }
+          headers: { "Authorization": `Bearer ${token}` }
         });
         if (!validateRes.ok) throw new Error("Mã giới thiệu không hợp lệ hoặc không tồn tại!");
       }
@@ -148,7 +147,7 @@ export default function ExploreFeature() {
       // GỌI API MỚI: Gửi request đến Partner (Status sẽ là WAITING_PARTNER)
       const bookingRes = await fetch(`https://ai-health-share-backend.onrender.com/appointments/request`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify({ 
           partner_id: activeService.partner_id,
           service_id: activeService.id, 

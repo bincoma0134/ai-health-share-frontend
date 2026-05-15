@@ -13,7 +13,7 @@ import dynamic from 'next/dynamic';
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 import { useUI } from "@/context/UIContext"; 
 import NotificationModal from "@/components/NotificationModal";
-import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/context/AuthContext";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -26,6 +26,7 @@ interface WithdrawalItem {
 export default function AdminDashboardOverview() {
   const router = useRouter();
   const { isNotifOpen, setIsNotifOpen, theme, toggleTheme } = useUI() as any;
+  const { refreshProfile } = useAuth();
   
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,12 +55,17 @@ export default function AdminDashboardOverview() {
     const startTime = performance.now();
     setIsLoading(true);
     try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) { router.push("/"); return; }
-        setUser(session.user);
+        const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+        if (!token) { router.push("/"); return; }
 
-        const opts = { headers: { "Authorization": `Bearer ${session.access_token}` } };
+        const opts = { headers: { "Authorization": `Bearer ${token}` } };
         
+        // Gọi profile ngầm để nạp dữ liệu định danh đồng bộ cho Admin
+        const pProfileRes = await fetch(`${API_URL}/user/profile`, opts).then(r => r.json()).catch(() => null);
+        if (pProfileRes && pProfileRes.status === "success" && pProfileRes.data?.profile) {
+            setUser(pProfileRes.data.profile);
+        }
+
         const [sRes, wRes, pRes] = await Promise.all([
             fetch(`${API_URL}/admin/dashboard-stats`, opts),
             fetch(`${API_URL}/admin/withdrawals`, opts),
@@ -104,10 +110,10 @@ export default function AdminDashboardOverview() {
       setIsProcessing(true);
       const tid = toast.loading("Đang xử lý lệnh giải ngân...");
       try {
-          const { data: { session } } = await supabase.auth.getSession();
+          const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
           const res = await fetch(`${API_URL}/admin/withdrawals/${selectedWithdrawal.id}`, {
               method: "PATCH",
-              headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` },
+              headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
               body: JSON.stringify({ status, admin_note: adminNote.trim() })
           });
           if (!res.ok) throw new Error("Lỗi xử lý");
@@ -578,7 +584,7 @@ export default function AdminDashboardOverview() {
                               <div className="p-6 rounded-[2rem] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 flex flex-col gap-2">
                                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Database size={14}/> Database</span>
                                   <span className="text-2xl font-black text-emerald-500 uppercase">{systemMetrics.dbStatus}</span>
-                                  <span className="text-[10px] font-bold text-slate-400 uppercase">Supabase Cloud (Singapore)</span>
+                                  <span className="text-[10px] font-bold text-slate-400 uppercase">PostgreSQL Core Engine (Standalone)</span>
                               </div>
                               <div className="p-6 rounded-[2rem] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 flex flex-col gap-2">
                                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Server size={14}/> API Core</span>

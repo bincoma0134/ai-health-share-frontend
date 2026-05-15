@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { X, Bell, CheckCircle, ShieldCheck, CalendarDays, Zap, MessageSquare } from "lucide-react";
 import { useUI } from "@/context/UIContext";
-import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { formatTimeAgo } from "@/utils/formatTime"; // Đảm bảo đúng đường dẫn
@@ -21,11 +20,11 @@ export default function NotificationModal() {
   }, [isNotifOpen]);
 
   const loadNotifications = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
+    const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+    if (!token) return;
     try {
       const res = await fetch(`${API_URL}/notifications`, {
-        headers: { "Authorization": `Bearer ${session.access_token}` }
+        headers: { "Authorization": `Bearer ${token}` }
       });
       const result = await res.json();
       if (result.status === "success") setNotifications(result.data);
@@ -37,11 +36,11 @@ export default function NotificationModal() {
   const handleNotificationClick = async (notif: any) => {
     // 1. Đánh dấu đã đọc nếu chưa đọc
     if (!notif.is_read) {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
+      const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+      if (token) {
         await fetch(`${API_URL}/notifications/${notif.id}/read`, {
           method: "PATCH",
-          headers: { "Authorization": `Bearer ${session.access_token}` }
+          headers: { "Authorization": `Bearer ${token}` }
         });
         setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n));
       }
@@ -61,13 +60,13 @@ export default function NotificationModal() {
   };
 
   const markAllAsRead = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
+    const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+    if (!token) return;
     
     try {
       await fetch(`${API_URL}/notifications/read-all`, {
         method: "PATCH",
-        headers: { "Authorization": `Bearer ${session.access_token}` }
+        headers: { "Authorization": `Bearer ${token}` }
       });
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
       toast.success("Đã đánh dấu tất cả là đã đọc");

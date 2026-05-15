@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import ReactMarkdown from 'react-markdown';
 import { useUI } from "@/context/UIContext";
-import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/context/AuthContext";
 
 
 interface ChatMessage {
@@ -23,6 +23,7 @@ export default function AIFeature() {
   const router = useRouter();
   const chatEndRef = useRef<HTMLDivElement>(null);
   const { setIsNotifOpen } = useUI();
+  const { refreshProfile } = useAuth();
   
   const [user, setUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<string>("USER");
@@ -51,18 +52,19 @@ export default function AIFeature() {
     }
 
     const loadData = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUser(session.user);
-        
+      const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+      if (token) {
         fetch("https://ai-health-share-backend.onrender.com/user/profile", {
-            headers: { "Authorization": `Bearer ${session.access_token}` }
+            headers: { "Authorization": `Bearer ${token}` }
         }).then(res => res.json()).then(result => {
-            if (result.status === "success") setUserRole(result.data.profile.role);
+            if (result.status === "success" && result.data?.profile) {
+                setUser(result.data.profile);
+                setUserRole(result.data.profile.role || "USER");
+            }
         }).catch(err => console.error("Lỗi lấy Profile:", err));
 
         fetch("https://ai-health-share-backend.onrender.com/ai/history", {
-            headers: { "Authorization": `Bearer ${session.access_token}` }
+            headers: { "Authorization": `Bearer ${token}` }
         }).then(res => res.json()).then(result => {
             if (result.status === "success" && result.data.length > 0) {
                 const history = result.data.map((m: any) => ({
@@ -95,8 +97,7 @@ export default function AIFeature() {
     setIsTyping(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
+      const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
 
       if (!token) throw new Error("Vui lòng đăng nhập để sử dụng AI Assistant.");
 
@@ -143,9 +144,9 @@ export default function AIFeature() {
     else document.documentElement.classList.remove('dark');
     localStorage.setItem('theme', themeStr);
     if (user) {
-        const { data: { session } } = await supabase.auth.getSession();
+        const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
         fetch("https://ai-health-share-backend.onrender.com/user/profile", {
-          method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` },
+          method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
           body: JSON.stringify({ theme_preference: themeStr })
         });
     }
@@ -155,7 +156,8 @@ export default function AIFeature() {
     setIsUserMenuOpen(false);
     const toastId = toast.loading("Đang đăng xuất...");
     try {
-      await supabase.auth.signOut();
+      if (typeof window !== "undefined") localStorage.removeItem("ai-health-token");
+      await refreshProfile();
       toast.success("Đã đăng xuất!", { id: toastId });
       router.push("/");
     } catch (error) { toast.error("Lỗi đăng xuất!", { id: toastId }); }

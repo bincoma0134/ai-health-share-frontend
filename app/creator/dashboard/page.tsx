@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useUI } from "@/context/UIContext";
-import { supabase } from "@/lib/supabase";
 
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -42,12 +41,17 @@ export default function CreatorDashboard() {
   const fetchDashboardData = async () => {
     setIsLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) { router.push("/"); return; }
-      setUser(session.user);
+      const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+      if (!token) { router.push("/"); return; }
 
-      const fetchOpts = { headers: { "Authorization": `Bearer ${session.access_token}` } };
+      const fetchOpts = { headers: { "Authorization": `Bearer ${token}` } };
       
+      // Gọi profile ngầm để đồng bộ chính xác trạng thái user của Creator
+      const pRes = await fetch(`${API_URL}/user/profile`, fetchOpts).then(r => r.json()).catch(() => null);
+      if (pRes && pRes.status === "success" && pRes.data?.profile) {
+          setUser(pRes.data.profile);
+      }
+
       const [sRes, cRes] = await Promise.all([
           fetch(`${API_URL}/creator/stats`, fetchOpts).then(r => r.json()).catch(() => null),
           fetch(`${API_URL}/creator/content`, fetchOpts).then(r => r.json()).catch(() => null)

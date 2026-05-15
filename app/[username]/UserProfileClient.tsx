@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { Sun, Moon, Bell } from "lucide-react";
 import NotificationModal from "@/components/NotificationModal";
-import { supabase } from "@/lib/supabase";
 import RegularUserView from "@/components/profile/RegularUserView";
+import { useAuth } from "@/context/AuthContext";
 import CreatorView from "@/components/profile/CreatorView";
 import PartnerView from "@/components/profile/PartnerView";
 import ModeratorView from "@/components/profile/ModeratorView";
@@ -21,21 +21,13 @@ export default function UserProfileClient({ params }: { params: { username: stri
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true); const [isAuthReady, setIsAuthReady] = useState(false);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  
+  // Kế thừa trực tiếp trạng thái đăng nhập toàn cục từ Context tự chủ
+  const { user: currentUser } = useAuth();
 
-  // 1. Lắng nghe trạng thái đăng nhập liên tục để chống lỗi F5 trắng trang
+  // Đồng bộ sẵn sàng phiên đăng nhập lập tức cho giao diện
   useEffect(() => {
-    const fetchSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setCurrentUser(session?.user || null); setIsAuthReady(true);
-    };
-    fetchSession();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setCurrentUser(session?.user || null); setIsAuthReady(true);
-    });
-
-    return () => authListener.subscription.unsubscribe();
+    setIsAuthReady(true);
   }, []);
 
   useEffect(() => {
@@ -45,8 +37,8 @@ export default function UserProfileClient({ params }: { params: { username: stri
         return;
       }
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const res = await fetch(`${API_URL}/user/public/${username}`, { headers: session ? { 'Authorization': `Bearer ${session.access_token}` } : {} });
+        const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+        const res = await fetch(`${API_URL}/user/public/${username}`, { headers: token ? { 'Authorization': `Bearer ${token}` } : {} });
         const result = await res.json();
         if (result.status === "success") setData(result.data);
       } catch (err) {

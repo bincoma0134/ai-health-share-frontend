@@ -10,7 +10,6 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useUI } from "@/context/UIContext";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { supabase } from "@/lib/supabase";
 
 
 
@@ -48,13 +47,13 @@ export default function ModeratorDashboard() {
   const fetchAllData = async () => {
       setIsLoading(true);
       try {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (!session) { router.push("/"); return; }
+          const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+          if (!token) { router.push("/"); return; }
 
           const [qRes, hRes, sRes] = await Promise.all([
-              fetch(`${API_URL}/moderation/queue`, { headers: { "Authorization": `Bearer ${session.access_token}` } }),
-              fetch(`${API_URL}/moderation/history`, { headers: { "Authorization": `Bearer ${session.access_token}` } }),
-              fetch(`${API_URL}/moderation/stats`, { headers: { "Authorization": `Bearer ${session.access_token}` } })
+              fetch(`${API_URL}/moderation/queue`, { headers: { "Authorization": `Bearer ${token}` } }),
+              fetch(`${API_URL}/moderation/history`, { headers: { "Authorization": `Bearer ${token}` } }),
+              fetch(`${API_URL}/moderation/stats`, { headers: { "Authorization": `Bearer ${token}` } })
           ]);
           
           const qData = await qRes.json();
@@ -78,10 +77,11 @@ export default function ModeratorDashboard() {
       setIsProcessing(true);
       const tid = toast.loading(`Đang xử lý ${action}...`);
       try {
-          const { data: { session } } = await supabase.auth.getSession();
+          const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+          if (!token) return;
           const res = await fetch(`${API_URL}/moderation/action/${selectedItem.type}/${selectedItem.id}`, {
               method: "PATCH",
-              headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` },
+              headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
               body: JSON.stringify({ action, note: rejectNote.trim() })
           });
           if (!res.ok) throw new Error("Lỗi xử lý");

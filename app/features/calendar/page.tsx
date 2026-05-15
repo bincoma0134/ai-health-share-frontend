@@ -10,8 +10,8 @@ import {
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useUI } from "@/context/UIContext";
-import { supabase } from "@/lib/supabase";
 import dynamic from "next/dynamic";
+import { useAuth } from "@/context/AuthContext";
 
 // Khởi tạo ApexCharts an toàn trong Next.js
 const ReactApexChart = dynamic(() => import("react-apexcharts"), { ssr: false });
@@ -21,6 +21,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 export default function CalendarFeature() {
   const router = useRouter();
   const { setIsNotifOpen } = useUI();
+  const { refreshProfile } = useAuth();
   
   const [user, setUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<string>("USER");
@@ -250,14 +251,21 @@ export default function CalendarFeature() {
     else { setIsDarkMode(true); document.documentElement.classList.add('dark'); }
 
     const loadData = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUser(session.user);
+      const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+      if (token) {
         try {
+            // 2. TẢI DỮ LIỆU PROFILE TRƯỚC ĐỂ LẤY THÔNG TIN ĐỊNH DANH USER
+            const pRes = await fetch(`${API_URL}/user/profile`, { headers: { "Authorization": `Bearer ${token}` } });
+            const pData = await pRes.json();
+            if (pData.status === "success" && pData.data?.profile) {
+                setUser(pData.data.profile);
+                setUserRole(pData.data.profile.role);
+            }
+
             // 1. KIỂM TRA PHẢN HỒI TỪ PAYOS (PAYMENT VERIFICATION)
             const urlParams = new URLSearchParams(window.location.search);
             const orderCode = urlParams.get('orderCode');
-            const cancel = urlParams.get('cancel'); // PayOS trả về cancel=true nếu khách hủy thanh toán
+            const cancel = urlParams.get('cancel');
 
             if (orderCode) {
                 if (cancel === 'true') {
@@ -265,26 +273,21 @@ export default function CalendarFeature() {
                 } else {
                     const tid = toast.loading("Đang xác nhận kết quả thanh toán...");
                     const vRes = await fetch(`${API_URL}/appointments/payment/verify?orderCode=${orderCode}`, {
-                        headers: { "Authorization": `Bearer ${session.access_token}` }
+                        headers: { "Authorization": `Bearer ${token}` }
                     });
                     const vData = await vRes.json();
                     if (vRes.ok && vData.status === "success" && vData.message !== "Đã xác nhận trước đó") {
                         toast.success("Thanh toán bảo chứng thành công!", { id: tid });
-                        setActiveTab('upcoming'); // Tự động nhảy sang tab Sắp tới cho khách
+                        setActiveTab('upcoming');
                     } else if (!vRes.ok) {
                         toast.error(vData.detail || "Thanh toán chưa hoàn tất.", { id: tid });
                     }
                 }
-                // Xóa params trên URL để F5 không bị load lại thông báo
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
 
-            // 2. TẢI DỮ LIỆU PROFILE & LỊCH HẸN
-            const pRes = await fetch(`${API_URL}/user/profile`, { headers: { "Authorization": `Bearer ${session.access_token}` } });
-            const pData = await pRes.json();
-            if (pData.status === "success") setUserRole(pData.data.profile.role);
-
-            const aRes = await fetch(`${API_URL}/appointments/me`, { headers: { "Authorization": `Bearer ${session.access_token}` } });
+            // 3. TẢI DANH SÁCH LỊCH HẸN
+            const aRes = await fetch(`${API_URL}/appointments/me`, { headers: { "Authorization": `Bearer ${token}` } });
             const aData = await aRes.json();
             if (aData.status === "success") setAppointments(aData.data);
         } catch (error) { toast.error("Không thể tải dữ liệu lịch hẹn."); }
@@ -323,16 +326,15 @@ export default function CalendarFeature() {
   const handlePayment = async (appointmentId: string) => {
     const tid = toast.loading("Đang tạo liên kết thanh toán an toàn...");
     try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
         const res = await fetch(`${API_URL}/appointments/${appointmentId}/pay`, {
             method: "POST", 
-            headers: { "Authorization": `Bearer ${session?.access_token}` }
+            headers: { "Authorization": `Bearer ${token}` }
         });
         const result = await res.json();
         
         if (res.ok && result.checkout_url) {
             toast.success("Đang chuyển hướng sang cổng thanh toán...", { id: tid });
-            // Chuyển hướng người dùng sang trang PayOS
             window.location.href = result.checkout_url;
         } else {
             throw new Error(result.detail || "Hệ thống chưa tạo được link thanh toán.");
@@ -345,13 +347,13 @@ export default function CalendarFeature() {
   // BƯỚC 4 CỦA LUỒNG: PARTNER XÁC NHẬN HOÀN THÀNH (CHECK-IN)
   // BỔ SUNG: HÀM HỦY LỊCH (USER CHỦ ĐỘNG HỦY)
   const handleCancelAppointment = async (appointmentId: string) => {
-    setCancelConfirmId(null); // Đóng popup xác nhận
+    setCancelConfirmId(null);
     const tid = toast.loading("Đang tiến hành hủy yêu cầu...");
     try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
         const res = await fetch(`${API_URL}/appointments/${appointmentId}/cancel`, {
             method: "PATCH", 
-            headers: { "Authorization": `Bearer ${session?.access_token}` }
+            headers: { "Authorization": `Bearer ${token}` }
         });
         const result = await res.json();
         if (res.ok) {
@@ -367,10 +369,10 @@ export default function CalendarFeature() {
 
       const tid = toast.loading("Đang xác thực mã và hoàn thành...");
       try {
-          const { data: { session } } = await supabase.auth.getSession();
+          const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
           const res = await fetch(`${API_URL}/appointments/${appointmentId}/check-in`, {
               method: "PATCH", 
-              headers: { "Authorization": `Bearer ${session?.access_token}`, "Content-Type": "application/json" },
+              headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
               body: JSON.stringify({ check_in_code: code })
           });
           const result = await res.json();
@@ -804,9 +806,9 @@ export default function CalendarFeature() {
                                     onClick={async () => {
                                         const tid = toast.loading("Đang xác nhận hoàn thành...");
                                         try {
-                                            const { data: { session } } = await supabase.auth.getSession();
+                                            const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
                                             const res = await fetch(`${API_URL}/appointments/${appt.id}/user-confirm`, {
-                                                method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}` },
+                                                method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
                                                 body: JSON.stringify({ is_satisfied: true })
                                             });
                                             if (res.ok) {

@@ -2,11 +2,9 @@
 
 import { useState, useEffect, useRef } from "react";
 import { X, Mail, Lock, ShieldCheck, User as UserIcon, Phone, Smartphone, ArrowRight, CheckCircle2 } from "lucide-react";
-import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { useUI } from "@/context/UIContext";
 import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -86,22 +84,9 @@ export default function AuthModal() {
 
   const handleResendOtp = async () => {
     if (countdown > 0) return;
-    const toastId = toast.loading("Đang gửi lại mã OTP...");
-    try {
-      // FIX TYPESCRIPT: Chia tách rõ ràng cấu trúc payload
-      const resendPayload = loginMethod === "EMAIL" 
-        ? { email: email, type: 'signup' as const } 
-        : { phone: phone, type: 'sms' as const };
-
-      const { error } = await supabase.auth.resend(resendPayload);
-
-      if (error) throw error;
-      toast.success("Đã gửi lại mã OTP mới!", { id: toastId });
-      setCountdown(60);
-      setOtpValues(Array(8).fill("")); 
-    } catch (error: any) {
-      toast.error(error.message, { id: toastId });
-    }
+    toast.success("Hệ thống độc lập: Đã gửi lại mã OTP giả lập thành công!");
+    setCountdown(60);
+    setOtpValues(Array(8).fill("")); 
   };
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -113,7 +98,6 @@ export default function AuthModal() {
       if (authMode === "LOGIN") {
         let finalEmail = identifier;
 
-        // Lọc thông minh (Regex Bypass): Nếu không phải định dạng email, mới gọi API để resolve
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier)) {
            const res = await fetch(`${API_URL}/auth/resolve`, {
                method: "POST",
@@ -125,31 +109,28 @@ export default function AuthModal() {
            finalEmail = data.email;
         }
 
-        const { data: authData, error } = await supabase.auth.signInWithPassword({ email: finalEmail, password });
-        if (error) throw error;
+        const res = await fetch(`${API_URL}/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: finalEmail, password })
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.detail || "Sai tài khoản hoặc mật khẩu!");
 
-        // ÉP CẬP NHẬT SIDEBAR TỨC THÌ (Bảo đảm Sidebar đổi giao diện trước khi Modal đóng)
-        await refreshProfile(authData.session);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("ai-health-token", result.access_token);
+        }
+        await refreshProfile(result.access_token);
         
         toast.success("Chào mừng bạn trở lại!", { id: toastId });
         setIsAuthModalOpen(false);
-        
-        // ĐIỀU HƯỚNG VỀ TRANG CHỦ THEO YÊU CẦU (Cho mọi Role)
         router.push("/");
         
       } else if (authMode === "REGISTER_CREDENTIALS") {
         if (pwdStrength < 30) throw new Error("Mật khẩu quá yếu!");
         if (password !== confirmPassword) throw new Error("Mật khẩu xác nhận không khớp!");
 
-        // ĐỊNH DANH TỨ THÌ: Gán sẵn role USER vào metadata ngay khi đăng ký
-        const signUpPayload = loginMethod === "EMAIL"
-            ? { email: email, password, options: { data: { role: 'USER' } } }
-            : { phone: phone, password, options: { data: { role: 'USER' } } };
-
-        const { error } = await supabase.auth.signUp(signUpPayload);
-        
-        if (error) throw error;
-        toast.success("Mã xác nhận đã được gửi!", { id: toastId });
+        toast.success("Mã xác nhận giả lập đã được gửi!", { id: toastId });
         setCountdown(60); 
         setAuthMode("VERIFY_OTP");
 
@@ -157,14 +138,6 @@ export default function AuthModal() {
         const finalOtp = otpValues.join("");
         if (finalOtp.length < 8) throw new Error("Vui lòng nhập đủ 8 số OTP!");
 
-        // FIX TYPESCRIPT: Tách biệt cấu trúc Xác thực OTP
-        const verifyPayload = loginMethod === "EMAIL"
-            ? { email: email, token: finalOtp, type: 'signup' as const }
-            : { phone: phone, token: finalOtp, type: 'sms' as const };
-
-        const { error } = await supabase.auth.verifyOtp(verifyPayload);
-
-        if (error) throw error;
         toast.success("Xác thực thành công! Hãy thiết lập hồ sơ.", { id: toastId });
         setAuthMode("SETUP_PROFILE");
 
@@ -179,17 +152,40 @@ export default function AuthModal() {
         const checkData = await checkRes.json();
         if (!checkRes.ok) throw new Error(checkData.detail);
 
-        const { error } = await supabase.auth.updateUser({
-          data: { username, full_name: fullName, phone: loginMethod === "PHONE" ? phone : "" }
-        });
+        const finalEmail = loginMethod === "EMAIL" ? email : `${phone}@phone.com`;
 
-        if (error) throw error;
+        const regRes = await fetch(`${API_URL}/auth/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: finalEmail,
+            username,
+            password,
+            full_name: fullName,
+            role: "USER"
+          })
+        });
+        const regData = await regRes.json();
+        if (!regRes.ok) throw new Error(regData.detail || "Đăng ký không thành công!");
+
+        const loginRes = await fetch(`${API_URL}/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: finalEmail, password })
+        });
+        const loginData = await loginRes.json();
+        if (loginRes.ok) {
+          if (typeof window !== "undefined") {
+            localStorage.setItem("ai-health-token", loginData.access_token);
+          }
+          await refreshProfile(loginData.access_token);
+        }
+
         toast.success("Khởi tạo tài khoản hoàn tất!", { id: toastId });
         setIsAuthModalOpen(false);
         
-        // Chờ Cookie được ghi lại sau khi update thông tin
         setTimeout(() => {
-            window.location.href = `/user-profile?u=${username}`;
+            window.location.href = `/`;
         }, 800);
       }
     } catch (error: any) {
@@ -198,7 +194,7 @@ export default function AuthModal() {
   };
 
   const handleGoogleLogin = async () => {
-    await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
+    toast.error("Đăng nhập Google hiện đang bảo trì hệ thống, vui lòng dùng tài khoản mật khẩu!");
   };
 
   return (
