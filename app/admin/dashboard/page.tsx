@@ -232,7 +232,7 @@ export default function AdminDashboardOverview() {
                                   <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform"><TrendingUp size={120} className="text-amber-500"/></div>
                                   <div className="relative z-10">
                                       <p className="text-xs font-black text-amber-500 uppercase tracking-widest flex items-center gap-2 mb-2"><TrendingUp size={16}/> Tổng Giao Dịch (GMV)</p>
-                                      <p className="text-4xl md:text-5xl font-black text-white">{stats.gmv.toLocaleString()} <span className="text-lg text-slate-400">đ</span></p>
+                                      <p className="text-4xl md:text-5xl font-black text-white">{(stats.gmv || 0).toLocaleString()} <span className="text-lg text-slate-400">đ</span></p>
                                   </div>
                               </div>
                               {/* Platform Revenue */}
@@ -240,7 +240,7 @@ export default function AdminDashboardOverview() {
                                   <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-110 transition-transform"><DollarSign size={120}/></div>
                                   <div className="relative z-10">
                                       <p className="text-xs font-black text-emerald-500 uppercase tracking-widest flex items-center gap-2 mb-2"><DollarSign size={16}/> Doanh Thu Nền Tảng</p>
-                                      <p className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white">{stats.platform_revenue.toLocaleString()} <span className="text-lg text-slate-400">đ</span></p>
+                                      <p className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white">{(stats.platform_revenue || 0).toLocaleString()} <span className="text-lg text-slate-400">đ</span></p>
                                   </div>
                               </div>
                               {/* Escrow Holding */}
@@ -248,7 +248,7 @@ export default function AdminDashboardOverview() {
                                   <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-110 transition-transform"><Landmark size={120}/></div>
                                   <div className="relative z-10">
                                       <p className="text-xs font-black text-blue-500 uppercase tracking-widest flex items-center gap-2 mb-2"><Landmark size={16}/> Quỹ Escrow (Tạm Giữ)</p>
-                                      <p className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white">{stats.escrow_holding.toLocaleString()} <span className="text-lg text-slate-400">đ</span></p>
+                                      <p className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white">{(stats.escrow_holding || 0).toLocaleString()} <span className="text-lg text-slate-400">đ</span></p>
                                   </div>
                               </div>
                           </div>
