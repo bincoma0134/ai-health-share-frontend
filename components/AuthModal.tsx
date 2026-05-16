@@ -109,7 +109,7 @@ export default function AuthModal() {
            finalEmail = data.email;
         }
 
-        const res = await fetch(`${API_URL}/auth/login`, {
+        const res = await fetch(`${API_URL}/auth/login/`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: finalEmail, password })
