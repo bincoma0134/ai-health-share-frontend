@@ -27,7 +27,7 @@ interface RoleConfig {
 export default function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, userRole, isLoading: authLoading } = useAuth();
+  const { user, userRole, isLoading: authLoading, refreshProfile } = useAuth();
   const { setIsAuthModalOpen } = useUI() as any; 
   
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -77,7 +77,8 @@ export default function Sidebar() {
 
   const handleLogout = async () => {
     const toastId = toast.loading("Đang đăng xuất an toàn...");
-    if (typeof window !== "undefined") localStorage.removeItem("ai-health-token");    
+    if (typeof window !== "undefined") localStorage.removeItem("ai-health-token");
+    refreshProfile();    
     router.push("/");
     toast.success("Hẹn gặp lại bạn!", { id: toastId });
   };
