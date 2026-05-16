@@ -96,23 +96,11 @@ export default function AuthModal() {
 
     try {
       if (authMode === "LOGIN") {
-        let finalEmail = identifier;
-
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier)) {
-           const res = await fetch(`${API_URL}/auth/resolve`, {
-               method: "POST",
-               headers: { "Content-Type": "application/json" },
-               body: JSON.stringify({ identifier })
-           });
-           const data = await res.json();
-           if (!res.ok) throw new Error(data.detail || "Không tìm thấy tài khoản");
-           finalEmail = data.email;
-        }
-
-        const res = await fetch(`${API_URL}/auth/login/`, {
+        // Backend hỗ trợ tìm kiếm song song: truyền thẳng định danh (Email/Username/SĐT) vào trường email
+        const res = await fetch(`${API_URL}/auth/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: finalEmail, password })
+          body: JSON.stringify({ email: identifier, password })
         });
         const result = await res.json();
         if (!res.ok) throw new Error(result.detail || "Sai tài khoản hoặc mật khẩu!");
@@ -144,16 +132,9 @@ export default function AuthModal() {
       } else if (authMode === "SETUP_PROFILE") {
         if (!username || !fullName) throw new Error("Vui lòng nhập đầy đủ thông tin!");
 
-        const checkRes = await fetch(`${API_URL}/auth/check-username`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username })
-        });
-        const checkData = await checkRes.json();
-        if (!checkRes.ok) throw new Error(checkData.detail);
-
         const finalEmail = loginMethod === "EMAIL" ? email : `${phone}@phone.com`;
 
+        // Đẩy thẳng thông tin lên API Đăng ký, Backend đã tự động đối soát trùng lặp trùng email/username
         const regRes = await fetch(`${API_URL}/auth/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
