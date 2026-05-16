@@ -215,10 +215,10 @@ export default function PartnerProfilePage() {
       try {
           const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
           const formData = new FormData();
-        formData.append("file", file);
-        formData.append("folder", type === 'avatar' ? 'users/avatars' : 'users/covers');
-
-        const uploadRes = await fetch(`${API_URL}/media/upload`, {
+          formData.append("file", file);
+          formData.append("folder", type === 'avatar' ? 'users/avatars' : 'users/covers');
+          
+          const uploadRes = await fetch(`${API_URL}/media/upload`, {
               method: "POST",
               headers: { "Authorization": `Bearer ${token}` },
               body: formData
@@ -311,9 +311,9 @@ export default function PartnerProfilePage() {
     try {
         const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
         const formData = new FormData();
-      formData.append("file", studioFile);
-      formData.append("folder", "tiktok_feeds/videos");
-      const uploadRes = await fetch(`${API_URL}/media/upload`, {
+        formData.append("file", studioFile);
+        formData.append("folder", "tiktok_feeds/videos");
+        const uploadRes = await fetch(`${API_URL}/media/upload`, {
             method: "POST",
             headers: { "Authorization": `Bearer ${token}` },
             body: formData
