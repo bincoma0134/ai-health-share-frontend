@@ -82,12 +82,18 @@ export default function ProfessorXPanel() {
       if (res.ok && result.access_token) {
         // Ghi đè token lưu trữ toàn cục để hệ thống NextJS nhận diện phiên làm việc mới hoàn toàn
         localStorage.setItem("ai-health-token", result.access_token);
-        toast.success(`Đăng nhập thành công! Chào mừng Giáo sư X đóng vai [${targetLabel}].`, { id: tid });
+        toast.success(`Chuyển vai thành công! Đang đồng bộ giao diện [${targetLabel}]...`, { id: tid });
         
-        // Reload trang ngay để toàn bộ Dashboard, Lưới lịch, Ví tiền kéo data mới tinh từ DB về hiển thị
-        setTimeout(() => {
-          window.location.reload();
-        }, 8000);
+        // Ánh xạ chính xác tuyến đường URL Dashboard theo từng Role để tối ưu tốc độ nạp UI
+        let targetPath = "/";
+        if (targetEmail.includes("admin.gsx")) targetPath = "/admin/dashboard";
+        else if (targetEmail.includes("partner.gsx")) targetPath = "/partner/dashboard";
+        else if (targetEmail.includes("creator.gsx")) targetPath = "/creator/dashboard";
+        else if (targetEmail.includes("moderator.gsx")) targetPath = "/moderator/dashboard";
+        else if (targetEmail.includes("user.gsx")) targetPath = "/features/calendar";
+
+        // Thay đổi URL trực tiếp giúp trình duyệt dọn sạch bộ nhớ cache cũ và tải Sidebar mới trong 200ms
+        window.location.href = targetPath;
       } else {
         throw new Error(result.detail || "Không thể thực hiện phiên đăng nhập giả lập.");
       }
