@@ -10,6 +10,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import NotificationModal from "@/components/NotificationModal";
 import AuthModal from "@/components/AuthModal";
 import Sidebar from "@/components/Sidebar";
+import ProfessorXPanel from "@/components/ProfessorXPanel";
 
 const beVietnam = Be_Vietnam_Pro({ 
   subsets: ["vietnamese", "latin"],
@@ -52,6 +53,9 @@ export default function RootLayout({
             {/* Các Modal nổi ở cấp cao nhất */}
             <NotificationModal />
             <AuthModal />
+            
+            {/* Bảng điều khiển chuyển đổi phân vai Native dành riêng cho Giáo sư X */}
+            <ProfessorXPanel />
           </UIProvider>
         </AuthProvider>
         
