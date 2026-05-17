@@ -95,7 +95,9 @@ export default function ProfessorXPanel() {
         // Thay đổi URL trực tiếp giúp trình duyệt dọn sạch bộ nhớ cache cũ và tải Sidebar mới trong 200ms
         window.location.href = targetPath;
       } else {
-        throw new Error(result.detail || "Không thể thực hiện phiên đăng nhập giả lập.");
+        // Trích xuất chi tiết thông báo lỗi từ server phản hồi để Giáo sư X nắm bắt chính xác hiện trạng hệ thống
+        const serverErrorMessage = typeof result.detail === "string" ? result.detail : JSON.stringify(result.detail);
+        throw new Error(serverErrorMessage || "Mật khẩu hoặc thông tin phân vai trong Cơ sở dữ liệu không khớp.");
       }
     } catch (error: any) {
       toast.error(error.message || "Lỗi đồng bộ phân vai hệ thống", { id: tid });
