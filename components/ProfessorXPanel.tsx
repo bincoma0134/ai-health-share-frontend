@@ -73,7 +73,7 @@ export default function ProfessorXPanel() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: targetEmail,
-          password: "Gsx@2026!" // Khớp mật khẩu master chung cho chuỗi tài khoản demo
+          password: "gsx123456" // Khớp mật khẩu master chung cho chuỗi tài khoản demo
         })
       });
 
