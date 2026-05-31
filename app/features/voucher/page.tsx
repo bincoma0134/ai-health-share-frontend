@@ -44,14 +44,15 @@ export default function VoucherPage() {
     await claimVoucher(code, token);
   };
 
-  // Hàm xử lý điều hướng khi bấm nút "Áp dụng"
+  // Hàm xử lý điều hướng chuẩn xác khi bấm nút "Áp dụng"
   const handleUseVoucher = (voucher: any) => {
     setSelectedVoucher(null); // Đóng pop-up
     if (voucher.issuer_type === 'ADMIN') {
       router.push('/features/explore'); // Mã toàn sàn -> Đi ra chợ tổng
     } else {
-      // Mã đối tác -> Vào thẳng tab Dịch vụ của Đối tác đó
-      router.push(`/partner/public/${voucher.issuer_id}?tab=services`);
+      // Dẫn link chuẩn cấp 1 theo username (VD: /partner03)
+      const targetUrl = voucher.partner_username ? `/${voucher.partner_username}` : `/${voucher.issuer_id}`;
+      router.push(targetUrl);
     }
   };
 
