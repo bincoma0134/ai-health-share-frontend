@@ -43,11 +43,11 @@ export default function BookingModal({ isOpen, onClose, partnerId, serviceId, se
   // 2. Thuật toán tính mức giảm thực tế của 1 mã (Bọc thép Max Discount)
   const calculateDiscount = (v: any) => {
     if (v.discount_type === 'PERCENTAGE') {
-      let amount = (price * v.discount_value) / 100;
-      if (v.max_discount_amount) amount = Math.min(amount, v.max_discount_amount);
+      let amount = (price * Number(v.discount_value)) / 100;
+      if (v.max_discount_amount) amount = Math.min(amount, Number(v.max_discount_amount));
       return amount;
     }
-    return v.discount_value;
+    return Number(v.discount_value);
   };
 
   // 3. TỰ ĐỘNG CHỌN MÃ GIẢM SÂU NHẤT KHI MỞ POP-UP
@@ -119,10 +119,21 @@ export default function BookingModal({ isOpen, onClose, partnerId, serviceId, se
       const code = affiliateCode.trim();
 
       if (code !== "") {
-        const validateRes = await fetch(`${API_URL}/affiliates/validate?code=${code}`, {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
-        if (!validateRes.ok) throw new Error("Mã giới thiệu không hợp lệ hoặc không tồn tại!");
+        try {
+          const validateRes = await fetch(`${API_URL}/affiliates/validate?code=${code}`, {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          if (!validateRes.ok) {
+            const errData = await validateRes.json().catch(() => ({}));
+            throw new Error(errData.detail || "Mã giới thiệu không hợp lệ hoặc không tồn tại!");
+          }
+        } catch (err: any) {
+          // Xử lý riêng lỗi "Failed to fetch" do mạng hoặc CORS
+          if (err.message.includes("Failed to fetch") || err.name === "TypeError") {
+             throw new Error("Không thể xác thực mã giới thiệu do lỗi mạng. Vui lòng thử lại!");
+          }
+          throw new Error(err.message || "Mã giới thiệu không hợp lệ!");
+        }
       }
 
       // Khôi phục API /appointments/request

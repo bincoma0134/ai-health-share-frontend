@@ -47,25 +47,18 @@ export default function CalendarFeature() {
   }, [user]);
 
   const getCalculatedPrices = (appt: any) => {
-      let originalPrice = appt.services?.price || appt.total_amount || 0; 
-      let finalPrice = appt.total_amount || 0;
-      let discountAmount = originalPrice - finalPrice;
+      let originalPrice = Number(appt.services?.price || appt.total_amount || 0); 
+      let discountAmount = 0;
       
-      if (appt.status === 'PENDING_PAYMENT' || appt.status === 'WAITING_PARTNER') {
-          const validVouchers = myVouchers.filter((v: any) => v.wallet_status === 'UNUSED' && (v.issuer_type === 'ADMIN' || v.issuer_id === appt.partner_id) && originalPrice >= v.min_order_value);
-          if (validVouchers.length > 0) {
-              let maxDiscount = 0;
-              validVouchers.forEach((v: any) => {
-                  let cur = v.discount_type === 'PERCENTAGE' ? (originalPrice * v.discount_value) / 100 : v.discount_value;
-                  if (v.discount_type === 'PERCENTAGE' && v.max_discount_amount) cur = Math.min(cur, v.max_discount_amount);
-                  if (cur > maxDiscount) maxDiscount = cur;
-              });
-              if (maxDiscount > 0) {
-                  discountAmount = maxDiscount;
-                  finalPrice = Math.max(0, originalPrice - discountAmount);
-              }
-          }
+      // Áp dụng trực tiếp thông tin Voucher đã khóa từ Backend trả về
+      if (appt.vouchers && appt.vouchers.discount_value != null) {
+          const v = appt.vouchers;
+          let cur = v.discount_type === 'PERCENTAGE' ? (originalPrice * Number(v.discount_value)) / 100 : Number(v.discount_value);
+          if (v.discount_type === 'PERCENTAGE' && v.max_discount_amount) cur = Math.min(cur, Number(v.max_discount_amount));
+          discountAmount = cur;
       }
+      
+      let finalPrice = Math.max(0, originalPrice - discountAmount);
       return { originalPrice, finalPrice, discountAmount, hasVoucher: discountAmount > 0 };
   };
 
@@ -421,6 +414,9 @@ export default function CalendarFeature() {
   // BỔ SUNG: HÀM HỦY LỊCH (USER CHỦ ĐỘNG HỦY)
   const handleCancelAppointment = async (appointmentId: string) => {
     setCancelConfirmId(null);
+    const appt = appointments.find(a => a.id === appointmentId);
+    const isPendingPayment = appt?.status === 'PENDING_PAYMENT';
+    
     const tid = toast.loading("Đang tiến hành hủy yêu cầu...");
     try {
         const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
@@ -430,7 +426,10 @@ export default function CalendarFeature() {
         });
         const result = await res.json();
         if (res.ok) {
-            toast.success(result.message + " (Voucher ưu đãi đã được trả lại vào Ví)", { id: tid });
+            const successMsg = isPendingPayment 
+                ? result.message + " (Đã hủy bỏ Voucher áp dụng theo chính sách)" 
+                : result.message + " (Voucher ưu đãi đã được trả lại vào Ví)";
+            toast.success(successMsg, { id: tid });
             setAppointments(prev => prev.map(a => a.id === appointmentId ? { ...a, status: 'CANCELLED', rejection_reason: 'Người dùng chủ động hủy bỏ yêu cầu' } : a));
             setActiveTab('history');
         } else throw new Error(result.detail);
@@ -963,7 +962,9 @@ export default function CalendarFeature() {
                     </div>
                     <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">Hủy yêu cầu đặt lịch?</h3>
                     <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mb-6 leading-relaxed">
-                        Thao tác này không thể hoàn tác. Cơ sở sẽ nhận được thông báo hủy từ bạn.
+                        {appointments.find(a => a.id === cancelConfirmId)?.status === 'PENDING_PAYMENT' 
+                            ? "Cơ sở đã xác nhận lịch. Nếu hủy lúc này, Voucher đã áp dụng sẽ bị HỦY BỎ và không thể hoàn lại. Bạn chắc chắn chứ?"
+                            : "Thao tác này không thể hoàn tác. Voucher sẽ được hoàn lại vào Ví (nếu có)."}
                     </p>
                     <div className="flex flex-col gap-3">
                         <button onClick={() => handleCancelAppointment(cancelConfirmId)} className="w-full py-3.5 bg-rose-500 hover:bg-rose-600 text-white font-black rounded-xl transition-all shadow-lg shadow-rose-500/20">
