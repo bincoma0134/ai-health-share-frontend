@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useUI } from "@/context/UIContext"; 
 import { useAuth } from "@/context/AuthContext";
+import BookingModal from "@/components/BookingModal";
 
 interface Service {
   id: string;
@@ -42,11 +43,6 @@ export default function ExploreFeature() {
   // --- BOOKING STATE (ESCROW) ---
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeService, setActiveService] = useState<Service | null>(null);
-  const [affiliateCode, setAffiliateCode] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [bookingName, setBookingName] = useState("");
-  const [bookingPhone, setBookingPhone] = useState("");
-  const [bookingNote, setBookingNote] = useState("");
   const [expandedService, setExpandedService] = useState<Service | null>(null);
 
   useEffect(() => {
@@ -120,67 +116,7 @@ export default function ExploreFeature() {
     setIsModalOpen(true);
   };
 
-  const handleBookingSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!activeService || !user) return;
-    
-    if (!bookingName.trim() || !bookingPhone.trim()) {
-      toast.error("Vui lòng nhập đầy đủ Họ tên và Số điện thoại!");
-      return;
-    }
-
-    setIsSubmitting(true);
-    const toastId = toast.loading("Đang gửi yêu cầu đến cơ sở...");
-    
-    try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
-      if (!token) throw new Error("Vui lòng đăng nhập để đặt lịch!");
-
-      const code = affiliateCode.trim();
-      if (code !== "") {
-        const validateRes = await fetch(`https://ai-health-share-backend.onrender.com/affiliates/validate?code=${code}`, {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
-        if (!validateRes.ok) throw new Error("Mã giới thiệu không hợp lệ hoặc không tồn tại!");
-      }
-
-      // GỌI API MỚI: Gửi request đến Partner (Status sẽ là WAITING_PARTNER)
-      const bookingRes = await fetch(`https://ai-health-share-backend.onrender.com/appointments/request`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-        body: JSON.stringify({ 
-          partner_id: activeService.partner_id,
-          service_id: activeService.id, 
-          affiliate_code: code || null, 
-          total_amount: activeService.price || 0,
-          customer_name: bookingName.trim(),
-          customer_phone: bookingPhone.trim(),
-          note: bookingNote.trim()
-        })
-      });
-      
-      const bookingData = await bookingRes.json();
-      
-      if (!bookingRes.ok) throw new Error(bookingData.detail || "Lỗi gửi yêu cầu");
-      
-      toast.success(bookingData.message || "Yêu cầu đã được gửi! Vui lòng theo dõi tại tab 'Lịch hẹn'.", { id: toastId, duration: 5000 });
-      
-      // Đóng modal & reset form
-      setIsModalOpen(false);
-      setBookingName("");
-      setBookingPhone("");
-      setBookingNote("");
-      setAffiliateCode("");
-      
-      // Điều hướng người dùng sang trang theo dõi Lịch hẹn
-      router.push('/features/calendar');
-      
-    } catch (error: any) { 
-      toast.error(error.message, { id: toastId }); 
-    } finally { 
-      setIsSubmitting(false); 
-    } 
-  };
+  // Luồng Booking đã được quy hoạch vào Component BookingModal
 
   // --- LOGIC LỌC DỮ LIỆU ---
   const filteredServices = services.filter(service => {
@@ -426,61 +362,16 @@ export default function ExploreFeature() {
         </div>
       )}
 
-      {/* ================= MODAL ĐẶT LỊCH DỊCH VỤ ================= */}
-      {isModalOpen && activeService && user && (
-        <div className="fixed inset-0 z-[150] flex justify-center items-center p-4">
-          <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md transition-all duration-500" onClick={() => setIsModalOpen(false)}></div>
-          
-          <div className="relative w-full max-w-lg bg-white/70 dark:bg-zinc-950/70 backdrop-blur-3xl rounded-[2.5rem] p-8 md:p-10 z-10 shadow-[0_20px_60px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.8)] border border-white/50 dark:border-white/10 animate-slide-up">
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#80BF84]/10 border border-[#80BF84]/20 rounded-full text-[10px] font-bold text-[#80BF84] mb-3 uppercase tracking-wider">
-                  <Sparkles size={12} /> Đặt lịch dịch vụ
-                </div>
-                <h3 className="text-2xl font-black text-slate-900 dark:text-white leading-tight pr-4">{activeService.service_name}</h3>
-                <p className="text-[#80BF84] font-black text-lg mt-1">{activeService.price?.toLocaleString()} VND</p>
-              </div>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 rounded-full bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-zinc-400 transition-colors shrink-0"><X size={20}/></button>
-            </div>
-
-            <form onSubmit={handleBookingSubmit} className="flex flex-col gap-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-slate-500 dark:text-zinc-400 ml-1">Họ và tên</label>
-                      <input type="text" placeholder="Nhập tên của bạn..." className="w-full px-5 py-3.5 bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:border-[#80BF84] focus:ring-1 focus:ring-[#80BF84]/50 transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-600" required value={bookingName} onChange={e => setBookingName(e.target.value)} />
-                  </div>
-                  <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-slate-500 dark:text-zinc-400 ml-1">Số điện thoại</label>
-                      <input type="tel" placeholder="09xx..." className="w-full px-5 py-3.5 bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:border-[#80BF84] focus:ring-1 focus:ring-[#80BF84]/50 transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-600" required value={bookingPhone} onChange={e => setBookingPhone(e.target.value)} />
-                  </div>
-              </div>
-
-              <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 dark:text-zinc-400 ml-1">Lời nhắn nhủ (Tùy chọn)</label>
-                  <textarea placeholder="Bạn có yêu cầu đặc biệt gì cho dịch vụ này không?" rows={2} className="w-full px-5 py-3.5 bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:border-[#80BF84] focus:ring-1 focus:ring-[#80BF84]/50 transition-all resize-none placeholder:text-slate-400 dark:placeholder:text-zinc-600" value={bookingNote} onChange={e => setBookingNote(e.target.value)} />
-              </div>
-
-              <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 dark:text-zinc-400 ml-1">Mã giới thiệu (Tùy chọn)</label>
-                  <input type="text" placeholder="Nhập mã ưu đãi..." className="w-full px-5 py-3.5 bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white font-medium uppercase focus:outline-none focus:border-[#80BF84] focus:ring-1 focus:ring-[#80BF84]/50 transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-600 placeholder:normal-case" value={affiliateCode} onChange={e => setAffiliateCode(e.target.value)} />
-              </div>
-
-              <div className="mt-6">
-                  <div className="p-4 mb-5 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-xl flex items-start gap-3">
-                      <ShieldCheck size={20} className="text-blue-500 shrink-0 mt-0.5" />
-                      <p className="text-[13px] leading-relaxed text-blue-800 dark:text-blue-300 font-medium">
-                          Bạn <strong>chưa cần thanh toán lúc này</strong>. Tổng tiền <strong className="text-blue-600 dark:text-blue-400">{activeService.price?.toLocaleString()} VND</strong> sẽ được hệ thống bảo chứng an toàn <strong>sau khi cơ sở xác nhận có lịch trống</strong> dành cho bạn.
-                      </p>
-                  </div>
-                  
-                  <button type="submit" disabled={isSubmitting} className="relative w-full py-4 bg-gradient-to-tr from-slate-800 to-slate-900 dark:from-white dark:to-slate-200 text-white dark:text-zinc-950 font-black text-lg rounded-2xl active:scale-95 transition-all shadow-xl overflow-hidden group">
-                    <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full skew-x-12 transition-transform duration-500"></div>
-                    {isSubmitting ? "Đang gửi yêu cầu..." : "Gửi yêu cầu đặt lịch"}
-                  </button>
-              </div>
-            </form>
-          </div>
-        </div>
+      {/* ================= MODAL ĐẶT LỊCH DỊCH VỤ DÙNG CHUNG ================= */}
+      {activeService && user && (
+        <BookingModal 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)}
+          partnerId={activeService.partner_id}
+          serviceId={activeService.id}
+          serviceName={activeService.service_name}
+          price={activeService.price}
+        />
       )}
 
     </div>
