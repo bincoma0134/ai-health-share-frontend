@@ -141,31 +141,31 @@ export default function FavoriteFeature() {
 
   // --- COMPONENT LOADING ĐỒNG BỘ ---
   if (isLoading || !isMounted) return (
-    <div className="h-[100dvh] w-full bg-slate-50 dark:bg-zinc-950 flex flex-col items-center justify-center gap-6 transition-colors duration-500">
+    <div className="h-[100dvh] w-full bg-brand-base dark:bg-zinc-950 flex flex-col items-center justify-center gap-6 transition-colors duration-500">
       <div className="relative w-16 h-16">
         <div className="absolute inset-0 bg-emerald-200 rounded-full animate-ping opacity-70"></div>
-        <div className="absolute inset-2 bg-emerald-400 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30"><Sparkles className="text-white w-6 h-6 animate-pulse" /></div>
+        <div className="absolute inset-2 bg-brand-primary rounded-full flex items-center justify-center shadow-lg shadow-brand-trust/30"><Sparkles className="text-white w-6 h-6 animate-pulse" /></div>
       </div>
-      <p className="text-slate-500 dark:text-zinc-500 text-sm font-medium tracking-widest uppercase animate-pulse">Khơi nguồn sức sống...</p>
+      <p className="text-brand-base0 dark:text-zinc-500 text-sm font-medium tracking-widest uppercase animate-pulse">Khơi nguồn sức sống...</p>
     </div>
   );
 
   return (
-    <div className="h-[100dvh] w-full bg-slate-50 dark:bg-black overflow-hidden flex relative transition-colors duration-500">
+    <div className="h-[100dvh] w-full bg-brand-base dark:bg-black overflow-hidden flex relative transition-colors duration-500">
       
       
       {/* ================= 2. MAIN FAVORITE AREA ================= */}
-      <div className="flex-1 relative h-[100dvh] overflow-y-auto no-scrollbar scroll-smooth bg-slate-50 dark:bg-zinc-950 transition-colors duration-500">
+      <div className="flex-1 relative h-[100dvh] overflow-y-auto no-scrollbar scroll-smooth bg-brand-base dark:bg-zinc-950 transition-colors duration-500">
         
         {/* THEME & NOTIFICATION CONTROLS */}
         <div className="absolute top-6 right-6 md:top-8 md:right-8 z-[60] flex items-center gap-3 pointer-events-auto">
           <button onClick={handleThemeToggle} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:bg-white/80 dark:hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg group">
-            {isDarkMode ? <Sun size={20} className="group-hover:text-amber-300 transition-colors"/> : <Moon size={20} className="group-hover:text-blue-500 transition-colors"/>}
+            {isDarkMode ? <Sun size={20} className="group-hover:text-amber-300 transition-colors"/> : <Moon size={20} className="group-hover:text-brand-trust transition-colors"/>}
           </button>
           
           {/* NÚT THÔNG BÁO ĐÃ ĐƯỢC CẬP NHẬT */}
           <button onClick={() => setIsNotifOpen(true)} className="relative w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:bg-white/80 dark:hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg group">
-            <Bell size={20} className="group-hover:text-[#80BF84] transition-colors"/>
+            <Bell size={20} className="group-hover:text-brand-primary transition-colors"/>
           </button>
         </div>
 
@@ -174,7 +174,7 @@ export default function FavoriteFeature() {
             {/* Header */}
             <div className="mb-10 animate-slide-up">
                 <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-2 flex items-center gap-3"><Heart className="text-rose-500 fill-rose-500" size={36} /> Yêu thích</h2>
-                <p className="text-slate-500 dark:text-zinc-400 font-medium">Thư viện lưu trữ các liệu trình chăm sóc sức khỏe cá nhân của bạn.</p>
+                <p className="text-brand-base0 dark:text-zinc-400 font-medium">Thư viện lưu trữ các liệu trình chăm sóc sức khỏe cá nhân của bạn.</p>
             </div>
 
             {/* KIỂM TRA ĐĂNG NHẬP HOẶC TRỐNG DỮ LIỆU */}
@@ -182,14 +182,14 @@ export default function FavoriteFeature() {
                 <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in">
                     <div className="w-24 h-24 bg-slate-200/50 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-6"><UserIcon size={40} className="text-slate-400 dark:text-zinc-500" /></div>
                     <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Bạn chưa đăng nhập</h3>
-                    <p className="text-slate-500 dark:text-zinc-400 mb-8 max-w-sm">Đăng nhập ngay để lưu trữ và xem lại các dịch vụ yêu thích bất cứ lúc nào.</p>
-                    <button onClick={() => router.push('/')} className="px-8 py-4 bg-[#80BF84] text-zinc-950 font-black rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-xl shadow-[#80BF84]/20">Quay lại Trang chủ</button>
+                    <p className="text-brand-base0 dark:text-zinc-400 mb-8 max-w-sm">Đăng nhập ngay để lưu trữ và xem lại các dịch vụ yêu thích bất cứ lúc nào.</p>
+                    <button onClick={() => router.push('/')} className="px-8 py-4 bg-brand-primary text-zinc-950 font-black rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-xl shadow-brand-primary/20">Quay lại Trang chủ</button>
                 </div>
             ) : savedServices.length === 0 ? (
                 <div className="glass-panel p-16 rounded-[2rem] bg-white/50 dark:bg-black/30 border-slate-200 dark:border-white/10 flex flex-col items-center justify-center text-center border-dashed mt-8 animate-fade-in">
                     <div className="w-16 h-16 bg-slate-200 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-4"><BookmarkMinus size={28} className="text-slate-400 dark:text-zinc-500" /></div>
                     <h4 className="text-lg font-bold text-slate-800 dark:text-white mb-1">Thư viện trống</h4>
-                    <p className="text-slate-500 dark:text-zinc-400 text-sm mb-6 max-w-sm">Bạn chưa lưu bất kỳ dịch vụ nào. Hãy ra ngoài Feed và bấm lưu những nội dung bổ ích nhé!</p>
+                    <p className="text-brand-base0 dark:text-zinc-400 text-sm mb-6 max-w-sm">Bạn chưa lưu bất kỳ dịch vụ nào. Hãy ra ngoài Feed và bấm lưu những nội dung bổ ích nhé!</p>
                     <button onClick={() => router.push('/features/explore')} className="px-6 py-3 bg-slate-900 dark:bg-white text-white dark:text-black font-bold rounded-xl hover:scale-105 active:scale-95 transition-all">Đi khám phá ngay</button>
                 </div>
             ) : (
@@ -212,7 +212,7 @@ export default function FavoriteFeature() {
                                 <video src={service.video_url || `/video-${(idx % 3) + 1}.mp4`} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700" loop autoPlay muted playsInline />
                                 <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 to-transparent pointer-events-none"></div>
                                 <div className="absolute top-3 left-3 px-2.5 py-1 bg-black/50 backdrop-blur-md rounded-lg flex items-center gap-1.5 border border-white/10">
-                                    <ShieldCheck size={12} className="text-[#80BF84]"/><span className="text-[10px] font-bold text-white uppercase tracking-wider">Đã xác thực</span>
+                                    <ShieldCheck size={12} className="text-brand-primary"/><span className="text-[10px] font-bold text-white uppercase tracking-wider">Đã xác thực</span>
                                 </div>
                                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                     <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/40 shadow-xl"><PlayCircle size={28} className="text-white"/></div>
@@ -221,10 +221,10 @@ export default function FavoriteFeature() {
 
                             {/* Thông tin chi tiết */}
                             <div className="flex flex-col gap-2 px-1">
-                                <h3 className="text-lg font-black text-slate-900 dark:text-white leading-tight line-clamp-2 group-hover:text-[#80BF84] transition-colors">{service.service_name}</h3>
+                                <h3 className="text-lg font-black text-slate-900 dark:text-white leading-tight line-clamp-2 group-hover:text-brand-primary transition-colors">{service.service_name}</h3>
                                 <div className="flex items-end justify-between mt-2 pt-3 border-t border-slate-200 dark:border-white/10">
-                                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Gói dịch vụ</span>
-                                    <div className="text-lg font-black text-slate-900 dark:text-white flex items-center"><DollarSign size={16} className="text-[#80BF84]"/>{service.price.toLocaleString()}</div>
+                                    <span className="text-xs font-bold text-brand-base0 uppercase tracking-widest">Gói dịch vụ</span>
+                                    <div className="text-lg font-black text-slate-900 dark:text-white flex items-center"><DollarSign size={16} className="text-brand-primary"/>{service.price.toLocaleString()}</div>
                                 </div>
                             </div>
                         </div>
@@ -236,12 +236,12 @@ export default function FavoriteFeature() {
         {/* ================= 3. MOBILE BOTTOM DOCK ================= */}
         <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-max animate-slide-up pointer-events-auto">
           <div className="px-8 py-3.5 rounded-full flex items-center justify-center gap-8 sm:gap-10 shadow-2xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/60 backdrop-blur-2xl transition-colors duration-500">
-            <button onClick={() => router.push('/')} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Home size={26} strokeWidth={2.5} /></button>
-            <button onClick={() => router.push('/features/explore')} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Compass size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
+            <button onClick={() => router.push('/')} className="text-brand-base0 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Home size={26} strokeWidth={2.5} /></button>
+            <button onClick={() => router.push('/features/explore')} className="text-brand-base0 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Compass size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
             <button onClick={() => router.push('/features/AI')} className="relative -mt-10 group">
               <div className="w-14 h-14 rounded-full bg-slate-200/50 dark:bg-zinc-800 p-[2px] shadow-[0_0_20px_rgba(0,0,0,0.1)] group-hover:scale-105 transition-all duration-300"><div className="w-full h-full bg-white dark:bg-zinc-950 rounded-full flex items-center justify-center transition-colors duration-500"><Sparkles size={26} className="text-slate-400" strokeWidth={2.5} /></div></div>
             </button>
-            <button onClick={() => router.push('/features/calendar')} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><CalendarDays size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
+            <button onClick={() => router.push('/features/calendar')} className="text-brand-base0 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><CalendarDays size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
             
             {/* NÚT YÊU THÍCH ĐANG ACTIVE */}
             <button className="text-rose-500 transition-colors group"><Heart size={26} strokeWidth={2.5} className="fill-rose-500 group-hover:scale-110 transition-transform" /></button>

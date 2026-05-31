@@ -43,7 +43,7 @@ export default function AdminView({ profile, videoTiktokFeeds = [], communityPos
               {profile.full_name || "Quản Trị Viên"}
               <Crown size={24} className="text-amber-500 fill-amber-500/20" />
             </h1>
-            <h2 className="text-base md:text-lg font-medium text-slate-500 dark:text-zinc-400 tracking-tight">
+            <h2 className="text-base md:text-lg font-medium text-brand-base0 dark:text-zinc-400 tracking-tight">
               @{profile.username || "admin_system"}
             </h2>
           </div>
@@ -59,10 +59,10 @@ export default function AdminView({ profile, videoTiktokFeeds = [], communityPos
             </button>
 
             <div className="flex gap-2">
-              <button onClick={handleShare} className="p-3.5 bg-white/40 dark:bg-white/5 backdrop-blur-3xl border border-slate-200 dark:border-white/10 text-slate-500 hover:text-amber-500 rounded-xl transition-all shadow-xl active:scale-90">
+              <button onClick={handleShare} className="p-3.5 bg-white/40 dark:bg-white/5 backdrop-blur-3xl border border-slate-200 dark:border-white/10 text-brand-base0 hover:text-amber-500 rounded-xl transition-all shadow-xl active:scale-90">
                 <Share2 size={20} />
               </button>
-              <button className="p-3.5 bg-white/40 dark:bg-white/5 backdrop-blur-3xl border border-slate-200 dark:border-white/10 text-slate-500 hover:text-slate-900 dark:hover:text-white rounded-xl transition-all shadow-xl active:scale-90">
+              <button className="p-3.5 bg-white/40 dark:bg-white/5 backdrop-blur-3xl border border-slate-200 dark:border-white/10 text-brand-base0 hover:text-slate-900 dark:hover:text-white rounded-xl transition-all shadow-xl active:scale-90">
                 <MoreHorizontal size={20} />
               </button>
             </div>
@@ -92,7 +92,7 @@ export default function AdminView({ profile, videoTiktokFeeds = [], communityPos
 
       {/* --- STACK PHÍA DƯỚI: TABS --- */}
       <div className="border-t border-slate-200 dark:border-white/10">
-        <div className="flex justify-center md:justify-start gap-10 sticky top-0 bg-slate-50/80 dark:bg-zinc-950/80 backdrop-blur-md z-20">
+        <div className="flex justify-center md:justify-start gap-10 sticky top-0 bg-brand-base/80 dark:bg-zinc-950/80 backdrop-blur-md z-20">
           {[
             { id: "activities", label: "Hoạt động", icon: Activity },
             { id: "videos", label: "Video đăng tải", icon: LayoutGrid },

@@ -127,7 +127,7 @@ export default function UserFeed() {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [activeNotifTab, setActiveNotifTab] = useState<'all' | 'unread'>('all');
   const [notifications, setNotifications] = useState([
-    { id: 1, type: 'system', title: 'Chào mừng đến với AI Health!', desc: 'Hệ thống đã sẵn sàng.', time: 'Vừa xong', isRead: false, icon: ShieldCheck, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    { id: 1, type: 'system', title: 'Chào mừng đến với AI Health!', desc: 'Hệ thống đã sẵn sàng.', time: 'Vừa xong', isRead: false, icon: ShieldCheck, color: 'text-brand-trust', bg: 'bg-brand-trust/10' },
   ]);
 
   // --- THEME & SYSTEM STATE ---
@@ -351,9 +351,9 @@ useEffect(() => {
 
   if (isLoading || !isMounted) {
     return (
-      <div className="h-[100dvh] w-full bg-slate-50 dark:bg-zinc-950 flex flex-col items-center justify-center gap-6 transition-colors duration-500">
-        <div className="relative w-16 h-16"><div className="absolute inset-0 bg-emerald-200 rounded-full animate-ping opacity-70"></div><div className="absolute inset-2 bg-emerald-400 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30"><Sparkles className="text-white w-6 h-6 animate-pulse" /></div></div>
-        <p className="text-slate-500 dark:text-zinc-500 text-sm font-medium tracking-widest uppercase animate-pulse">Khơi nguồn sức sống...</p>
+      <div className="h-[100dvh] w-full bg-brand-base dark:bg-zinc-950 flex flex-col items-center justify-center gap-6 transition-colors duration-500">
+        <div className="relative w-16 h-16"><div className="absolute inset-0 bg-emerald-200 rounded-full animate-ping opacity-70"></div><div className="absolute inset-2 bg-brand-primary rounded-full flex items-center justify-center shadow-lg shadow-brand-trust/30"><Sparkles className="text-white w-6 h-6 animate-pulse" /></div></div>
+        <p className="text-brand-base0 dark:text-zinc-500 text-sm font-medium tracking-widest uppercase animate-pulse">Khơi nguồn sức sống...</p>
       </div>
     );
   }
@@ -367,16 +367,16 @@ useEffect(() => {
       {/* ================= MAIN FEED AREA ================= */}
       <div className="flex-1 relative h-full z-10">
         <div className="md:hidden absolute top-0 w-full z-40 p-6 flex justify-between items-center pointer-events-none transition-all">
-          <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-lg flex items-center gap-1 transition-colors duration-500">AI<span className="text-[#80BF84]">HEALTH</span></h1>
+          <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-lg flex items-center gap-1 transition-colors duration-500">AI<span className="text-brand-primary">HEALTH</span></h1>
         </div>
 
         {/* THEME & NOTIFICATION CONTROLS */}
         <div className="absolute top-6 right-6 md:top-8 md:right-8 z-[60] flex items-center gap-3 pointer-events-auto">
           <button onClick={handleThemeToggle} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:bg-white/80 dark:hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg group">
-            {isDarkMode ? <Sun size={20} className="group-hover:text-amber-300 transition-colors"/> : <Moon size={20} className="group-hover:text-blue-500 transition-colors"/>}
+            {isDarkMode ? <Sun size={20} className="group-hover:text-amber-300 transition-colors"/> : <Moon size={20} className="group-hover:text-brand-trust transition-colors"/>}
           </button>
           <button onClick={handleOpenNotification} className="relative w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:bg-white/80 dark:hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg group">
-            <Bell size={20} className="group-hover:text-[#80BF84] transition-colors"/>
+            <Bell size={20} className="group-hover:text-brand-primary transition-colors"/>
             {hasNotification && <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white dark:border-zinc-950 animate-pulse shadow-[0_0_10px_rgba(225,29,72,0.8)]"></span>}
           </button>
         </div>
@@ -385,7 +385,7 @@ useEffect(() => {
           {videos.length === 0 && (
              <div className="h-full w-full flex flex-col items-center justify-center text-slate-400">
                  <Video size={48} className="mb-4 opacity-30"/>
-                 <p className="font-bold text-slate-500 dark:text-zinc-500">Chưa có video nào được đăng tải trên Studio.</p>
+                 <p className="font-bold text-brand-base0 dark:text-zinc-500">Chưa có video nào được đăng tải trên Studio.</p>
              </div>
           )}
 
@@ -408,7 +408,7 @@ useEffect(() => {
                     <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none"></div>
                     
                     <div className="absolute bottom-[100px] md:bottom-[40px] left-4 md:left-6 z-10 max-w-[75%] pointer-events-auto animate-slide-up">
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/20 dark:bg-white/10 backdrop-blur-md border border-white/30 dark:border-white/20 rounded-full text-[10px] font-bold text-[#80BF84] mb-3 uppercase tracking-wider shadow-sm">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/20 dark:bg-white/10 backdrop-blur-md border border-white/30 dark:border-white/20 rounded-full text-[10px] font-bold text-brand-primary mb-3 uppercase tracking-wider shadow-sm">
                           <ShieldCheck size={12} /> Dịch vụ xác thực
                         </div>
                         <h3 className="text-2xl md:text-3xl font-black text-white leading-tight drop-shadow-xl mb-1.5 text-balance">{item.title}</h3>
@@ -416,8 +416,8 @@ useEffect(() => {
                         
                         {item.price && (
                           <button onClick={() => { if (!user) { setIsAuthModalOpen(true); return; } setActiveVideo(item); setIsModalOpen(true); }} className="group flex items-center gap-3 pl-2 pr-5 py-2 bg-white/20 dark:bg-white/10 backdrop-blur-xl border border-white/30 dark:border-white/20 text-white rounded-[2rem] hover:bg-white/30 dark:hover:bg-white/20 active:scale-95 transition-all shadow-xl shadow-black/20">
-                            <div className="w-10 h-10 bg-[#80BF84] rounded-full flex items-center justify-center text-zinc-950 shadow-sm group-hover:scale-110 transition-transform"><CalendarPlus size={20} strokeWidth={2.5} /></div>
-                            <div className="flex flex-col text-left"><span className="font-bold text-sm tracking-wide drop-shadow-sm leading-tight">Đặt gói này</span><span className="text-[10px] font-semibold text-[#80BF84] leading-tight">{item.price.toLocaleString()} VND</span></div>
+                            <div className="w-10 h-10 bg-brand-primary rounded-full flex items-center justify-center text-zinc-950 shadow-sm group-hover:scale-110 transition-transform"><CalendarPlus size={20} strokeWidth={2.5} /></div>
+                            <div className="flex flex-col text-left"><span className="font-bold text-sm tracking-wide drop-shadow-sm leading-tight">Đặt gói này</span><span className="text-[10px] font-semibold text-brand-primary leading-tight">{item.price.toLocaleString()} VND</span></div>
                           </button>
                         )}
                     </div>
@@ -426,10 +426,10 @@ useEffect(() => {
                         <div className="relative mb-2 group cursor-pointer active:scale-90 transition-transform" onClick={() => {
                            if (item.author?.username) router.push(`/${item.author.username}`);
                         }}>
-                          <div className="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-zinc-800 flex items-center justify-center shadow-lg group-hover:border-[#80BF84] transition-colors">
+                          <div className="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-zinc-800 flex items-center justify-center shadow-lg group-hover:border-brand-primary transition-colors">
                              {item.author?.avatar_url ? <img src={item.author.avatar_url} className="w-full h-full object-cover"/> : <UserIcon size={24} className="text-zinc-400" />}
                           </div>
-                          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-5 h-5 bg-[#80BF84] rounded-full flex items-center justify-center border-2 border-zinc-900 group-hover:scale-110 transition-transform"><Plus size={12} className="text-zinc-950" strokeWidth={4} /></div>
+                          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-5 h-5 bg-brand-primary rounded-full flex items-center justify-center border-2 border-zinc-900 group-hover:scale-110 transition-transform"><Plus size={12} className="text-zinc-950" strokeWidth={4} /></div>
                         </div>
 
                         <button onClick={() => handleInteraction(item.id, 'like')} className="flex flex-col items-center gap-1 group">
@@ -490,13 +490,13 @@ useEffect(() => {
              <div className="pt-8 pb-4 px-6 border-b border-slate-200 dark:border-white/10 flex justify-between items-center transition-colors duration-500">
                <h3 className="text-xl font-black text-slate-900 dark:text-white transition-colors duration-500">Thông báo</h3>
                <div className="flex items-center gap-3">
-                  <button onClick={markAllAsRead} className="text-xs font-bold text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white transition-colors flex items-center gap-1" title="Đánh dấu tất cả đã đọc"><CheckCircle size={18}/></button>
-                  <button onClick={() => setIsNotificationOpen(false)} className="text-slate-500 dark:text-white hover:text-slate-900 transition-colors"><X size={20}/></button>
+                  <button onClick={markAllAsRead} className="text-xs font-bold text-brand-base0 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white transition-colors flex items-center gap-1" title="Đánh dấu tất cả đã đọc"><CheckCircle size={18}/></button>
+                  <button onClick={() => setIsNotificationOpen(false)} className="text-brand-base0 dark:text-white hover:text-slate-900 transition-colors"><X size={20}/></button>
                </div>
              </div>
              <div className="px-6 py-3 border-b border-slate-200 dark:border-white/10 flex gap-2">
-               <button onClick={() => setActiveNotifTab('all')} className={`px-4 py-2 rounded-xl font-bold text-xs transition-all ${activeNotifTab === 'all' ? 'bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}>Tất cả</button>
-               <button onClick={() => setActiveNotifTab('unread')} className={`px-4 py-2 rounded-xl font-bold text-xs transition-all flex items-center gap-2 ${activeNotifTab === 'unread' ? 'bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}>
+               <button onClick={() => setActiveNotifTab('all')} className={`px-4 py-2 rounded-xl font-bold text-xs transition-all ${activeNotifTab === 'all' ? 'bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm' : 'text-brand-base0 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}>Tất cả</button>
+               <button onClick={() => setActiveNotifTab('unread')} className={`px-4 py-2 rounded-xl font-bold text-xs transition-all flex items-center gap-2 ${activeNotifTab === 'unread' ? 'bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm' : 'text-brand-base0 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}>
                   Chưa đọc
                   {notifications.filter(n => !n.isRead).length > 0 && <span className="px-1.5 py-0.5 bg-rose-500 text-white rounded-md text-[10px] leading-none">{notifications.filter(n => !n.isRead).length}</span>}
                </button>
@@ -506,7 +506,7 @@ useEffect(() => {
                     <div className="w-full h-full flex flex-col items-center justify-center text-center px-4">
                         <Bell size={40} className="text-slate-300 dark:text-zinc-700 mb-4" />
                         <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2">Bạn đã xem hết thông báo!</h3>
-                        <p className="text-slate-500 dark:text-zinc-400 text-xs">Chưa có cập nhật mới nào trong thời gian này.</p>
+                        <p className="text-brand-base0 dark:text-zinc-400 text-xs">Chưa có cập nhật mới nào trong thời gian này.</p>
                     </div>
                 ) : (
                     filteredNotifs.map((notif) => {
@@ -516,10 +516,10 @@ useEffect(() => {
                                 <div className={`p-2.5 rounded-xl ${notif.bg} ${notif.color} shrink-0`}><Icon size={20} strokeWidth={2.5} /></div>
                                 <div className="flex-1">
                                     <div className="flex justify-between items-start mb-1"><h4 className={`text-sm font-black leading-tight ${!notif.isRead ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-zinc-300'}`}>{notif.title}</h4></div>
-                                    <p className={`text-xs mt-1 mb-2 ${!notif.isRead ? 'text-slate-600 dark:text-zinc-400 font-medium' : 'text-slate-500 dark:text-zinc-500'}`}>{notif.desc}</p>
+                                    <p className={`text-xs mt-1 mb-2 ${!notif.isRead ? 'text-slate-600 dark:text-zinc-400 font-medium' : 'text-brand-base0 dark:text-zinc-500'}`}>{notif.desc}</p>
                                     <span className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500">{notif.time}</span>
                                 </div>
-                                {!notif.isRead && <div className="w-2 h-2 rounded-full bg-[#80BF84] shrink-0 mt-2"></div>}
+                                {!notif.isRead && <div className="w-2 h-2 rounded-full bg-brand-primary shrink-0 mt-2"></div>}
                             </div>
                         )
                     })
@@ -549,7 +549,7 @@ useEffect(() => {
           <div className="relative w-full max-w-sm bg-white/10 dark:bg-zinc-900/60 backdrop-blur-3xl rounded-[2.5rem] border border-white/20 dark:border-white/10 shadow-[0_0_50px_rgba(245,158,11,0.2)] p-8 text-center animate-slide-up overflow-hidden">
             {/* Hiệu ứng ánh sáng hào quang */}
             <div className="absolute -top-20 -left-20 w-40 h-40 bg-amber-500/30 rounded-full blur-3xl animate-pulse pointer-events-none"></div>
-            <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-[#80BF84]/20 rounded-full blur-3xl animate-pulse pointer-events-none delay-500"></div>
+            <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-brand-primary/20 rounded-full blur-3xl animate-pulse pointer-events-none delay-500"></div>
 
             <button onClick={() => setDroppedVoucher(null)} className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors z-10">
               <X size={16} />
@@ -591,12 +591,12 @@ useEffect(() => {
           <div className="relative w-full max-w-sm bg-white/90 dark:bg-zinc-900/90 backdrop-blur-3xl rounded-[3rem] p-8 z-10 shadow-2xl border border-slate-200 dark:border-white/10 transition-colors duration-500 animate-slide-up">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-2xl font-black text-slate-900 dark:text-white transition-colors duration-500">{isLoginMode ? "Đăng nhập" : "Đăng ký"}</h3>
-              <button onClick={() => setIsAuthModalOpen(false)} className="text-slate-500 hover:text-slate-900 dark:text-zinc-500 dark:hover:text-white transition-colors"><X size={24}/></button>
+              <button onClick={() => setIsAuthModalOpen(false)} className="text-brand-base0 hover:text-slate-900 dark:text-zinc-500 dark:hover:text-white transition-colors"><X size={24}/></button>
             </div>
             
             <form onSubmit={handleAuth} className="space-y-4">
-              <input type="email" placeholder="Email" className="w-full px-5 py-4 bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:border-[#80BF84] transition-colors duration-500" value={email} onChange={e => setEmail(e.target.value)} required />
-              <input type="password" placeholder="Mật khẩu" className="w-full px-5 py-4 bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:border-[#80BF84] transition-colors duration-500" value={password} onChange={e => setPassword(e.target.value)} required />
+              <input type="email" placeholder="Email" className="w-full px-5 py-4 bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:border-brand-primary transition-colors duration-500" value={email} onChange={e => setEmail(e.target.value)} required />
+              <input type="password" placeholder="Mật khẩu" className="w-full px-5 py-4 bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:border-brand-primary transition-colors duration-500" value={password} onChange={e => setPassword(e.target.value)} required />
               <button type="submit" disabled={authLoading} className="w-full py-4 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-black rounded-2xl active:scale-95 transition-all flex justify-center items-center gap-2">
                 {authLoading ? <div className="w-5 h-5 border-2 border-white dark:border-zinc-900 border-t-transparent rounded-full animate-spin"/> : null}
                 {isLoginMode ? "Đăng nhập" : "Tạo tài khoản"}
@@ -606,10 +606,10 @@ useEffect(() => {
             <div className="mt-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200 dark:border-white/10"></div></div>
-                <div className="relative flex justify-center text-sm"><span className="px-2 bg-white/90 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 transition-colors duration-500">Hoặc tiếp tục với</span></div>
+                <div className="relative flex justify-center text-sm"><span className="px-2 bg-white/90 dark:bg-zinc-900 text-brand-base0 dark:text-zinc-400 transition-colors duration-500">Hoặc tiếp tục với</span></div>
               </div>
               
-              <button onClick={handleGoogleLogin} type="button" className="mt-4 w-full flex items-center justify-center gap-3 py-3.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl hover:bg-slate-50 dark:hover:bg-white/10 transition-all font-bold text-slate-700 dark:text-white group">
+              <button onClick={handleGoogleLogin} type="button" className="mt-4 w-full flex items-center justify-center gap-3 py-3.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl hover:bg-brand-base dark:hover:bg-white/10 transition-all font-bold text-slate-700 dark:text-white group">
                 <svg className="w-5 h-5 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                   <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -623,7 +623,7 @@ useEffect(() => {
             <div className="mt-6 text-center">
               <p className="text-sm text-slate-600 dark:text-zinc-400 transition-colors duration-500">
                 {isLoginMode ? "Chưa có tài khoản?" : "Đã có tài khoản?"}
-                <button type="button" onClick={() => setIsLoginMode(!isLoginMode)} className="ml-1 font-bold text-[#80BF84] hover:underline">
+                <button type="button" onClick={() => setIsLoginMode(!isLoginMode)} className="ml-1 font-bold text-brand-primary hover:underline">
                   {isLoginMode ? "Đăng ký ngay" : "Đăng nhập"}
                 </button>
               </p>

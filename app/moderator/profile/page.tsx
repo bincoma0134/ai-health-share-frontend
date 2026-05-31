@@ -163,7 +163,7 @@ export default function ModeratorProfilePage() {
   const updateSocial = (idx: number, field: keyof SocialLink, value: string) => { const ns = [...socials]; ns[idx] = { ...ns[idx], [field]: value }; setSocials(ns); };
 
   if (isLoading) return (
-      <div className="h-[100dvh] w-full bg-slate-50 dark:bg-zinc-950 flex flex-col items-center justify-center gap-6 transition-colors duration-500">
+      <div className="h-[100dvh] w-full bg-brand-base dark:bg-zinc-950 flex flex-col items-center justify-center gap-6 transition-colors duration-500">
           <div className="relative w-16 h-16">
               <div className="absolute inset-0 bg-violet-400 rounded-full animate-ping opacity-70"></div>
               <div className="absolute inset-2 bg-violet-500 rounded-full flex items-center justify-center shadow-lg"><Shield className="text-white w-6 h-6 animate-pulse" /></div>
@@ -173,18 +173,18 @@ export default function ModeratorProfilePage() {
   );
 
   return (
-    <div className="flex-1 relative h-[100dvh] flex flex-col bg-slate-50 dark:bg-zinc-950 transition-colors duration-500 overflow-hidden font-be-vietnam">
+    <div className="flex-1 relative h-[100dvh] flex flex-col bg-brand-base dark:bg-zinc-950 transition-colors duration-500 overflow-hidden font-be-vietnam">
       
       <input type="file" accept="image/*" className="hidden" ref={avatarInputRef} onChange={e => handleImageUpload(e, 'avatar')} />
       <input type="file" accept="image/*" className="hidden" ref={coverInputRef} onChange={e => handleImageUpload(e, 'cover')} />
 
       {/* TOP BAR */}
-      <div className="absolute top-0 w-full z-40 p-6 flex justify-end items-center bg-gradient-to-b from-slate-50 dark:from-zinc-950 to-transparent pointer-events-none">
+      <div className="absolute top-0 w-full z-40 p-6 flex justify-end items-center bg-gradient-to-b from-brand-base dark:from-zinc-950 to-transparent pointer-events-none">
           <div className="flex items-center gap-3 pointer-events-auto">
             <button onClick={toggleTheme} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-3xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white shadow-lg group transition-all">
               {theme === "dark" ? <Sun size={20} className="group-hover:text-amber-300" /> : <Moon size={20} className="group-hover:text-violet-500" />}
             </button>
-            <button onClick={() => setIsNotifOpen(true)} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-3xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 hover:text-violet-500 shadow-lg transition-all"><Bell size={20} /></button>
+            <button onClick={() => setIsNotifOpen(true)} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-3xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-brand-base0 hover:text-violet-500 shadow-lg transition-all"><Bell size={20} /></button>
           </div>
       </div>
 
@@ -226,7 +226,7 @@ export default function ModeratorProfilePage() {
                         <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-md flex items-center justify-center md:justify-start gap-2">
                             {profileData?.full_name || "Kiểm duyệt viên"} <ShieldCheck size={24} className="text-violet-500" />
                         </h1>
-                        <h2 className="text-base font-medium text-slate-500 dark:text-zinc-400 tracking-tight">@{profileData?.username || "moderator"}</h2>
+                        <h2 className="text-base font-medium text-brand-base0 dark:text-zinc-400 tracking-tight">@{profileData?.username || "moderator"}</h2>
                       </div>
 
                       <div className="flex items-center justify-center md:justify-end gap-3 mt-2 md:mt-0">
@@ -290,21 +290,21 @@ export default function ModeratorProfilePage() {
                                             <div className="flex items-center gap-3"><div className="p-2 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-xl"><Clock size={20} strokeWidth={3} /></div><h3 className="font-bold text-slate-700 dark:text-zinc-300">Hàng đợi chờ duyệt</h3></div>
                                             <div>
                                                 <span className="text-5xl font-black text-slate-900 dark:text-white">{stats.pendingTotal}</span>
-                                                <span className="text-slate-500 dark:text-zinc-400 font-medium ml-2">Mục chờ xử lý</span>
+                                                <span className="text-brand-base0 dark:text-zinc-400 font-medium ml-2">Mục chờ xử lý</span>
                                             </div>
                                             <button onClick={() => router.push('/moderator/dashboard')} className="w-max mt-2 text-sm font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1">Vào khu vực duyệt &rarr;</button>
                                         </div>
                                     </div>
 
-                                    <div className="bg-white/60 dark:bg-zinc-900/50 backdrop-blur-2xl p-8 rounded-[2.5rem] border border-emerald-500/20 shadow-lg relative overflow-hidden group">
-                                        <div className="absolute -right-6 -top-6 text-emerald-500/10 dark:text-emerald-500/5 group-hover:scale-110 transition-transform"><CheckCircle size={160} /></div>
+                                    <div className="bg-white/60 dark:bg-zinc-900/50 backdrop-blur-2xl p-8 rounded-[2.5rem] border border-brand-trust/20 shadow-lg relative overflow-hidden group">
+                                        <div className="absolute -right-6 -top-6 text-brand-trust/10 dark:text-brand-trust/5 group-hover:scale-110 transition-transform"><CheckCircle size={160} /></div>
                                         <div className="relative z-10 flex flex-col h-full justify-between gap-4">
-                                            <div className="flex items-center gap-3"><div className="p-2 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl"><CheckCircle size={20} strokeWidth={3} /></div><h3 className="font-bold text-slate-700 dark:text-zinc-300">Hiệu suất cá nhân</h3></div>
+                                            <div className="flex items-center gap-3"><div className="p-2 bg-brand-trust/20 text-emerald-600 dark:text-brand-primary rounded-xl"><CheckCircle size={20} strokeWidth={3} /></div><h3 className="font-bold text-slate-700 dark:text-zinc-300">Hiệu suất cá nhân</h3></div>
                                             <div>
                                                 <span className="text-5xl font-black text-slate-900 dark:text-white">{stats.approvedByMe}</span>
-                                                <span className="text-slate-500 dark:text-zinc-400 font-medium ml-2">Mục đã xử lý</span>
+                                                <span className="text-brand-base0 dark:text-zinc-400 font-medium ml-2">Mục đã xử lý</span>
                                             </div>
-                                            <p className="mt-2 text-sm font-medium text-slate-500 dark:text-zinc-500 flex items-center gap-1"><Sparkles size={14} className="text-emerald-500"/> Cảm ơn sự cống hiến của bạn!</p>
+                                            <p className="mt-2 text-sm font-medium text-brand-base0 dark:text-zinc-500 flex items-center gap-1"><Sparkles size={14} className="text-brand-trust"/> Cảm ơn sự cống hiến của bạn!</p>
                                         </div>
                                     </div>
                                 </div>
@@ -324,13 +324,13 @@ export default function ModeratorProfilePage() {
                                     <div className="flex flex-col gap-2">
                                         <label className="text-[11px] font-black text-slate-800 dark:text-white uppercase tracking-widest ml-1">Username định danh</label>
                                         <input type="text" className="w-full bg-slate-100/50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 shadow-inner" value={editForm.username} onChange={e => setEditForm({...editForm, username: e.target.value})} />
-                                        <p className="text-[10px] text-slate-500 dark:text-zinc-500 font-medium ml-1">Tên định danh dùng để hiển thị trên URL hồ sơ công khai.</p>
+                                        <p className="text-[10px] text-brand-base0 dark:text-zinc-500 font-medium ml-1">Tên định danh dùng để hiển thị trên URL hồ sơ công khai.</p>
                                     </div>
                                     
                                     <div className="flex flex-col gap-2">
                                         <label className="text-[11px] font-black text-slate-800 dark:text-white uppercase tracking-widest ml-1">Họ tên / Bí danh kiểm duyệt</label>
                                         <input type="text" className="w-full bg-slate-100/50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 shadow-inner" value={editForm.full_name} onChange={e => setEditForm({...editForm, full_name: e.target.value})} />
-                                        <p className="text-[10px] text-slate-500 dark:text-zinc-500 font-medium ml-1">Tên hiển thị công khai trên các quyết định và hoạt động của bạn.</p>
+                                        <p className="text-[10px] text-brand-base0 dark:text-zinc-500 font-medium ml-1">Tên hiển thị công khai trên các quyết định và hoạt động của bạn.</p>
                                     </div>
 
                                     <div className="flex flex-col gap-2">
@@ -345,7 +345,7 @@ export default function ModeratorProfilePage() {
                                         </div>
                                         <div className="space-y-4">
                                             {socials.map((social, idx) => (
-                                                <div key={idx} className="flex flex-col sm:flex-row items-center gap-3 bg-slate-50 dark:bg-white/5 p-3 rounded-2xl border border-slate-200 dark:border-white/5">
+                                                <div key={idx} className="flex flex-col sm:flex-row items-center gap-3 bg-brand-base dark:bg-white/5 p-3 rounded-2xl border border-slate-200 dark:border-white/5">
                                                     <select value={social.platform} onChange={(e) => updateSocial(idx, 'platform', e.target.value as SocialPlatform)} className="w-full sm:w-1/3 bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 dark:text-zinc-300">
                                                         <option value="facebook">Facebook</option><option value="tiktok">TikTok</option><option value="instagram">Instagram</option><option value="youtube">YouTube</option><option value="website">Website</option>
                                                     </select>
@@ -374,7 +374,7 @@ export default function ModeratorProfilePage() {
                         <div className="flex items-baseline gap-1 mb-2">
                             <span className="text-5xl font-black text-slate-800 dark:text-white tracking-tighter">Tích cực</span>
                         </div>
-                        <p className="text-[11px] text-slate-500 dark:text-zinc-500 font-medium leading-relaxed">
+                        <p className="text-[11px] text-brand-base0 dark:text-zinc-500 font-medium leading-relaxed">
                             Cảm ơn bạn đã đóng góp duy trì một môi trường nội dung minh bạch và an toàn cho AI Health Share.
                         </p>
                         <div className="absolute -right-4 -top-4 opacity-[0.03] dark:opacity-5">
@@ -389,9 +389,9 @@ export default function ModeratorProfilePage() {
       {/* MOBILE BOTTOM DOCK */}
       <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-max pointer-events-auto">
         <div className="px-8 py-3.5 rounded-full flex items-center justify-center gap-8 sm:gap-10 shadow-2xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/60 backdrop-blur-2xl">
-          <button onClick={() => router.push('/')} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Home size={26} strokeWidth={2.5} /></button>
+          <button onClick={() => router.push('/')} className="text-brand-base0 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Home size={26} strokeWidth={2.5} /></button>
           <button className="text-violet-500 transition-colors group"><UserIcon size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
-          <button onClick={() => router.push('/moderator/dashboard')} className="relative text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group">
+          <button onClick={() => router.push('/moderator/dashboard')} className="relative text-brand-base0 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group">
               <LayoutDashboard size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
               {stats.pendingTotal > 0 && <span className="absolute -top-1 -right-1 w-3 h-3 bg-rose-500 rounded-full border-2 border-white dark:border-zinc-950"></span>}
           </button>

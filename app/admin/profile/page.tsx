@@ -223,11 +223,11 @@ export default function SuperAdminProfile() {
 
 
   return (
-    <div className="flex-1 relative h-[100dvh] overflow-y-auto no-scrollbar scroll-smooth bg-slate-50 dark:bg-zinc-950 transition-colors duration-500 font-be-vietnam">
+    <div className="flex-1 relative h-[100dvh] overflow-y-auto no-scrollbar scroll-smooth bg-brand-base dark:bg-zinc-950 transition-colors duration-500 font-be-vietnam">
       
       {/* HIỆU ỨNG LOADING ĐỒNG BỘ DASHBOARD (NẰM DƯỚI SIDEBAR) */}
       {isLoading && (
-          <div className="absolute inset-0 z-[60] bg-slate-50/80 dark:bg-zinc-950/80 backdrop-blur-md flex flex-col items-center justify-center gap-6 transition-all duration-500">
+          <div className="absolute inset-0 z-[60] bg-brand-base/80 dark:bg-zinc-950/80 backdrop-blur-md flex flex-col items-center justify-center gap-6 transition-all duration-500">
               <div className="relative w-16 h-16">
                   <div className="absolute inset-0 bg-amber-200 rounded-full animate-ping opacity-70"></div>
                   <div className="absolute inset-2 bg-amber-500 rounded-full flex items-center justify-center shadow-lg shadow-amber-500/30"><Crown className="text-white w-6 h-6 animate-pulse" /></div>
@@ -240,12 +240,12 @@ export default function SuperAdminProfile() {
       <input type="file" accept="image/*" className="hidden" ref={coverInputRef} onChange={e => handleImageUpload(e, 'cover')} />
 
       {/* TOP NAV */}
-      <div className="absolute top-0 w-full z-40 p-6 flex justify-end items-center bg-gradient-to-b from-slate-50 dark:from-zinc-950 to-transparent pointer-events-none">
+      <div className="absolute top-0 w-full z-40 p-6 flex justify-end items-center bg-gradient-to-b from-brand-base dark:from-zinc-950 to-transparent pointer-events-none">
           <div className="flex items-center gap-3 pointer-events-auto">
             <button onClick={toggleTheme} className="w-10 h-10 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-3xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white shadow-lg hover:text-amber-500 transition-all">
               {theme === 'dark' ? <Sun size={20}/> : <Moon size={20}/>}
             </button>
-            <button onClick={() => setIsNotifOpen(true)} className="w-10 h-10 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-3xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 hover:text-amber-500 shadow-lg transition-all"><Bell size={20} /></button>
+            <button onClick={() => setIsNotifOpen(true)} className="w-10 h-10 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-3xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-brand-base0 hover:text-amber-500 shadow-lg transition-all"><Bell size={20} /></button>
           </div>
       </div>
 
@@ -288,7 +288,7 @@ export default function SuperAdminProfile() {
                               <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter flex items-center justify-center md:justify-start gap-2 mb-1">
                                   {profileData?.full_name || "Quản Trị Viên"} <Crown size={24} className="text-amber-500" />
                               </h1>
-                              <h2 className="text-base font-medium text-slate-500 dark:text-zinc-400">@{profileData?.username || "admin"}</h2>
+                              <h2 className="text-base font-medium text-brand-base0 dark:text-zinc-400">@{profileData?.username || "admin"}</h2>
                           </div>
                           
                           <div className="flex items-center justify-center md:justify-end gap-3 mt-2 md:mt-0">
@@ -350,12 +350,12 @@ export default function SuperAdminProfile() {
                                   <div className="space-y-4 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 dark:before:via-white/10 before:to-transparent">
                                       {systemLogs.map((log) => (
                                           <div key={log.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                                              <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-slate-50 dark:border-zinc-950 bg-white dark:bg-zinc-900 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
-                                                  <log.icon size={16} className={log.type === 'success' ? 'text-emerald-500' : log.type === 'warning' ? 'text-amber-500' : 'text-blue-500'} />
+                                              <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-brand-base dark:border-zinc-950 bg-white dark:bg-zinc-900 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
+                                                  <log.icon size={16} className={log.type === 'success' ? 'text-brand-trust' : log.type === 'warning' ? 'text-amber-500' : 'text-brand-trust'} />
                                               </div>
                                               <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 shadow-sm transition-transform hover:-translate-y-1">
                                                   <div className="flex items-center justify-between mb-2">
-                                                      <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${log.type === 'success' ? 'bg-emerald-50 text-emerald-600' : log.type === 'warning' ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-blue-600'}`}>SYS_{log.type}</span>
+                                                      <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${log.type === 'success' ? 'bg-emerald-50 text-emerald-600' : log.type === 'warning' ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-brand-trust'}`}>SYS_{log.type}</span>
                                                       <span className="text-[10px] font-bold text-slate-400">{log.time}</span>
                                                   </div>
                                                   <p className="text-sm font-medium text-slate-700 dark:text-zinc-300">{log.msg}</p>
@@ -379,7 +379,7 @@ export default function SuperAdminProfile() {
                                   {videos.length === 0 ? (
                                       <div className="py-20 text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-3xl">
                                           <Video size={40} className="mx-auto text-slate-300 dark:text-zinc-700 mb-3"/>
-                                          <p className="text-slate-500 font-bold">Chưa có video nội bộ hệ thống.</p>
+                                          <p className="text-brand-base0 font-bold">Chưa có video nội bộ hệ thống.</p>
                                       </div>
                                   ) : (
                                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
@@ -388,7 +388,7 @@ export default function SuperAdminProfile() {
                                                   <video src={vid.video_url} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700" muted playsInline />
                                                   <div className="absolute top-3 left-3 z-10">
                                                       {/* Đã chỉnh sửa nhãn auto-approved cho Admin */}
-                                                      <span className="px-2 py-1 rounded-md text-[8px] font-black uppercase backdrop-blur-md border bg-emerald-500/20 text-emerald-400 border-emerald-500/30 flex items-center gap-1">
+                                                      <span className="px-2 py-1 rounded-md text-[8px] font-black uppercase backdrop-blur-md border bg-brand-trust/20 text-brand-primary border-brand-trust/30 flex items-center gap-1">
                                                           <CheckCircle size={10} /> ĐÃ DUYỆT
                                                       </span>
                                                   </div>
@@ -461,17 +461,17 @@ export default function SuperAdminProfile() {
 
                                   <h3 className="font-black text-slate-900 dark:text-white text-lg tracking-tight mb-4 pt-6 border-t border-slate-200 dark:border-white/10 flex items-center gap-2"><ShieldCheck size={20} className="text-amber-500"/> Cài đặt Bảo mật Mạng lưới</h3>
                                   <div className="space-y-4 mb-8">
-                                      <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/5">
+                                      <div className="flex items-center justify-between p-4 bg-brand-base dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/5">
                                           <div className="flex items-center gap-3">
                                               <div className="p-2 bg-amber-500/10 text-amber-500 rounded-xl"><Lock size={18}/></div>
-                                              <div><p className="text-sm font-bold text-slate-900 dark:text-white">Xác thực 2 lớp (2FA)</p><p className="text-[10px] text-slate-500 font-medium mt-0.5">Bảo vệ quyền can thiệp cấp cao.</p></div>
+                                              <div><p className="text-sm font-bold text-slate-900 dark:text-white">Xác thực 2 lớp (2FA)</p><p className="text-[10px] text-brand-base0 font-medium mt-0.5">Bảo vệ quyền can thiệp cấp cao.</p></div>
                                           </div>
                                           <div className="w-12 h-6 bg-amber-500 rounded-full relative cursor-pointer"><div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div></div>
                                       </div>
-                                      <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/5">
+                                      <div className="flex items-center justify-between p-4 bg-brand-base dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/5">
                                           <div className="flex items-center gap-3">
                                               <div className="p-2 bg-amber-500/10 text-amber-500 rounded-xl"><Activity size={18}/></div>
-                                              <div><p className="text-sm font-bold text-slate-900 dark:text-white">Cảnh báo đăng nhập lạ</p><p className="text-[10px] text-slate-500 font-medium mt-0.5">Gửi email khi IP thay đổi đột ngột.</p></div>
+                                              <div><p className="text-sm font-bold text-slate-900 dark:text-white">Cảnh báo đăng nhập lạ</p><p className="text-[10px] text-brand-base0 font-medium mt-0.5">Gửi email khi IP thay đổi đột ngột.</p></div>
                                           </div>
                                           <div className="w-12 h-6 bg-amber-500 rounded-full relative cursor-pointer"><div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div></div>
                                       </div>
@@ -494,7 +494,7 @@ export default function SuperAdminProfile() {
                           <div className="flex items-baseline gap-1 mb-2">
                               <span className="text-5xl font-black text-slate-800 dark:text-white tracking-tighter">Level 5</span>
                           </div>
-                          <p className="text-[11px] text-slate-500 dark:text-zinc-500 font-medium leading-relaxed mt-2 border-t border-slate-200 dark:border-white/10 pt-4">
+                          <p className="text-[11px] text-brand-base0 dark:text-zinc-500 font-medium leading-relaxed mt-2 border-t border-slate-200 dark:border-white/10 pt-4">
                               Tài khoản có đặc quyền cao nhất. Vui lòng cẩn trọng với các thao tác xóa và sửa đổi hệ thống.
                           </p>
                       </div>
@@ -508,9 +508,9 @@ export default function SuperAdminProfile() {
         <div className="fixed inset-0 z-[100] flex justify-center items-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsAddVideoModalOpen(false)}></div>
             <div className="relative w-full max-w-[800px] bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-slate-200 dark:border-white/10 shadow-2xl animate-slide-up overflow-hidden flex flex-col max-h-[90vh]">
-                <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-black/20">
+                <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-white/5 bg-brand-base/50 dark:bg-black/20">
                     <h3 className="font-black text-lg text-slate-900 dark:text-white flex items-center gap-2"><Video size={20} className="text-amber-500"/> Đăng Video Lên Studio</h3>
-                    <button onClick={() => setIsAddVideoModalOpen(false)} className="p-2 bg-slate-200/50 dark:bg-white/5 rounded-full text-slate-500"><X size={16}/></button>
+                    <button onClick={() => setIsAddVideoModalOpen(false)} className="p-2 bg-slate-200/50 dark:bg-white/5 rounded-full text-brand-base0"><X size={16}/></button>
                 </div>
                 
                 <div className="p-6 md:p-8 overflow-y-auto no-scrollbar">
@@ -536,16 +536,16 @@ export default function SuperAdminProfile() {
                         </div>
 
                         <div className="lg:col-span-7 flex flex-col justify-center space-y-4">
-                            <div className="p-3 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl mb-2 flex items-center gap-2">
-                                <CheckCircle size={16} className="text-emerald-500 shrink-0"/>
-                                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">Đặc quyền Admin: Video sẽ được hệ thống TỰ ĐỘNG DUYỆT ngay khi đăng.</span>
+                            <div className="p-3 bg-emerald-50 dark:bg-brand-trust/10 border border-emerald-200 dark:border-brand-trust/20 rounded-xl mb-2 flex items-center gap-2">
+                                <CheckCircle size={16} className="text-brand-trust shrink-0"/>
+                                <span className="text-xs font-bold text-emerald-600 dark:text-brand-primary">Đặc quyền Admin: Video sẽ được hệ thống TỰ ĐỘNG DUYỆT ngay khi đăng.</span>
                             </div>
                             <div>
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Tiêu đề (Bắt buộc)</label>
+                                <label className="text-[10px] font-black text-brand-base0 uppercase tracking-widest mb-1 block">Tiêu đề (Bắt buộc)</label>
                                 <input type="text" className="w-full bg-slate-100/50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-5 py-3.5 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-amber-500" placeholder="Viết một tiêu đề thu hút..." value={studioData.title} onChange={e => setStudioData({...studioData, title: e.target.value})} />
                             </div>
                             <div>
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Mô tả nội dung</label>
+                                <label className="text-[10px] font-black text-brand-base0 uppercase tracking-widest mb-1 block">Mô tả nội dung</label>
                                 <textarea rows={3} className="w-full bg-slate-100/50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-5 py-3.5 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-amber-500 resize-none" placeholder="Chia sẻ thêm thông tin..." value={studioData.content} onChange={e => setStudioData({...studioData, content: e.target.value})} />
                             </div>
                             
@@ -565,24 +565,24 @@ export default function SuperAdminProfile() {
         <div className="fixed inset-0 z-[100] flex justify-center items-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsAddPostModalOpen(false)}></div>
             <div className="relative w-full max-w-lg bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-slate-200 dark:border-white/10 shadow-2xl animate-slide-up overflow-hidden flex flex-col">
-                <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-black/20">
+                <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-white/5 bg-brand-base/50 dark:bg-black/20">
                     <h3 className="font-black text-lg text-slate-900 dark:text-white flex items-center gap-2"><Edit3 size={20} className="text-amber-500"/> Tạo Thông Báo Hệ Thống</h3>
-                    <button onClick={() => setIsAddPostModalOpen(false)} className="p-2 bg-slate-200/50 dark:bg-white/5 rounded-full text-slate-500"><X size={16}/></button>
+                    <button onClick={() => setIsAddPostModalOpen(false)} className="p-2 bg-slate-200/50 dark:bg-white/5 rounded-full text-brand-base0"><X size={16}/></button>
                 </div>
                 
                 <form onSubmit={handleAddPost} className="p-6 space-y-4">
                     <div className="flex items-center gap-3 mb-4">
                         <img src={profileData?.avatar_url} className="w-10 h-10 rounded-full" />
-                        <div><div className="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-1">{profileData?.full_name} <Crown size={12} className="text-amber-500"/></div><div className="text-[10px] text-slate-500 font-black uppercase">Thông báo trực tiếp</div></div>
+                        <div><div className="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-1">{profileData?.full_name} <Crown size={12} className="text-amber-500"/></div><div className="text-[10px] text-brand-base0 font-black uppercase">Thông báo trực tiếp</div></div>
                     </div>
 
-                    <textarea rows={5} className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-amber-500 resize-none" placeholder="Viết thông báo cho cộng đồng..." value={postData.content} onChange={e => setPostData({...postData, content: e.target.value})} required />
+                    <textarea rows={5} className="w-full bg-brand-base dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-amber-500 resize-none" placeholder="Viết thông báo cho cộng đồng..." value={postData.content} onChange={e => setPostData({...postData, content: e.target.value})} required />
 
-                    <div className="relative h-40 w-full rounded-2xl border-2 border-dashed border-slate-300 dark:border-white/10 bg-slate-50 dark:bg-black/40 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-100 dark:hover:bg-white/5 transition-colors overflow-hidden" onClick={() => postInputRef.current?.click()}>
+                    <div className="relative h-40 w-full rounded-2xl border-2 border-dashed border-slate-300 dark:border-white/10 bg-brand-base dark:bg-black/40 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-100 dark:hover:bg-white/5 transition-colors overflow-hidden" onClick={() => postInputRef.current?.click()}>
                         {postPreview ? (
                             <img src={postPreview} className="w-full h-full object-cover"/>
                         ) : (
-                            <><UploadCloud className="text-slate-400 mb-2"/><p className="text-xs font-bold text-slate-500">Tải lên ảnh đính kèm (Tùy chọn)</p></>
+                            <><UploadCloud className="text-slate-400 mb-2"/><p className="text-xs font-bold text-brand-base0">Tải lên ảnh đính kèm (Tùy chọn)</p></>
                         )}
                         <input type="file" accept="image/*" ref={postInputRef} className="hidden" onChange={(e) => {
                             const f = e.target.files?.[0];

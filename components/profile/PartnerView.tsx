@@ -166,7 +166,7 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
               <img src={profile.cover_url} className="w-full h-full object-cover" alt="cover" />
           ) : (
               <div className="absolute inset-0 bg-gradient-to-br from-blue-900/40 to-cyan-900/40 flex items-center justify-center">
-                 <Building2 className="text-blue-500/30 w-20 h-20" />
+                 <Building2 className="text-brand-trust/30 w-20 h-20" />
               </div>
           )}
       </div>
@@ -184,7 +184,7 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
               alt="avatar"
             />
           </div>
-          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-[10px] font-black rounded-full shadow-xl flex items-center gap-1 border border-white/20 whitespace-nowrap uppercase tracking-widest">
+          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-gradient-to-r from-brand-trust to-brand-surface text-white text-[10px] font-black rounded-full shadow-xl flex items-center gap-1 border border-white/20 whitespace-nowrap uppercase tracking-widest">
             <Building2 size={12} fill="currentColor" className="text-blue-200" /> BUSINESS
           </div>
         </div>
@@ -196,9 +196,9 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
           <div className="mb-4">
             <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-md flex items-center justify-center md:justify-start gap-2 mb-1">
               {profile.full_name || "Doanh Nghiệp"}
-              <BadgeCheck size={24} className="text-blue-500" />
+              <BadgeCheck size={24} className="text-brand-trust" />
             </h1>
-            <h2 className="text-base font-medium text-slate-500 dark:text-zinc-400 tracking-tight">
+            <h2 className="text-base font-medium text-brand-base0 dark:text-zinc-400 tracking-tight">
               @{profile.username || "business_account"}
             </h2>
           </div>
@@ -210,8 +210,8 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
               onClick={handleToggleFollow} 
               className={`relative px-8 py-3.5 font-black rounded-2xl transition-all duration-300 ease-out flex items-center justify-center gap-2 overflow-hidden group active:scale-95 text-xs uppercase tracking-widest min-w-[160px] ${
                 isFollowing 
-                ? 'bg-slate-100 dark:bg-zinc-800/80 text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700/50 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-500 dark:hover:text-rose-400 hover:border-rose-200 dark:hover:border-rose-500/30' 
-                : 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white hover:scale-[1.02] hover:-translate-y-0.5 shadow-[0_8px_20px_-6px_rgba(59,130,246,0.5)] hover:shadow-[0_15px_25px_-6px_rgba(59,130,246,0.6)]'
+                ? 'bg-slate-100 dark:bg-zinc-800/80 text-brand-base0 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700/50 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-500 dark:hover:text-rose-400 hover:border-rose-200 dark:hover:border-rose-500/30' 
+                : 'bg-gradient-to-r from-brand-trust to-brand-surface text-white hover:scale-[1.02] hover:-translate-y-0.5 shadow-[0_8px_20px_-6px_rgba(59,130,246,0.5)] hover:shadow-[0_15px_25px_-6px_rgba(59,130,246,0.6)]'
               }`}
             >
               {!isFollowing && <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-700 skew-x-12"></div>}
@@ -224,7 +224,7 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
             <button className="p-3.5 bg-white/60 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white rounded-2xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all shadow-sm active:scale-90">
               <MessageCircle size={18} />
             </button>
-            <button onClick={handleShare} className="p-3.5 bg-white/60 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white rounded-2xl hover:bg-slate-100 dark:hover:bg-white/10 hover:text-blue-500 transition-all shadow-sm active:scale-90">
+            <button onClick={handleShare} className="p-3.5 bg-white/60 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white rounded-2xl hover:bg-slate-100 dark:hover:bg-white/10 hover:text-brand-trust transition-all shadow-sm active:scale-90">
               <Share2 size={18} />
             </button>
             <button className="p-3.5 bg-white/60 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white rounded-2xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all shadow-sm active:scale-90">
@@ -245,7 +245,7 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
             </div>
             <div className="w-[1px] h-8 bg-slate-200 dark:bg-white/10"></div>
             <div className="flex items-center gap-2 group cursor-pointer">
-              <span className="text-xl md:text-2xl font-black text-blue-500 transition-colors">{profile?.reputation_points || 92}</span>
+              <span className="text-xl md:text-2xl font-black text-brand-trust transition-colors">{profile?.reputation_points || 92}</span>
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-tight">Điểm<br/>Uy tín</span>
             </div>
           </div>
@@ -262,7 +262,7 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
         {/* CỘT TRÁI (CHIẾM 2 PHẦN): TABS & DANH SÁCH */}
         <div className="lg:col-span-2">
           {/* Menu Tabs */}
-          <div className="flex justify-start gap-8 sticky top-0 bg-slate-50/80 dark:bg-zinc-950/80 backdrop-blur-md z-20 overflow-x-auto no-scrollbar pb-2 border-b border-slate-200 dark:border-white/10">
+          <div className="flex justify-start gap-8 sticky top-0 bg-brand-base/80 dark:bg-zinc-950/80 backdrop-blur-md z-20 overflow-x-auto no-scrollbar pb-2 border-b border-slate-200 dark:border-white/10">
             {[
               { id: "services", label: "Dịch vụ", icon: Package },
               { id: "videos", label: "Video", icon: LayoutGrid },
@@ -275,7 +275,7 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 py-4 text-xs font-black transition-all border-b-2 whitespace-nowrap -mb-[9px] ${
                   activeTab === tab.id 
-                  ? "border-blue-500 text-blue-500" 
+                  ? "border-brand-trust text-brand-trust" 
                   : "border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300"
                 }`}
               >
@@ -298,7 +298,7 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
                           onClick={() => setSortOrder(sort)}
                           className={`px-4 py-2 rounded-full text-xs font-bold transition-all border whitespace-nowrap ${
                               sortOrder === sort 
-                              ? 'bg-blue-500 text-white border-blue-500 shadow-md' 
+                              ? 'bg-brand-trust text-white border-brand-trust shadow-md' 
                               : 'bg-white/50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-white/10'
                           }`}
                       >
@@ -310,7 +310,7 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
                 {/* Danh sách Dịch vụ */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                    {mockServices.map((svc: any) => (
-                      <div key={svc.id} onClick={() => setExpandedService(svc)} className="bg-white/60 dark:bg-zinc-900/50 backdrop-blur-xl rounded-[2rem] border border-slate-200 dark:border-white/10 overflow-hidden hover:shadow-2xl hover:border-blue-500/50 transition-all duration-300 hover:-translate-y-1 group flex flex-col cursor-pointer">
+                      <div key={svc.id} onClick={() => setExpandedService(svc)} className="bg-white/60 dark:bg-zinc-900/50 backdrop-blur-xl rounded-[2rem] border border-slate-200 dark:border-white/10 overflow-hidden hover:shadow-2xl hover:border-brand-trust/50 transition-all duration-300 hover:-translate-y-1 group flex flex-col cursor-pointer">
                           <div className="relative h-44 overflow-hidden shrink-0 bg-slate-100 dark:bg-black">
                               {/* Ưu tiên hiển thị Video nếu có, không thì hiện ảnh */}
                               {svc.video_url ? (
@@ -337,16 +337,16 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
                           </div>
                           <div className="p-5 flex-1 flex flex-col">
                               <div className="flex items-start justify-between gap-2 mb-2">
-                                  <h3 className="font-black text-lg text-slate-900 dark:text-white line-clamp-2 group-hover:text-blue-500 transition-colors">{svc.service_name || svc.name}</h3>
-                                  <BadgeCheck size={18} className="text-blue-500 shrink-0 mt-0.5" />
+                                  <h3 className="font-black text-lg text-slate-900 dark:text-white line-clamp-2 group-hover:text-brand-trust transition-colors">{svc.service_name || svc.name}</h3>
+                                  <BadgeCheck size={18} className="text-brand-trust shrink-0 mt-0.5" />
                               </div>
-                              <p className="text-sm text-slate-500 dark:text-zinc-400 line-clamp-2 mb-4 flex-1">{svc.description || svc.desc}</p>
+                              <p className="text-sm text-brand-base0 dark:text-zinc-400 line-clamp-2 mb-4 flex-1">{svc.description || svc.desc}</p>
                               <div className="flex items-end justify-between mt-auto border-t border-slate-100 dark:border-white/5 pt-4">
                                   <div>
                                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Giá trọn gói</span>
-                                      <span className="text-blue-600 dark:text-blue-400 font-black text-xl">{parseFloat(svc.price).toLocaleString('vi-VN')} đ</span>
+                                      <span className="text-brand-trust dark:text-blue-400 font-black text-xl">{parseFloat(svc.price).toLocaleString('vi-VN')} đ</span>
                                   </div>
-                                  <button onClick={(e) => { e.stopPropagation(); setSelectedService(svc); setIsBookingModalOpen(true); }} className="w-10 h-10 bg-slate-900 dark:bg-white text-white dark:text-black rounded-full hover:scale-110 active:scale-95 transition-all shadow-lg flex items-center justify-center group-hover:bg-blue-500 group-hover:text-white">
+                                  <button onClick={(e) => { e.stopPropagation(); setSelectedService(svc); setIsBookingModalOpen(true); }} className="w-10 h-10 bg-slate-900 dark:bg-white text-white dark:text-black rounded-full hover:scale-110 active:scale-95 transition-all shadow-lg flex items-center justify-center group-hover:bg-brand-trust group-hover:text-white">
                                       <CalendarPlus size={18} />
                                   </button>
                               </div>
@@ -362,7 +362,7 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
             {(activeTab === "videos" || activeTab === "liked" || activeTab === "saved") && (
                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 md:gap-6 animate-fade-in">
                {(activeTab === "videos" ? localVideos : activeTab === "liked" ? likedTiktokFeeds : savedTiktokFeeds).map((item: any) => (
-                 <div key={item.id} onClick={() => { if(activeTab === 'videos') setExpandedVideo(item); }} className={`relative aspect-[9/16] bg-zinc-900 rounded-[2.2rem] overflow-hidden group shadow-sm border border-white/5 transition-all duration-500 ${activeTab === 'videos' ? 'cursor-pointer hover:shadow-2xl hover:border-blue-500/40 hover:-translate-y-1.5' : ''}`}>
+                 <div key={item.id} onClick={() => { if(activeTab === 'videos') setExpandedVideo(item); }} className={`relative aspect-[9/16] bg-zinc-900 rounded-[2.2rem] overflow-hidden group shadow-sm border border-white/5 transition-all duration-500 ${activeTab === 'videos' ? 'cursor-pointer hover:shadow-2xl hover:border-brand-trust/40 hover:-translate-y-1.5' : ''}`}>
                    <video src={item.video_url || item.image_url} className="w-full h-full object-cover opacity-85 transition-all duration-1000 group-hover:scale-110 group-hover:opacity-100" muted playsInline />
                    
                    {/* Overlay: Hiển thị Tim & Lượt xem trực quan ngay Preview */}
@@ -379,7 +379,7 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
                       
                       {item.price ? (
                           <div className="flex items-center gap-2">
-                              <div className="px-2.5 py-1 bg-blue-500/20 backdrop-blur-xl border border-blue-400/30 rounded-lg shadow-inner">
+                              <div className="px-2.5 py-1 bg-brand-trust/20 backdrop-blur-xl border border-blue-400/30 rounded-lg shadow-inner">
                                   <span className="text-blue-400 text-[10px] font-black tracking-tight">{parseFloat(item.price).toLocaleString('vi-VN')} đ</span>
                               </div>
                               <div className="w-6 h-6 bg-white/10 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 translate-x-2 group-hover:translate-x-0">
@@ -395,7 +395,7 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
 
                    {/* Quick Actions (Hover Only) */}
                    <div className="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-4 group-hover:translate-x-0 z-20">
-                      <button onClick={(e) => { e.stopPropagation(); handleInteraction(item.id, 'share'); }} className="p-2.5 bg-white/10 backdrop-blur-xl border border-white/20 text-white rounded-full hover:bg-blue-600 transition-all shadow-xl">
+                      <button onClick={(e) => { e.stopPropagation(); handleInteraction(item.id, 'share'); }} className="p-2.5 bg-white/10 backdrop-blur-xl border border-white/20 text-white rounded-full hover:bg-brand-trust transition-all shadow-xl">
                           <Share2 size={14} strokeWidth={2.5} />
                       </button>
                    </div>
@@ -404,7 +404,7 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
                {videoTiktokFeeds.length === 0 && activeTab === "videos" && (
                   <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-[2rem]">
                       <LayoutGrid size={48} className="mx-auto text-slate-300 dark:text-zinc-700 mb-4" />
-                      <p className="text-slate-500 font-bold">Doanh nghiệp chưa đăng tải video nào.</p>
+                      <p className="text-brand-base0 font-bold">Doanh nghiệp chưa đăng tải video nào.</p>
                   </div>
                )}
              </div>
@@ -432,16 +432,16 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
                                       onClick={() => setSelectedVoucher(v)}
                                       className="relative flex bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all group cursor-pointer"
                                     >
-                                        <div className={`w-4 flex flex-col justify-between items-center py-2 ${v.issuer_type === 'ADMIN' ? 'bg-amber-500' : 'bg-[#80BF84]'}`}>
-                                            <div className="w-2 h-2 rounded-full bg-slate-50 dark:bg-zinc-950 -ml-4"></div>
-                                            <div className="w-2 h-2 rounded-full bg-slate-50 dark:bg-zinc-950 -ml-4"></div>
-                                            <div className="w-2 h-2 rounded-full bg-slate-50 dark:bg-zinc-950 -ml-4"></div>
+                                        <div className={`w-4 flex flex-col justify-between items-center py-2 ${v.issuer_type === 'ADMIN' ? 'bg-amber-500' : 'bg-brand-primary'}`}>
+                                            <div className="w-2 h-2 rounded-full bg-brand-base dark:bg-zinc-950 -ml-4"></div>
+                                            <div className="w-2 h-2 rounded-full bg-brand-base dark:bg-zinc-950 -ml-4"></div>
+                                            <div className="w-2 h-2 rounded-full bg-brand-base dark:bg-zinc-950 -ml-4"></div>
                                         </div>
 
                                         <div className="flex-1 p-5 flex flex-col justify-between gap-3">
                                             <div>
                                                 <div className="flex justify-between items-start gap-2 mb-1">
-                                                    <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${v.issuer_type === 'ADMIN' ? 'bg-amber-100 text-amber-800 dark:bg-amber-500/10 dark:text-amber-400' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-400'}`}>
+                                                    <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${v.issuer_type === 'ADMIN' ? 'bg-amber-100 text-amber-800 dark:bg-amber-500/10 dark:text-amber-400' : 'bg-emerald-100 text-emerald-800 dark:bg-brand-trust/10 dark:text-brand-primary'}`}>
                                                         {v.issuer_type === 'ADMIN' ? 'Toàn sàn' : 'Độc quyền cơ sở'}
                                                     </span>
                                                     <span className="text-xs font-bold text-slate-400 dark:text-zinc-500 flex items-center gap-1">
@@ -452,7 +452,7 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
                                                 <h4 className="text-lg font-black text-slate-900 dark:text-white leading-tight">
                                                     Giảm {v.discount_type === 'PERCENTAGE' ? `${Number(v.discount_value)}%` : `${Number(v.discount_value).toLocaleString()}đ`}
                                                 </h4>
-                                                <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 mt-1">
+                                                <p className="text-xs font-medium text-brand-base0 dark:text-zinc-400 mt-1">
                                                     Đơn tối thiểu: {Number(v.min_order_value).toLocaleString()}đ
                                                 </p>
                                             </div>
@@ -480,7 +480,7 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
                                                             ? 'bg-rose-50 text-rose-400 dark:bg-rose-500/10 dark:text-rose-500/30 cursor-not-allowed'
                                                             : v.issuer_type === 'ADMIN'
                                                             ? 'bg-amber-500 text-zinc-900 hover:bg-amber-400 shadow-sm shadow-amber-500/20'
-                                                            : 'bg-[#80BF84] text-zinc-900 hover:bg-emerald-400 shadow-sm shadow-emerald-500/20'
+                                                            : 'bg-brand-primary text-zinc-900 hover:bg-brand-primary shadow-sm shadow-brand-trust/20'
                                                     }`}
                                                 >
                                                     {isClaimed ? (
@@ -505,17 +505,17 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
         <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-8 self-start">
             
             {/* THẺ ĐIỂM UY TÍN */}
-            <div className="bg-[#f0f9f1] dark:bg-blue-500/10 rounded-[2rem] p-6 border border-blue-200 dark:border-blue-500/20 relative overflow-hidden shadow-sm">
+            <div className="bg-[#f0f9f1] dark:bg-brand-trust/10 rounded-[2rem] p-6 border border-blue-200 dark:border-brand-trust/20 relative overflow-hidden shadow-sm">
                 <div className="absolute -right-4 -top-4 opacity-5 dark:opacity-10">
-                    <ShieldCheck size={120} className="text-blue-500" />
+                    <ShieldCheck size={120} className="text-brand-trust" />
                 </div>
                 <div className="relative z-10">
-                    <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-black text-sm mb-4 justify-center md:justify-start uppercase tracking-widest">
+                    <div className="flex items-center gap-2 text-brand-trust dark:text-blue-400 font-black text-sm mb-4 justify-center md:justify-start uppercase tracking-widest">
                         <ShieldCheck size={18} strokeWidth={3} /> ĐIỂM UY TÍN
                     </div>
                     <div className="flex items-baseline gap-1 mb-2 justify-center md:justify-start">
                         <span className="text-6xl font-black text-slate-800 dark:text-white tracking-tighter">{stats.reputation || profile?.reputation_points || "92"}</span>
-                        <span className="text-2xl font-bold text-slate-400 dark:text-slate-500">/100</span>
+                        <span className="text-2xl font-bold text-slate-400 dark:text-brand-base0">/100</span>
                     </div>
                     <p className="text-xs text-slate-600 dark:text-zinc-400 font-medium text-center md:text-left mt-2">
                         Hoạt động tốt và phản hồi tích cực giúp tăng điểm.
@@ -535,14 +535,14 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
                         <div className="flex text-amber-400 mb-1.5">
                             {[...Array(5)].map((_, i) => <Star key={i} size={18} className="fill-amber-400" />)}
                         </div>
-                        <p className="text-xs text-slate-500 dark:text-zinc-400 font-bold">Dựa trên 124 lượt đánh giá</p>
+                        <p className="text-xs text-brand-base0 dark:text-zinc-400 font-bold">Dựa trên 124 lượt đánh giá</p>
                     </div>
                 </div>
 
                 <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4">Phản hồi gần đây</h4>
                 <div className="space-y-3">
                     {mockReviews.slice(0,3).map((rev: any) => (
-                        <div key={rev.id} className="bg-slate-50 dark:bg-white/5 rounded-2xl p-4 border border-slate-100 dark:border-white/5">
+                        <div key={rev.id} className="bg-brand-base dark:bg-white/5 rounded-2xl p-4 border border-slate-100 dark:border-white/5">
                             <div className="flex items-center justify-between mb-2">
                                 <h5 className="font-bold text-sm text-slate-900 dark:text-white">{rev.user.full_name}</h5>
                                 <div className="flex text-amber-400">
@@ -580,9 +580,9 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
             </div>
 
             <div className="flex-1 p-6 md:p-10 flex flex-col overflow-y-auto no-scrollbar relative">
-                <button onClick={() => setExpandedService(null)} className="hidden md:flex absolute top-6 right-6 p-2 rounded-full bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-zinc-400 transition-colors"><X size={20}/></button>
+                <button onClick={() => setExpandedService(null)} className="hidden md:flex absolute top-6 right-6 p-2 rounded-full bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-brand-base0 dark:text-zinc-400 transition-colors"><X size={20}/></button>
                 
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#80BF84]/10 border border-[#80BF84]/20 rounded-full text-[10px] font-bold text-[#80BF84] mb-4 uppercase tracking-wider w-max">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-brand-primary/10 border border-brand-primary/20 rounded-full text-[10px] font-bold text-brand-primary mb-4 uppercase tracking-wider w-max">
                   <Sparkles size={12} /> Thông tin dịch vụ
                 </div>
 
@@ -596,7 +596,7 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
                 <div className="mt-auto pt-6 border-t border-slate-100 dark:border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                     <div>
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Giá trọn gói</p>
-                        <p className="text-3xl font-black text-[#80BF84]">{Number(expandedService.price).toLocaleString()} <span className="text-base text-slate-500">đ</span></p>
+                        <p className="text-3xl font-black text-brand-primary">{Number(expandedService.price).toLocaleString()} <span className="text-base text-brand-base0">đ</span></p>
                     </div>
                     {/* Nút Đặt lịch ngay cho Public View */}
                     <button 
@@ -605,7 +605,7 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
                             setExpandedService(null);
                             setIsBookingModalOpen(true);
                         }} 
-                        className="w-full sm:w-auto px-8 py-4 bg-[#80BF84] hover:bg-emerald-400 text-zinc-950 font-black rounded-2xl shadow-xl hover:shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-xs"
+                        className="w-full sm:w-auto px-8 py-4 bg-brand-primary hover:bg-brand-primary text-zinc-950 font-black rounded-2xl shadow-xl hover:shadow-brand-trust/20 active:scale-95 transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-xs"
                     >
                         <CalendarPlus size={18}/> Đặt lịch ngay
                     </button>
@@ -652,7 +652,7 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
                                 setIsCommentModalOpen(false);
                                 setIsBookingModalOpen(true); 
                             }} 
-                            className="absolute top-6 right-6 z-30 group flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#80BF84]/90 backdrop-blur-xl border border-[#80BF84] text-zinc-950 hover:bg-[#80BF84] hover:scale-105 transition-all shadow-[0_0_20px_rgba(128,191,132,0.4)] active:scale-95">
+                            className="absolute top-6 right-6 z-30 group flex items-center gap-2 px-4 py-2.5 rounded-full bg-brand-primary/90 backdrop-blur-xl border border-brand-primary text-zinc-950 hover:bg-brand-primary hover:scale-105 transition-all shadow-[0_0_20px_rgba(128,191,132,0.4)] active:scale-95">
                         <CalendarPlus size={16} strokeWidth={2.5} />
                         <span className="text-[10px] font-black uppercase tracking-widest">Đặt lịch</span>
                     </button>
@@ -667,8 +667,8 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
                     
                     {expandedVideo.price && (
                       <div className="flex items-center gap-3 pl-1.5 pr-6 py-2 bg-black/40 backdrop-blur-xl border border-white/10 text-white rounded-full w-max shadow-2xl">
-                        <div className="w-8 h-8 bg-[#80BF84] rounded-full flex items-center justify-center text-zinc-950 shadow-inner"><DollarSign size={16} strokeWidth={3} /></div>
-                        <div className="flex flex-col"><span className="text-[8px] font-black text-slate-300 uppercase leading-none mb-0.5">Giá tham khảo</span><span className="font-black text-sm leading-none text-[#80BF84]">{parseFloat(expandedVideo.price).toLocaleString()} đ</span></div>
+                        <div className="w-8 h-8 bg-brand-primary rounded-full flex items-center justify-center text-zinc-950 shadow-inner"><DollarSign size={16} strokeWidth={3} /></div>
+                        <div className="flex flex-col"><span className="text-[8px] font-black text-slate-300 uppercase leading-none mb-0.5">Giá tham khảo</span><span className="font-black text-sm leading-none text-brand-primary">{parseFloat(expandedVideo.price).toLocaleString()} đ</span></div>
                       </div>
                     )}
                 </div>
@@ -678,7 +678,7 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
                       <div className="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-zinc-800 shadow-xl">
                          <img src={profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.full_name}&background=3b82f6&color=fff`} className="w-full h-full object-cover"/>
                       </div>
-                      <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-4.5 h-4.5 bg-[#80BF84] rounded-full flex items-center justify-center border-2 border-zinc-900 shadow-md"><Plus size={10} className="text-zinc-950" strokeWidth={4} /></div>
+                      <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-4.5 h-4.5 bg-brand-primary rounded-full flex items-center justify-center border-2 border-zinc-900 shadow-md"><Plus size={10} className="text-zinc-950" strokeWidth={4} /></div>
                     </div>
 
                     <button onClick={() => handleInteraction(expandedVideo.id, 'like')} className="flex flex-col items-center gap-1 group">
@@ -752,13 +752,13 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
             
             <button 
               onClick={() => setSelectedVoucher(null)}
-              className="absolute top-4 right-4 p-2 bg-slate-100 dark:bg-zinc-800 rounded-full text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
+              className="absolute top-4 right-4 p-2 bg-slate-100 dark:bg-zinc-800 rounded-full text-brand-base0 hover:text-slate-900 dark:hover:text-white transition-colors"
             >
               <X size={16} />
             </button>
 
             {/* Icon Avatar */}
-            <div className={`w-20 h-20 mx-auto rounded-3xl flex items-center justify-center mb-4 shadow-inner ${selectedVoucher.issuer_type === 'ADMIN' ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-500' : 'bg-slate-100 dark:bg-white/5 text-[#80BF84]'}`}>
+            <div className={`w-20 h-20 mx-auto rounded-3xl flex items-center justify-center mb-4 shadow-inner ${selectedVoucher.issuer_type === 'ADMIN' ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-500' : 'bg-slate-100 dark:bg-white/5 text-brand-primary'}`}>
               {selectedVoucher.issuer_type === 'ADMIN' ? <Crown className="w-10 h-10" /> : <Store className="w-10 h-10" />}
             </div>
 
@@ -770,7 +770,7 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
             </div>
 
             {/* Khối mô tả */}
-            <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl text-left text-sm text-slate-600 dark:text-zinc-300 mb-6 space-y-3">
+            <div className="p-4 bg-brand-base dark:bg-white/5 rounded-2xl text-left text-sm text-slate-600 dark:text-zinc-300 mb-6 space-y-3">
               <p>
                 <strong className="text-slate-900 dark:text-white block mb-0.5">Loại ưu đãi:</strong> 
                 {selectedVoucher.issuer_type === 'ADMIN' ? 'Mã Độc Quyền Toàn Sàn' : `Cơ sở phát hành: ${profile?.full_name || "Đối tác"}`}
@@ -813,7 +813,7 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
               className={`w-full py-4 rounded-2xl font-black flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg
                 ${selectedVoucher.issuer_type === 'ADMIN' 
                   ? 'bg-amber-500 text-zinc-900 hover:bg-amber-400 shadow-amber-500/30' 
-                  : 'bg-[#80BF84] text-zinc-900 hover:bg-emerald-400 shadow-[#80BF84]/30'}
+                  : 'bg-brand-primary text-zinc-900 hover:bg-brand-primary shadow-brand-primary/30'}
               `}
             >
               {selectedVoucher.issuer_type === 'ADMIN' ? 'SĂN DỊCH VỤ NGAY' : 'XEM DỊCH VỤ NGAY'}

@@ -170,35 +170,35 @@ export default function AIFeature() {
     else router.push("/profile");
   };
 
-  if (!isMounted) return <div className="h-[100dvh] bg-slate-50 dark:bg-zinc-950"></div>;
+  if (!isMounted) return <div className="h-[100dvh] bg-brand-base dark:bg-zinc-950"></div>;
 
   return (
-    <div className="h-[100dvh] w-full bg-slate-50 dark:bg-black overflow-hidden flex relative transition-colors duration-500">
+    <div className="h-[100dvh] w-full bg-brand-base dark:bg-black overflow-hidden flex relative transition-colors duration-500">
       
       
       {/* 2. MAIN AI CHAT AREA */}
-      <div className="flex-1 relative h-[100dvh] flex flex-col bg-slate-50 dark:bg-zinc-950 transition-colors duration-500">
-        <div className="absolute top-0 w-full z-40 p-6 flex justify-between items-center bg-gradient-to-b from-slate-50 dark:from-zinc-950 to-transparent pointer-events-none transition-all">
+      <div className="flex-1 relative h-[100dvh] flex flex-col bg-brand-base dark:bg-zinc-950 transition-colors duration-500">
+        <div className="absolute top-0 w-full z-40 p-6 flex justify-between items-center bg-gradient-to-b from-brand-base dark:from-zinc-950 to-transparent pointer-events-none transition-all">
             <div className="flex items-center gap-3 pointer-events-auto">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#80BF84] to-emerald-400 flex items-center justify-center shadow-lg shadow-emerald-500/20"><Bot className="text-zinc-950" size={24} /></div>
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-primary to-brand-primary flex items-center justify-center shadow-lg shadow-brand-trust/20"><Bot className="text-zinc-950" size={24} /></div>
                 <div>
                     <h2 className="text-lg md:text-xl font-black text-slate-900 dark:text-white leading-tight">AI Health Assistant</h2>
-                    <p className="text-[10px] font-bold text-[#80BF84] uppercase tracking-widest">Phân tích đa luồng</p>
+                    <p className="text-[10px] font-bold text-brand-primary uppercase tracking-widest">Phân tích đa luồng</p>
                 </div>
             </div>
             
             <div className="flex items-center gap-3 pointer-events-auto">
-                <button onClick={clearChat} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 active:scale-95 transition-all shadow-lg" title="Xóa lịch sử">
+                <button onClick={clearChat} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-brand-base0 hover:text-rose-500 hover:bg-rose-500/10 active:scale-95 transition-all shadow-lg" title="Xóa lịch sử">
                     <Trash2 size={18} />
                 </button>
 
                 {/* ĐÂY LÀ NÚT CHUÔNG ĐÃ ĐƯỢC GẮN STATE MỞ MODAL */}
-                <button onClick={() => setIsNotifOpen(true)} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 hover:text-[#80BF84] hover:bg-[#80BF84]/10 active:scale-95 transition-all shadow-lg" title="Thông báo">
+                <button onClick={() => setIsNotifOpen(true)} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-brand-base0 hover:text-brand-primary hover:bg-brand-primary/10 active:scale-95 transition-all shadow-lg" title="Thông báo">
                     <Bell size={18} />
                 </button>
 
                 <button onClick={handleThemeToggle} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:bg-white/80 dark:hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg group">
-                    {isDarkMode ? <Sun size={20} className="group-hover:text-amber-300 transition-colors"/> : <Moon size={20} className="group-hover:text-blue-500 transition-colors"/>}
+                    {isDarkMode ? <Sun size={20} className="group-hover:text-amber-300 transition-colors"/> : <Moon size={20} className="group-hover:text-brand-trust transition-colors"/>}
                 </button>
             </div>
         </div>
@@ -208,13 +208,13 @@ export default function AIFeature() {
             {messages.map((msg) => (
                 <div key={msg.id} className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-slide-up`}>
                     {msg.role === 'bot' && (
-                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-200 dark:bg-zinc-800 flex items-center justify-center shrink-0 border border-slate-300 dark:border-zinc-700 shadow-sm"><Bot size={18} className="text-[#80BF84]" /></div>
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-200 dark:bg-zinc-800 flex items-center justify-center shrink-0 border border-slate-300 dark:border-zinc-700 shadow-sm"><Bot size={18} className="text-brand-primary" /></div>
                     )}
 
                     <div className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} max-w-[85%] md:max-w-[75%]`}>
                         <div className={`p-4 md:p-6 text-[15px] leading-relaxed transition-all duration-300 ${
                             msg.role === 'user' 
-                            ? 'bg-[#80BF84] text-zinc-950 rounded-[1.5rem] rounded-tr-sm whitespace-pre-wrap font-medium shadow-md dark:shadow-[0_0_15px_rgba(128,191,132,0.2)]' 
+                            ? 'bg-brand-primary text-zinc-950 rounded-[1.5rem] rounded-tr-sm whitespace-pre-wrap font-medium shadow-md dark:shadow-[0_0_15px_rgba(128,191,132,0.2)]' 
                             : 'bg-white/80 dark:bg-zinc-900/60 backdrop-blur-2xl border border-slate-200 dark:border-white/10 text-slate-800 dark:text-zinc-200 rounded-[1.5rem] rounded-tl-sm shadow-lg dark:shadow-[0_0_15px_rgba(128,191,132,0.15)]'
                         }`}>
                             {msg.role === 'user' ? (
@@ -225,7 +225,7 @@ export default function AIFeature() {
                                     p: ({node, ...props}) => <p className="mb-3 last:mb-0" {...props} />,
                                     ul: ({node, ...props}) => <ul className="list-disc ml-5 mb-3 space-y-1" {...props} />,
                                     ol: ({node, ...props}) => <ol className="list-decimal ml-5 mb-3 space-y-1" {...props} />,
-                                    h2: ({node, ...props}) => <h2 className="text-lg font-black mb-2 mt-4 text-emerald-600 dark:text-emerald-400" {...props} />,
+                                    h2: ({node, ...props}) => <h2 className="text-lg font-black mb-2 mt-4 text-emerald-600 dark:text-brand-primary" {...props} />,
                                     h3: ({node, ...props}) => <h3 className="text-md font-bold mb-2 mt-3" {...props} />,
                                     strong: ({node, ...props}) => <strong className="font-bold text-slate-900 dark:text-white" {...props} />,
                                   }}
@@ -240,18 +240,18 @@ export default function AIFeature() {
                     </div>
 
                     {msg.role === 'user' && (
-                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#80BF84]/20 flex items-center justify-center shrink-0 border border-[#80BF84]/50 shadow-sm"><UserAvatar size={18} className="text-[#80BF84]" /></div>
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-brand-primary/20 flex items-center justify-center shrink-0 border border-brand-primary/50 shadow-sm"><UserAvatar size={18} className="text-brand-primary" /></div>
                     )}
                 </div>
             ))}
 
             {isTyping && (
                 <div className="flex gap-4 justify-start animate-fade-in">
-                    <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-200 dark:bg-zinc-800 flex items-center justify-center shrink-0 border border-slate-300 dark:border-zinc-700 shadow-sm"><Bot size={18} className="text-[#80BF84]" /></div>
+                    <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-200 dark:bg-zinc-800 flex items-center justify-center shrink-0 border border-slate-300 dark:border-zinc-700 shadow-sm"><Bot size={18} className="text-brand-primary" /></div>
                     <div className="bg-white/80 dark:bg-zinc-900/60 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-[1.5rem] rounded-tl-sm px-5 py-4 flex items-center gap-1.5 shadow-lg dark:shadow-[0_0_15px_rgba(128,191,132,0.15)]">
-                        <div className="w-2 h-2 rounded-full bg-[#80BF84] animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                        <div className="w-2 h-2 rounded-full bg-[#80BF84] animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                        <div className="w-2 h-2 rounded-full bg-[#80BF84] animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                        <div className="w-2 h-2 rounded-full bg-brand-primary animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                        <div className="w-2 h-2 rounded-full bg-brand-primary animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                        <div className="w-2 h-2 rounded-full bg-brand-primary animate-bounce" style={{ animationDelay: '300ms' }}></div>
                     </div>
                 </div>
             )}
@@ -260,16 +260,16 @@ export default function AIFeature() {
 
         {/* INPUT AREA */}
         <div className="absolute bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 w-full max-w-3xl px-5 md:px-0 pointer-events-auto">
-            <form onSubmit={handleSendMessage} className="relative w-full flex items-end gap-3 p-2 bg-white/80 dark:bg-black/60 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-[2rem] shadow-2xl focus-within:border-[#80BF84]/50 dark:focus-within:shadow-[0_0_20px_rgba(128,191,132,0.15)] transition-all duration-300">
+            <form onSubmit={handleSendMessage} className="relative w-full flex items-end gap-3 p-2 bg-white/80 dark:bg-black/60 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-[2rem] shadow-2xl focus-within:border-brand-primary/50 dark:focus-within:shadow-[0_0_20px_rgba(128,191,132,0.15)] transition-all duration-300">
                 <textarea 
-                    className="flex-1 bg-transparent px-5 py-4 min-h-[56px] max-h-[120px] text-[15px] font-medium text-slate-900 dark:text-white placeholder:text-slate-500 focus:outline-none resize-none no-scrollbar" 
+                    className="flex-1 bg-transparent px-5 py-4 min-h-[56px] max-h-[120px] text-[15px] font-medium text-slate-900 dark:text-white placeholder:text-brand-base0 focus:outline-none resize-none no-scrollbar" 
                     placeholder="VN Share xin chào..."
                     value={input} 
                     onChange={e => setInput(e.target.value)} 
                     onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(e); } }}
                     rows={1}
                 />
-                <button type="submit" disabled={!input.trim() || isTyping} className="w-12 h-12 shrink-0 mb-1 mr-1 rounded-full bg-gradient-to-tr from-[#80BF84] to-emerald-500 text-zinc-950 flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 transition-all">
+                <button type="submit" disabled={!input.trim() || isTyping} className="w-12 h-12 shrink-0 mb-1 mr-1 rounded-full bg-gradient-to-tr from-brand-primary to-brand-trust text-zinc-950 flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 transition-all">
                     <Send size={20} className="ml-1"/>
                 </button>
             </form>
@@ -279,12 +279,12 @@ export default function AIFeature() {
         {/* 3. MOBILE BOTTOM DOCK */}
         <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-max pointer-events-auto">
           <div className="px-8 py-3.5 rounded-full flex items-center justify-center gap-8 sm:gap-10 shadow-2xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/60 backdrop-blur-2xl transition-colors duration-500">
-            <button onClick={() => router.push('/')} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Home size={26} strokeWidth={2.5} /></button>
-            <button onClick={() => router.push('/features/explore')} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Compass size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
+            <button onClick={() => router.push('/')} className="text-brand-base0 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Home size={26} strokeWidth={2.5} /></button>
+            <button onClick={() => router.push('/features/explore')} className="text-brand-base0 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Compass size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
             <button className="relative -mt-10 group cursor-default">
-              <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#80BF84] to-emerald-300 p-[2px] shadow-[0_0_20px_rgba(128,191,132,0.4)] transition-all duration-300"><div className="w-full h-full bg-white dark:bg-zinc-950 rounded-full flex items-center justify-center transition-colors duration-500"><Sparkles size={26} className="text-[#80BF84]" strokeWidth={2.5} /></div></div>
+              <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-brand-primary to-emerald-300 p-[2px] shadow-[0_0_20px_rgba(128,191,132,0.4)] transition-all duration-300"><div className="w-full h-full bg-white dark:bg-zinc-950 rounded-full flex items-center justify-center transition-colors duration-500"><Sparkles size={26} className="text-brand-primary" strokeWidth={2.5} /></div></div>
             </button>
-            <button onClick={() => router.push('/features/favorite')} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Heart size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
+            <button onClick={() => router.push('/features/favorite')} className="text-brand-base0 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Heart size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
             <div className="relative">
               {isUserMenuOpen && user && (
                 <>
@@ -295,7 +295,7 @@ export default function AIFeature() {
                   </div>
                 </>
               )}
-              <button onClick={() => { if(!user) router.push('/'); else setIsUserMenuOpen(!isUserMenuOpen); }} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group">
+              <button onClick={() => { if(!user) router.push('/'); else setIsUserMenuOpen(!isUserMenuOpen); }} className="text-brand-base0 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group">
                 <UserIcon size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
               </button>
             </div>

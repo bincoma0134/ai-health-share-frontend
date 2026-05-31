@@ -67,28 +67,28 @@ export default function VoucherPage() {
   };
 
   return (
-    <div className="min-h-full bg-slate-50 dark:bg-[#09090b] text-slate-900 dark:text-white p-4 md:p-8 animate-fade-in pb-24 md:pb-8">
+    <div className="min-h-full bg-brand-base dark:bg-[#09090b] text-slate-900 dark:text-white p-4 md:p-8 animate-fade-in pb-24 md:pb-8">
       <div className="max-w-4xl mx-auto">
         
         {/* HEADER & TABS */}
         <div className="mb-8 relative z-10">
-          <h1 className="text-3xl font-black bg-gradient-to-r from-[#80BF84] to-emerald-400 bg-clip-text text-transparent mb-6 flex items-center gap-3">
+          <h1 className="text-3xl font-black bg-gradient-to-r from-brand-primary to-brand-primary bg-clip-text text-transparent mb-6 flex items-center gap-3">
             <SparklesIcon /> Trung Tâm Ưu Đãi
           </h1>
           <div className="flex gap-4 border-b border-slate-200 dark:border-white/10 pb-1">
             <button 
               onClick={() => setActiveTab("PUBLIC")}
-              className={`pb-3 font-bold px-2 transition-all ${activeTab === "PUBLIC" ? "text-[#80BF84] border-b-2 border-[#80BF84]" : "text-slate-500 hover:text-slate-700 dark:hover:text-white"}`}
+              className={`pb-3 font-bold px-2 transition-all ${activeTab === "PUBLIC" ? "text-brand-primary border-b-2 border-brand-primary" : "text-brand-base0 hover:text-slate-700 dark:hover:text-white"}`}
             >
               Săn Mã Đỉnh
             </button>
             <button 
               onClick={() => { if(!user) setIsAuthModalOpen(true); else setActiveTab("WALLET"); }}
-              className={`pb-3 font-bold px-2 transition-all flex items-center gap-2 ${activeTab === "WALLET" ? "text-[#80BF84] border-b-2 border-[#80BF84]" : "text-slate-500 hover:text-slate-700 dark:hover:text-white"}`}
+              className={`pb-3 font-bold px-2 transition-all flex items-center gap-2 ${activeTab === "WALLET" ? "text-brand-primary border-b-2 border-brand-primary" : "text-brand-base0 hover:text-slate-700 dark:hover:text-white"}`}
             >
               Ví Của Tôi 
               {user && myVouchers.length > 0 && (
-                <span className="bg-[#80BF84] text-zinc-900 text-[10px] px-2 py-0.5 rounded-full font-black">{myVouchers.length}</span>
+                <span className="bg-brand-primary text-zinc-900 text-[10px] px-2 py-0.5 rounded-full font-black">{myVouchers.length}</span>
               )}
             </button>
           </div>
@@ -96,7 +96,7 @@ export default function VoucherPage() {
 
         {/* CONTENT */}
         {isLoading && activeTab === "PUBLIC" ? (
-          <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-[#80BF84] border-t-transparent rounded-full animate-spin"></div></div>
+          <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-brand-primary border-t-transparent rounded-full animate-spin"></div></div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             
@@ -122,7 +122,7 @@ export default function VoucherPage() {
                   )}
 
                   <div className="flex gap-4 items-center">
-                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 shadow-inner ${isAdmin ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-500' : 'bg-slate-100 dark:bg-white/5 text-[#80BF84]'}`}>
+                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 shadow-inner ${isAdmin ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-500' : 'bg-slate-100 dark:bg-white/5 text-brand-primary'}`}>
                       {isAdmin ? <Crown className="w-8 h-8" /> : <Store className="w-8 h-8" />}
                     </div>
                     
@@ -133,7 +133,7 @@ export default function VoucherPage() {
                             <Crown size={10}/> Mã Toàn Sàn
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#80BF84]/10 text-emerald-700 dark:text-[#80BF84] text-[10px] font-black rounded uppercase tracking-wider border border-[#80BF84]/30">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-brand-primary/10 text-emerald-700 dark:text-brand-primary text-[10px] font-black rounded uppercase tracking-wider border border-brand-primary/30">
                             <Store size={10}/> {v.partner_name || "Mã Cơ Sở"}
                           </span>
                         )}
@@ -141,20 +141,20 @@ export default function VoucherPage() {
                       <h3 className="font-black text-xl tracking-tight leading-none mb-1.5">
                         {v.discount_type === 'PERCENTAGE' ? `Giảm ${v.discount_value}%` : `Giảm ${(v.discount_value / 1000)}K`}
                       </h3>
-                      <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">Đơn tối thiểu {v.min_order_value.toLocaleString()}đ</p>
+                      <p className="text-xs text-brand-base0 dark:text-zinc-400 font-medium">Đơn tối thiểu {v.min_order_value.toLocaleString()}đ</p>
                     </div>
                   </div>
 
                   <div className="w-full flex items-center gap-2">
-                    <div className="w-2 h-4 rounded-r-full bg-slate-50 dark:bg-[#09090b] -ml-5 border-y border-r border-inherit"></div>
+                    <div className="w-2 h-4 rounded-r-full bg-brand-base dark:bg-[#09090b] -ml-5 border-y border-r border-inherit"></div>
                     <div className="flex-1 border-t-2 border-dashed border-slate-200 dark:border-zinc-800 opacity-60"></div>
-                    <div className="w-2 h-4 rounded-l-full bg-slate-50 dark:bg-[#09090b] -mr-5 border-y border-l border-inherit"></div>
+                    <div className="w-2 h-4 rounded-l-full bg-brand-base dark:bg-[#09090b] -mr-5 border-y border-l border-inherit"></div>
                   </div>
 
                   <div className="flex items-end justify-between gap-4">
                     <div className="flex-1 w-full space-y-2">
                       <div className="flex justify-between items-center text-[10px] font-bold">
-                        <span className="text-slate-500 flex items-center gap-1">
+                        <span className="text-brand-base0 flex items-center gap-1">
                           <Zap size={10} className={fomo.isRunningOut ? "text-rose-500" : "text-amber-500"}/> 
                           Đã dùng {fomo.percent}%
                         </span>
@@ -162,7 +162,7 @@ export default function VoucherPage() {
                       </div>
                       <div className="w-full h-1.5 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden">
                         <div 
-                          className={`h-full rounded-full transition-all duration-1000 ${fomo.isRunningOut ? 'bg-rose-500' : 'bg-gradient-to-r from-[#80BF84] to-emerald-400'}`} 
+                          className={`h-full rounded-full transition-all duration-1000 ${fomo.isRunningOut ? 'bg-rose-500' : 'bg-gradient-to-r from-brand-primary to-brand-primary'}`} 
                           style={{ width: `${fomo.percent}%` }}
                         ></div>
                       </div>
@@ -176,7 +176,7 @@ export default function VoucherPage() {
                         ? 'bg-slate-200 dark:bg-zinc-800 text-slate-400 cursor-not-allowed' 
                         : isAdmin 
                           ? 'bg-amber-500 text-zinc-900 hover:bg-amber-400 shadow-[0_5px_15px_rgba(245,158,11,0.3)] hover:-translate-y-0.5' 
-                          : 'bg-[#80BF84] text-zinc-900 hover:bg-emerald-400 shadow-[0_5px_15px_rgba(128,191,132,0.3)] hover:-translate-y-0.5'
+                          : 'bg-brand-primary text-zinc-900 hover:bg-brand-primary shadow-[0_5px_15px_rgba(128,191,132,0.3)] hover:-translate-y-0.5'
                       }`}
                     >
                       {isClaimed ? 'ĐÃ LƯU' : 'LƯU MÃ'}
@@ -193,7 +193,7 @@ export default function VoucherPage() {
                   <ShoppingBag className="w-8 h-8 text-slate-400" />
                 </div>
                 <p className="font-bold text-lg">Ví của bạn đang trống</p>
-                <p className="text-sm text-slate-500">Hãy ra ngoài săn những ưu đãi độc quyền nhé!</p>
+                <p className="text-sm text-brand-base0">Hãy ra ngoài săn những ưu đãi độc quyền nhé!</p>
               </div>
             )}
 
@@ -207,14 +207,14 @@ export default function VoucherPage() {
                   key={v.user_voucher_id} 
                   onClick={() => setSelectedVoucher(v)} // Bấm vào Ví cũng mở Modal
                   className={`p-5 rounded-[2rem] flex gap-4 items-center transition-all border cursor-pointer hover:scale-[1.02]
-                  ${isUnused ? 'bg-white/60 dark:bg-white/[0.02] border-l-4 border-l-[#80BF84] border-white/50 dark:border-white/10 shadow-sm' 
+                  ${isUnused ? 'bg-white/60 dark:bg-white/[0.02] border-l-4 border-l-brand-primary border-white/50 dark:border-white/10 shadow-sm' 
                   : isLocked ? 'bg-amber-50 dark:bg-amber-900/10 border-l-4 border-l-amber-500 border-amber-500/20 opacity-90' 
-                  : 'bg-slate-50 dark:bg-zinc-900 border-l-4 border-l-slate-400 border-transparent grayscale opacity-50'}
+                  : 'bg-brand-base dark:bg-zinc-900 border-l-4 border-l-slate-400 border-transparent grayscale opacity-50'}
                 `}>
                   <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 
                     ${isUnused ? 'bg-slate-100 dark:bg-zinc-800' : isLocked ? 'bg-amber-100 dark:bg-amber-500/20' : 'bg-slate-200 dark:bg-zinc-800'}
                   `}>
-                    {isUnused ? <Ticket className="text-[#80BF84] w-6 h-6" /> : isLocked ? <Lock className="text-amber-500 w-6 h-6" /> : <CheckCircle2 className="text-slate-400 w-6 h-6" />}
+                    {isUnused ? <Ticket className="text-brand-primary w-6 h-6" /> : isLocked ? <Lock className="text-amber-500 w-6 h-6" /> : <CheckCircle2 className="text-slate-400 w-6 h-6" />}
                   </div>
                   
                   <div className="flex-1">
@@ -225,7 +225,7 @@ export default function VoucherPage() {
                       <span className="inline-block px-2.5 py-0.5 bg-slate-200 dark:bg-zinc-800 rounded text-[10px] font-mono font-black tracking-widest">{v.code}</span>
                       {v.issuer_type === 'ADMIN' && <Crown size={12} className="text-amber-500"/>}
                     </div>
-                    <p className={`text-[10px] font-bold mt-2 ${isLocked ? 'text-amber-600' : 'text-slate-500'}`}>
+                    <p className={`text-[10px] font-bold mt-2 ${isLocked ? 'text-amber-600' : 'text-brand-base0'}`}>
                       {isUnused ? `Dùng trước: ${formatDate(v.valid_until)}` : isLocked ? 'Đang kẹt trong giao dịch' : 'Đã sử dụng / Hết hạn'}
                     </p>
                   </div>
@@ -246,13 +246,13 @@ export default function VoucherPage() {
             
             <button 
               onClick={() => setSelectedVoucher(null)}
-              className="absolute top-4 right-4 p-2 bg-slate-100 dark:bg-zinc-800 rounded-full text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
+              className="absolute top-4 right-4 p-2 bg-slate-100 dark:bg-zinc-800 rounded-full text-brand-base0 hover:text-slate-900 dark:hover:text-white transition-colors"
             >
               <X size={16} />
             </button>
 
             {/* Icon Avatar */}
-            <div className={`w-20 h-20 mx-auto rounded-3xl flex items-center justify-center mb-4 shadow-inner ${selectedVoucher.issuer_type === 'ADMIN' ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-500' : 'bg-slate-100 dark:bg-white/5 text-[#80BF84]'}`}>
+            <div className={`w-20 h-20 mx-auto rounded-3xl flex items-center justify-center mb-4 shadow-inner ${selectedVoucher.issuer_type === 'ADMIN' ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-500' : 'bg-slate-100 dark:bg-white/5 text-brand-primary'}`}>
               {selectedVoucher.issuer_type === 'ADMIN' ? <Crown className="w-10 h-10" /> : <Store className="w-10 h-10" />}
             </div>
 
@@ -264,7 +264,7 @@ export default function VoucherPage() {
             </div>
 
             {/* Khối mô tả */}
-            <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl text-left text-sm text-slate-600 dark:text-zinc-300 mb-6 space-y-3">
+            <div className="p-4 bg-brand-base dark:bg-white/5 rounded-2xl text-left text-sm text-slate-600 dark:text-zinc-300 mb-6 space-y-3">
               <p>
                 <strong className="text-slate-900 dark:text-white block mb-0.5">Loại ưu đãi:</strong> 
                 {selectedVoucher.issuer_type === 'ADMIN' ? 'Mã Độc Quyền Toàn Sàn' : `Cơ sở phát hành: ${selectedVoucher.partner_name || "Đang tải..."}`}
@@ -290,7 +290,7 @@ export default function VoucherPage() {
               className={`w-full py-4 rounded-2xl font-black flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg
                 ${selectedVoucher.issuer_type === 'ADMIN' 
                   ? 'bg-amber-500 text-zinc-900 hover:bg-amber-400 shadow-amber-500/30' 
-                  : 'bg-[#80BF84] text-zinc-900 hover:bg-emerald-400 shadow-[#80BF84]/30'}
+                  : 'bg-brand-primary text-zinc-900 hover:bg-brand-primary shadow-brand-primary/30'}
               `}
             >
               {selectedVoucher.issuer_type === 'ADMIN' ? 'SĂN DỊCH VỤ NGAY' : 'XEM DỊCH VỤ ĐỐI TÁC'}
@@ -306,7 +306,7 @@ export default function VoucherPage() {
 
 function SparklesIcon() {
   return (
-    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#80BF84] to-emerald-500 flex items-center justify-center shadow-lg shadow-[#80BF84]/30">
+    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-primary to-brand-trust flex items-center justify-center shadow-lg shadow-brand-primary/30">
       <Ticket className="w-4 h-4 text-zinc-900" />
     </div>
   );

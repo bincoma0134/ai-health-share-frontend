@@ -34,8 +34,8 @@ export default function DashboardButton({ userRole }: { userRole: string }) {
     case "PARTNER_ADMIN":
       btnConfig = {
         text: "QUẢN LÝ CƠ SỞ",
-        icon: <Building2 size={18} strokeWidth={2.5} className="fill-blue-500/20" />,
-        colorClass: "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-blue-500/30",
+        icon: <Building2 size={18} strokeWidth={2.5} className="fill-brand-trust/20" />,
+        colorClass: "bg-brand-trust/10 text-brand-trust hover:bg-brand-trust/20 border-brand-trust/30",
         path: "/partner/dashboard",
       };
       break;

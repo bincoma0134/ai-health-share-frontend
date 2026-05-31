@@ -105,7 +105,7 @@ export default function CommentModal({ isOpen, onClose, videoId, videoAuthorId, 
 
   const renderTextWithMentions = (text: string) => {
       return text.split(/(@\w+)/g).map((part, i) => part.startsWith('@') ? 
-        <span key={i} onClick={(e) => { e.stopPropagation(); navigateToProfile(part.slice(1)); }} className="text-blue-500 dark:text-blue-400 cursor-pointer hover:underline font-semibold">{part}</span> 
+        <span key={i} onClick={(e) => { e.stopPropagation(); navigateToProfile(part.slice(1)); }} className="text-brand-trust dark:text-blue-400 cursor-pointer hover:underline font-semibold">{part}</span> 
         : <span key={i}>{part}</span>
       );
   };
@@ -124,7 +124,7 @@ export default function CommentModal({ isOpen, onClose, videoId, videoAuthorId, 
     return (
       <div className={`flex flex-col gap-2 ${indentClass}`}>
         <div className="flex gap-3 relative">
-          <div onClick={() => navigateToProfile(username)} className="w-9 h-9 rounded-full bg-slate-200 dark:bg-zinc-800 overflow-hidden shrink-0 cursor-pointer border border-transparent hover:border-[#80BF84] transition-colors">
+          <div onClick={() => navigateToProfile(username)} className="w-9 h-9 rounded-full bg-slate-200 dark:bg-zinc-800 overflow-hidden shrink-0 cursor-pointer border border-transparent hover:border-brand-primary transition-colors">
             {comment.users?.avatar_url ? <img src={comment.users.avatar_url} className="w-full h-full object-cover"/> : <UserIcon size={16} className="m-auto mt-2 text-slate-400"/>}
           </div>
           
@@ -138,7 +138,7 @@ export default function CommentModal({ isOpen, onClose, videoId, videoAuthorId, 
                   
                   {/* HUY HIỆU ROLE (Cơ chế Badge Chồng) */}
                   {role === 'SUPER_ADMIN' && <span className="px-1.5 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[8px] font-black rounded-sm flex items-center gap-1"><Crown size={10}/> ADMIN</span>}
-                  {(role === 'PARTNER_ADMIN' || role === 'PARTNER') && <span className="px-1.5 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[8px] font-black rounded-sm flex items-center gap-1"><BadgeCheck size={10}/> BUSINESS</span>}
+                  {(role === 'PARTNER_ADMIN' || role === 'PARTNER') && <span className="px-1.5 py-0.5 bg-brand-trust/10 text-brand-trust dark:text-blue-400 text-[8px] font-black rounded-sm flex items-center gap-1"><BadgeCheck size={10}/> BUSINESS</span>}
                   {role === 'MODERATOR' && <span className="px-1.5 py-0.5 bg-violet-500/10 text-violet-600 dark:text-violet-400 text-[8px] font-black rounded-sm flex items-center gap-1"><ShieldCheck size={10}/> MOD</span>}
                   {role === 'CREATOR' && <span className="px-1.5 py-0.5 bg-pink-500/10 text-pink-600 dark:text-pink-400 text-[8px] font-black rounded-sm flex items-center gap-1"><Sparkles size={10}/> CREATOR</span>}
               </div>
@@ -162,7 +162,7 @@ export default function CommentModal({ isOpen, onClose, videoId, videoAuthorId, 
                 <button onClick={() => {
                     setReplyingTo({ id: comment.id, username: username, name: comment.users?.full_name || "Thành viên" });
                     setNewComment(`@${username} `); inputRef.current?.focus();
-                }} className="text-[10px] font-black text-slate-500 hover:text-blue-500 transition-colors">Trả lời</button>
+                }} className="text-[10px] font-black text-brand-base0 hover:text-brand-trust transition-colors">Trả lời</button>
             </div>
           </div>
         </div>
@@ -184,21 +184,21 @@ export default function CommentModal({ isOpen, onClose, videoId, videoAuthorId, 
       <div className={`absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-500 pointer-events-auto ${isAnimating ? 'opacity-100' : 'opacity-0'}`} onClick={onClose}></div>
       <div className={`relative w-full md:w-[480px] h-[85vh] md:h-full mt-auto md:mt-0 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-3xl shadow-2xl flex flex-col transition-transform duration-500 ease-out transform pointer-events-auto rounded-t-[2.5rem] md:rounded-none md:rounded-l-[2.5rem] border-l border-white/20 dark:border-white/5 ${isAnimating ? 'translate-y-0 md:translate-x-0' : 'translate-y-full md:translate-x-full'}`}>
         <div className="pt-8 pb-4 px-6 border-b border-slate-100 dark:border-white/5 flex justify-between items-center shrink-0">
-            <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">Bình luận <span className="text-xs px-2 py-0.5 bg-slate-100 dark:bg-white/10 rounded-md text-slate-500">{rawComments.length}</span></h3>
-            <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 dark:bg-white/5 text-slate-500 hover:text-rose-500 transition-colors"><X size={20}/></button>
+            <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">Bình luận <span className="text-xs px-2 py-0.5 bg-slate-100 dark:bg-white/10 rounded-md text-brand-base0">{rawComments.length}</span></h3>
+            <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 dark:bg-white/5 text-brand-base0 hover:text-rose-500 transition-colors"><X size={20}/></button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 space-y-2 no-scrollbar pb-6" onClick={() => setActiveDropdown(null)}>
-          {isLoading ? <div className="flex flex-col items-center justify-center h-full gap-4"><div className="w-8 h-8 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin"></div></div> : rawComments.length === 0 ? <div className="flex flex-col items-center justify-center h-full gap-2 text-center opacity-50"><MessageCircle size={48} className="text-slate-400 mb-2"/><p className="font-bold text-slate-500">Chưa có bình luận nào.</p></div> : commentTree.map(c => <CommentItem key={c.id} comment={c} />)}
+          {isLoading ? <div className="flex flex-col items-center justify-center h-full gap-4"><div className="w-8 h-8 border-4 border-slate-200 border-t-brand-trust rounded-full animate-spin"></div></div> : rawComments.length === 0 ? <div className="flex flex-col items-center justify-center h-full gap-2 text-center opacity-50"><MessageCircle size={48} className="text-slate-400 mb-2"/><p className="font-bold text-brand-base0">Chưa có bình luận nào.</p></div> : commentTree.map(c => <CommentItem key={c.id} comment={c} />)}
         </div>
 
         <div className="p-4 md:p-6 bg-white dark:bg-zinc-950 border-t border-slate-100 dark:border-white/5 shrink-0 shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
-          {replyingTo && <div className="flex justify-between items-center mb-3 bg-blue-50 dark:bg-blue-500/10 px-4 py-2.5 rounded-xl border border-blue-200 dark:border-blue-500/20 animate-slide-up"><span className="text-xs font-bold text-blue-600 dark:text-blue-400">Đang trả lời <span className="font-black">@{replyingTo.username}</span></span><button onClick={() => {setReplyingTo(null); setNewComment("");}} className="text-blue-400 hover:text-blue-600"><X size={16}/></button></div>}
+          {replyingTo && <div className="flex justify-between items-center mb-3 bg-blue-50 dark:bg-brand-trust/10 px-4 py-2.5 rounded-xl border border-blue-200 dark:border-brand-trust/20 animate-slide-up"><span className="text-xs font-bold text-brand-trust dark:text-blue-400">Đang trả lời <span className="font-black">@{replyingTo.username}</span></span><button onClick={() => {setReplyingTo(null); setNewComment("");}} className="text-blue-400 hover:text-brand-trust"><X size={16}/></button></div>}
           <form onSubmit={handlePostComment} className="flex gap-3 items-end">
             <div className="flex-1 relative">
-                <textarea ref={inputRef} className="w-full bg-slate-100 dark:bg-white/5 px-5 py-3.5 text-sm font-medium text-slate-900 dark:text-white rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none no-scrollbar block" placeholder={user ? "Thêm bình luận..." : "Đăng nhập để bình luận"} value={newComment} onChange={e => setNewComment(e.target.value)} rows={1} disabled={!user} />
+                <textarea ref={inputRef} className="w-full bg-slate-100 dark:bg-white/5 px-5 py-3.5 text-sm font-medium text-slate-900 dark:text-white rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-brand-trust/30 resize-none no-scrollbar block" placeholder={user ? "Thêm bình luận..." : "Đăng nhập để bình luận"} value={newComment} onChange={e => setNewComment(e.target.value)} rows={1} disabled={!user} />
             </div>
-            <button type="submit" disabled={!newComment.trim() || !user} className="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg active:scale-95 transition-all disabled:opacity-50 disabled:bg-slate-300 dark:disabled:bg-zinc-800 shrink-0"><Send size={18} className="ml-0.5"/></button>
+            <button type="submit" disabled={!newComment.trim() || !user} className="w-12 h-12 rounded-full bg-brand-trust text-white flex items-center justify-center shadow-lg active:scale-95 transition-all disabled:opacity-50 disabled:bg-slate-300 dark:disabled:bg-zinc-800 shrink-0"><Send size={18} className="ml-0.5"/></button>
           </form>
         </div>
       </div>

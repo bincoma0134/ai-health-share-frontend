@@ -10,7 +10,7 @@ export default function PostItem({ post, onLike, currentUserId }: any) {
   const getRoleBadge = (role: string) => {
     switch (role) {
       case "SUPER_ADMIN": return <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-violet-500/10 border border-violet-500/20 text-violet-500 text-[9px] font-black uppercase"><Crown size={10}/> Tối cao</span>;
-      case "PARTNER_ADMIN": return <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#80BF84]/10 border border-[#80BF84]/20 text-[#80BF84] text-[9px] font-black uppercase"><ShieldCheck size={10}/> Doanh nghiệp</span>;
+      case "PARTNER_ADMIN": return <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-brand-primary/10 border border-brand-primary/20 text-brand-primary text-[9px] font-black uppercase"><ShieldCheck size={10}/> Doanh nghiệp</span>;
       case "CREATOR": return <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[9px] font-black uppercase"><Sparkles size={10}/> Sáng tạo</span>;
       default: return null;
     }
@@ -29,10 +29,10 @@ export default function PostItem({ post, onLike, currentUserId }: any) {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h4 className="font-bold text-slate-900 dark:text-white text-base leading-none group-hover/author:text-[#80BF84] transition-colors">{post.author?.full_name}</h4>
+                <h4 className="font-bold text-slate-900 dark:text-white text-base leading-none group-hover/author:text-brand-primary transition-colors">{post.author?.full_name}</h4>
                 {getRoleBadge(post.author?.role)}
               </div>
-              <span className="text-xs font-medium text-slate-500 dark:text-zinc-500">2 giờ trước</span>
+              <span className="text-xs font-medium text-brand-base0 dark:text-zinc-500">2 giờ trước</span>
             </div>
           </a>
           <button className="p-2 rounded-full text-slate-400 hover:text-slate-900 dark:hover:text-white"><MoreHorizontal size={20}/></button>
@@ -45,14 +45,14 @@ export default function PostItem({ post, onLike, currentUserId }: any) {
         {/* Footer */}
         <div className="flex items-center justify-between pt-4 border-t border-slate-200/50 dark:border-white/5">
           <div className="flex items-center gap-6">
-            <button onClick={() => onLike(post.id)} className={`flex items-center gap-2 text-sm font-bold transition-colors ${post.isLiked ? 'text-rose-500' : 'text-slate-500 dark:text-zinc-400 hover:text-rose-500'}`}>
+            <button onClick={() => onLike(post.id)} className={`flex items-center gap-2 text-sm font-bold transition-colors ${post.isLiked ? 'text-rose-500' : 'text-brand-base0 dark:text-zinc-400 hover:text-rose-500'}`}>
               <Heart size={18} className={post.isLiked ? 'fill-rose-500' : ''} /> {post.likes_count || 0}
             </button>
-            <button onClick={() => setShowComments(!showComments)} className="flex items-center gap-2 text-sm font-bold text-slate-500 dark:text-zinc-400 hover:text-blue-500">
+            <button onClick={() => setShowComments(!showComments)} className="flex items-center gap-2 text-sm font-bold text-brand-base0 dark:text-zinc-400 hover:text-brand-trust">
               <MessageCircle size={18} /> {post.comments_count || 0}
             </button>
           </div>
-          <button className="flex items-center gap-2 text-sm font-bold text-slate-500 dark:text-zinc-400 hover:text-[#80BF84] transition-colors"><Share2 size={18} /> Chia sẻ</button>
+          <button className="flex items-center gap-2 text-sm font-bold text-brand-base0 dark:text-zinc-400 hover:text-brand-primary transition-colors"><Share2 size={18} /> Chia sẻ</button>
         </div>
       </div>
     </div>

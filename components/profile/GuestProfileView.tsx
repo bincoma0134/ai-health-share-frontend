@@ -9,11 +9,11 @@ export default function GuestProfileView() {
   return (
     <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center animate-fade-in pt-20 pb-32">
         <div className="relative mb-8">
-            <div className="absolute inset-0 bg-[#80BF84] blur-[50px] opacity-30 rounded-full animate-pulse"></div>
+            <div className="absolute inset-0 bg-brand-primary blur-[50px] opacity-30 rounded-full animate-pulse"></div>
             <div className="w-32 h-32 rounded-full bg-white/20 dark:bg-black/40 backdrop-blur-2xl border border-white/40 dark:border-white/10 flex items-center justify-center shadow-2xl relative z-10">
-                <UserCircle size={64} className="text-[#80BF84]" />
+                <UserCircle size={64} className="text-brand-primary" />
             </div>
-            <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-[#80BF84] rounded-full flex items-center justify-center border-4 border-slate-50 dark:border-zinc-950 z-20 shadow-lg">
+            <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-brand-primary rounded-full flex items-center justify-center border-4 border-brand-base dark:border-zinc-950 z-20 shadow-lg">
                 <Sparkles size={18} className="text-zinc-950" />
             </div>
         </div>
@@ -21,7 +21,7 @@ export default function GuestProfileView() {
         <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-3 tracking-tighter">
             Hành trình sức khỏe <br /> của riêng bạn
         </h2>
-        <p className="text-slate-500 dark:text-zinc-400 text-sm mb-10 max-w-sm font-medium">
+        <p className="text-brand-base0 dark:text-zinc-400 text-sm mb-10 max-w-sm font-medium">
             Đăng nhập để mở khóa không gian lưu trữ cá nhân và nhận tư vấn từ mạng lưới chuyên gia AI Health.
         </p>
 

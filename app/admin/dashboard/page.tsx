@@ -140,7 +140,7 @@ export default function AdminDashboardOverview() {
       if (active && payload && payload.length) {
           return (
               <div className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl p-5 rounded-3xl shadow-2xl border border-slate-200 dark:border-white/10 z-50">
-                  <p className="text-xs font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-4 border-b border-slate-100 dark:border-white/5 pb-2">{label}</p>
+                  <p className="text-xs font-black text-brand-base0 dark:text-zinc-400 uppercase tracking-widest mb-4 border-b border-slate-100 dark:border-white/5 pb-2">{label}</p>
                   {payload.map((entry: any, index: number) => (
                       <div key={index} className="flex items-center justify-between gap-8 mb-3 last:mb-0">
                           <div className="flex items-center gap-2.5">
@@ -163,7 +163,7 @@ export default function AdminDashboardOverview() {
    
 
   return (
-    <div className="h-[100dvh] w-full bg-slate-50 dark:bg-zinc-950 overflow-hidden flex flex-col transition-colors duration-500 font-be-vietnam">
+    <div className="h-[100dvh] w-full bg-brand-base dark:bg-zinc-950 overflow-hidden flex flex-col transition-colors duration-500 font-be-vietnam">
       
       {/* TOP HEADER */}
       <div className="flex justify-between items-center px-6 md:px-10 py-5 bg-white/60 dark:bg-black/60 backdrop-blur-2xl border-b border-slate-200 dark:border-white/10 z-20">
@@ -186,31 +186,31 @@ export default function AdminDashboardOverview() {
           {/* SIDEBAR */}
           <div className="w-20 md:w-64 border-r border-slate-200 dark:border-white/10 bg-white/40 dark:bg-black/20 backdrop-blur-xl flex flex-col py-6 z-10">
               <div className="flex-1 px-4 space-y-2">
-                  <button onClick={() => setActiveTab('overview')} className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl font-bold transition-all ${activeTab === 'overview' ? 'bg-amber-500 text-slate-900 shadow-lg shadow-amber-500/20' : 'text-slate-500 hover:bg-slate-200/50 dark:hover:bg-white/5'}`}>
+                  <button onClick={() => setActiveTab('overview')} className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl font-bold transition-all ${activeTab === 'overview' ? 'bg-amber-500 text-slate-900 shadow-lg shadow-amber-500/20' : 'text-brand-base0 hover:bg-slate-200/50 dark:hover:bg-white/5'}`}>
                       <BarChart3 size={20}/> <span className="hidden md:block uppercase tracking-widest text-[11px]">Tổng quan</span>
                   </button>
-                  <button onClick={() => setActiveTab('finance')} className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl font-bold transition-all ${activeTab === 'finance' ? 'bg-amber-500 text-slate-900 shadow-lg shadow-amber-500/20' : 'text-slate-500 hover:bg-slate-200/50 dark:hover:bg-white/5'}`}>
+                  <button onClick={() => setActiveTab('finance')} className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl font-bold transition-all ${activeTab === 'finance' ? 'bg-amber-500 text-slate-900 shadow-lg shadow-amber-500/20' : 'text-brand-base0 hover:bg-slate-200/50 dark:hover:bg-white/5'}`}>
                       <div className="flex items-center gap-4"><Landmark size={20}/> <span className="hidden md:block uppercase tracking-widest text-[11px]">Tài chính</span></div>
                       {stats.pending_withdrawals > 0 && <span className="hidden md:flex px-2 py-0.5 bg-rose-500 text-white text-[10px] rounded-full">{stats.pending_withdrawals}</span>}
                   </button>
-                  <button onClick={() => setActiveTab('partners')} className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl font-bold transition-all ${activeTab === 'partners' ? 'bg-amber-500 text-slate-900 shadow-lg shadow-amber-500/20' : 'text-slate-500 hover:bg-slate-200/50 dark:hover:bg-white/5'}`}>
+                  <button onClick={() => setActiveTab('partners')} className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl font-bold transition-all ${activeTab === 'partners' ? 'bg-amber-500 text-slate-900 shadow-lg shadow-amber-500/20' : 'text-brand-base0 hover:bg-slate-200/50 dark:hover:bg-white/5'}`}>
                       <Building2 size={20}/> <span className="hidden md:block uppercase tracking-widest text-[11px]">Quản lý Đối tác</span>
                   </button>
-                  <button onClick={() => setActiveTab('audit')} className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl font-bold transition-all ${activeTab === 'audit' ? 'bg-amber-500 text-slate-900 shadow-lg shadow-amber-500/20' : 'text-slate-500 hover:bg-slate-200/50 dark:hover:bg-white/5'}`}>
+                  <button onClick={() => setActiveTab('audit')} className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl font-bold transition-all ${activeTab === 'audit' ? 'bg-amber-500 text-slate-900 shadow-lg shadow-amber-500/20' : 'text-brand-base0 hover:bg-slate-200/50 dark:hover:bg-white/5'}`}>
                       <ShieldCheck size={20}/> <span className="hidden md:block uppercase tracking-widest text-[11px]">Giám sát hệ thống</span>
                   </button>
                   <div className="my-2 border-b border-slate-200 dark:border-white/10 hidden md:block"></div>
-                  <button onClick={() => setActiveTab('vouchers')} className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl font-bold transition-all ${activeTab === 'vouchers' ? 'bg-amber-500 text-slate-900 shadow-lg shadow-amber-500/20' : 'text-slate-500 hover:bg-slate-200/50 dark:hover:bg-white/5'}`}>
+                  <button onClick={() => setActiveTab('vouchers')} className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl font-bold transition-all ${activeTab === 'vouchers' ? 'bg-amber-500 text-slate-900 shadow-lg shadow-amber-500/20' : 'text-brand-base0 hover:bg-slate-200/50 dark:hover:bg-white/5'}`}>
                       <Ticket size={20}/> <span className="hidden md:block uppercase tracking-widest text-[11px]">Kho Ưu đãi</span>
                   </button>
               </div>
           </div>
 
            {/* CONTENT AREA */}
-          <div className="flex-1 overflow-y-auto no-scrollbar bg-slate-50/50 dark:bg-zinc-950/50 p-6 md:p-10 relative">
+          <div className="flex-1 overflow-y-auto no-scrollbar bg-brand-base/50 dark:bg-zinc-950/50 p-6 md:p-10 relative">
               {/* HIỆU ỨNG LOADING NẰM TRONG NỘI DUNG (GIỮ SIDEBAR) */}
               {isLoading && (
-                  <div className="absolute inset-0 z-[40] bg-slate-50/80 dark:bg-zinc-950/80 backdrop-blur-sm flex flex-col items-center justify-center gap-6 transition-all duration-500">
+                  <div className="absolute inset-0 z-[40] bg-brand-base/80 dark:bg-zinc-950/80 backdrop-blur-sm flex flex-col items-center justify-center gap-6 transition-all duration-500">
                       <div className="relative w-16 h-16">
                           <div className="absolute inset-0 bg-amber-200 rounded-full animate-ping opacity-70"></div>
                           <div className="absolute inset-2 bg-amber-500 rounded-full flex items-center justify-center shadow-lg shadow-amber-500/30"><Crown className="text-white w-6 h-6 animate-pulse" /></div>
@@ -228,7 +228,7 @@ export default function AdminDashboardOverview() {
                       <div className="space-y-10">
                           <div className="mb-6">
                               <h2 className="text-3xl font-black text-slate-900 dark:text-white flex items-center gap-2">Bảng Điều Khiển Tối Cao <Sparkles className="text-amber-500 w-6 h-6" /></h2>
-                              <p className="text-slate-500 font-medium text-sm mt-1">Giám sát tổng giao dịch (GMV), doanh thu nền tảng và hoạt động ký quỹ (Escrow).</p>
+                              <p className="text-brand-base0 font-medium text-sm mt-1">Giám sát tổng giao dịch (GMV), doanh thu nền tảng và hoạt động ký quỹ (Escrow).</p>
                           </div>
 
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -244,7 +244,7 @@ export default function AdminDashboardOverview() {
                               <div className="p-8 rounded-[2.5rem] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 shadow-lg relative overflow-hidden group">
                                   <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-110 transition-transform"><DollarSign size={120}/></div>
                                   <div className="relative z-10">
-                                      <p className="text-xs font-black text-emerald-500 uppercase tracking-widest flex items-center gap-2 mb-2"><DollarSign size={16}/> Doanh Thu Nền Tảng</p>
+                                      <p className="text-xs font-black text-brand-trust uppercase tracking-widest flex items-center gap-2 mb-2"><DollarSign size={16}/> Doanh Thu Nền Tảng</p>
                                       <p className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white">{(stats.platform_revenue || 0).toLocaleString()} <span className="text-lg text-slate-400">đ</span></p>
                                   </div>
                               </div>
@@ -252,7 +252,7 @@ export default function AdminDashboardOverview() {
                               <div className="p-8 rounded-[2.5rem] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 shadow-lg relative overflow-hidden group">
                                   <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-110 transition-transform"><Landmark size={120}/></div>
                                   <div className="relative z-10">
-                                      <p className="text-xs font-black text-blue-500 uppercase tracking-widest flex items-center gap-2 mb-2"><Landmark size={16}/> Quỹ Escrow (Tạm Giữ)</p>
+                                      <p className="text-xs font-black text-brand-trust uppercase tracking-widest flex items-center gap-2 mb-2"><Landmark size={16}/> Quỹ Escrow (Tạm Giữ)</p>
                                       <p className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white">{(stats.escrow_holding || 0).toLocaleString()} <span className="text-lg text-slate-400">đ</span></p>
                                   </div>
                               </div>
@@ -262,17 +262,17 @@ export default function AdminDashboardOverview() {
                               <div className="p-6 rounded-[2rem] bg-white/60 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex flex-col items-center justify-center text-center">
                                   <Users size={24} className="text-slate-400 mb-2"/>
                                   <p className="text-2xl font-black text-slate-900 dark:text-white">{stats.total_users}</p>
-                                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Người dùng</p>
+                                  <p className="text-[10px] font-bold text-brand-base0 uppercase tracking-widest mt-1">Người dùng</p>
                               </div>
                               <div className="p-6 rounded-[2rem] bg-white/60 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex flex-col items-center justify-center text-center">
                                   <Building2 size={24} className="text-slate-400 mb-2"/>
                                   <p className="text-2xl font-black text-slate-900 dark:text-white">{stats.total_partners}</p>
-                                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Đối tác kinh doanh</p>
+                                  <p className="text-[10px] font-bold text-brand-base0 uppercase tracking-widest mt-1">Đối tác kinh doanh</p>
                               </div>
                               <div className="p-6 rounded-[2rem] bg-white/60 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex flex-col items-center justify-center text-center">
-                                  <Activity size={24} className="text-emerald-500 mb-2"/>
+                                  <Activity size={24} className="text-brand-trust mb-2"/>
                                   <p className="text-2xl font-black text-slate-900 dark:text-white">99.9%</p>
-                                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Uptime Hệ thống</p>
+                                  <p className="text-[10px] font-bold text-brand-base0 uppercase tracking-widest mt-1">Uptime Hệ thống</p>
                               </div>
                               <button onClick={() => setActiveTab('finance')} className="p-6 rounded-[2rem] bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 flex flex-col items-center justify-center text-center hover:scale-105 transition-transform cursor-pointer">
                                   <Wallet size={24} className="text-amber-500 mb-2"/>
@@ -290,8 +290,8 @@ export default function AdminDashboardOverview() {
                                   </h3>
                                   {/* Chú thích màu sắc (Legend) */}
                                   <div className="flex gap-4">
-                                      <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-[#f59e0b]"></div><span className="text-xs font-bold text-slate-500">GMV</span></div>
-                                      <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-[#10b981]"></div><span className="text-xs font-bold text-slate-500">Doanh thu</span></div>
+                                      <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-[#f59e0b]"></div><span className="text-xs font-bold text-brand-base0">GMV</span></div>
+                                      <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-[#10b981]"></div><span className="text-xs font-bold text-brand-base0">Doanh thu</span></div>
                                   </div>
                               </div>
                               
@@ -329,7 +329,7 @@ export default function AdminDashboardOverview() {
                           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                               <div>
                                   <h2 className="text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3"><Wallet className="text-amber-500" size={32} /> Quản trị Giải ngân</h2>
-                                  <p className="text-slate-500 font-medium text-sm mt-1">Kiểm soát luồng tiền ra khỏi quỹ Escrow và thanh toán cho Đối tác.</p>
+                                  <p className="text-brand-base0 font-medium text-sm mt-1">Kiểm soát luồng tiền ra khỏi quỹ Escrow và thanh toán cho Đối tác.</p>
                               </div>
                           </div>
 
@@ -337,7 +337,7 @@ export default function AdminDashboardOverview() {
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                               <div className="p-6 rounded-[2rem] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 shadow-sm flex flex-col gap-2 relative overflow-hidden group">
                                   <div className="absolute right-0 top-0 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform"></div>
-                                  <span className="text-xs font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest relative z-10">Tổng Yêu Cầu Ghi Nhận</span>
+                                  <span className="text-xs font-black text-brand-base0 dark:text-zinc-400 uppercase tracking-widest relative z-10">Tổng Yêu Cầu Ghi Nhận</span>
                                   <span className="text-3xl font-black text-slate-900 dark:text-white relative z-10">{withdrawals.length} <span className="text-sm font-bold text-slate-400">lệnh</span></span>
                               </div>
                               <div className="p-6 rounded-[2rem] bg-amber-50/50 dark:bg-amber-500/10 border border-amber-200/50 dark:border-amber-500/20 shadow-sm flex flex-col gap-2 relative overflow-hidden group">
@@ -345,24 +345,24 @@ export default function AdminDashboardOverview() {
                                   <span className="text-xs font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest relative z-10">Đang Chờ Xử Lý</span>
                                   <span className="text-3xl font-black text-amber-600 dark:text-amber-400 relative z-10">{withdrawals.filter(w => w.status === 'PENDING').length} <span className="text-sm font-bold opacity-60">lệnh</span></span>
                               </div>
-                              <div className="p-6 rounded-[2rem] bg-gradient-to-br from-slate-900 to-slate-800 border border-emerald-500/20 shadow-xl flex flex-col gap-2 relative overflow-hidden">
-                                  <div className="absolute right-4 bottom-4 opacity-10"><CheckCircle size={80} className="text-emerald-500" /></div>
-                                  <span className="text-xs font-black text-emerald-400 uppercase tracking-widest relative z-10">Đã Giải Ngân Thành Công</span>
+                              <div className="p-6 rounded-[2rem] bg-gradient-to-br from-slate-900 to-slate-800 border border-brand-trust/20 shadow-xl flex flex-col gap-2 relative overflow-hidden">
+                                  <div className="absolute right-4 bottom-4 opacity-10"><CheckCircle size={80} className="text-brand-trust" /></div>
+                                  <span className="text-xs font-black text-brand-primary uppercase tracking-widest relative z-10">Đã Giải Ngân Thành Công</span>
                                   <span className="text-3xl font-black text-white relative z-10">
-                                      {withdrawals.filter(w => w.status === 'COMPLETED').reduce((acc, curr) => acc + curr.amount, 0).toLocaleString()} <span className="text-sm font-bold text-emerald-400/60">VND</span>
+                                      {withdrawals.filter(w => w.status === 'COMPLETED').reduce((acc, curr) => acc + curr.amount, 0).toLocaleString()} <span className="text-sm font-bold text-brand-primary/60">VND</span>
                                   </span>
                               </div>
                           </div>
 
                           {/* BỘ LỌC VÀ DANH SÁCH */}
                           <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm">
-                              <div className="p-6 border-b border-slate-100 dark:border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50/50 dark:bg-black/20">
+                              <div className="p-6 border-b border-slate-100 dark:border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4 bg-brand-base/50 dark:bg-black/20">
                                   <div className="flex gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar pb-2 sm:pb-0">
                                       {['ALL', 'PENDING', 'COMPLETED', 'REJECTED'].map((filter) => (
                                           <button 
                                               key={filter} 
                                               onClick={() => setWithdrawalFilter(filter as any)}
-                                              className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all border ${withdrawalFilter === filter ? 'bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-black dark:border-white shadow-md' : 'bg-transparent text-slate-500 border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5'}`}
+                                              className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all border ${withdrawalFilter === filter ? 'bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-black dark:border-white shadow-md' : 'bg-transparent text-brand-base0 border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5'}`}
                                           >
                                               {filter === 'ALL' ? 'Tất cả' : filter}
                                           </button>
@@ -388,16 +388,16 @@ export default function AdminDashboardOverview() {
                                           {withdrawals.length === 0 ? (
                                               <tr><td colSpan={5} className="p-16 text-center text-slate-400 font-bold uppercase tracking-widest text-xs flex flex-col items-center justify-center gap-3"><FileText size={32} className="opacity-30"/> Không có yêu cầu giải ngân</td></tr>
                                           ) : withdrawals.filter(w => withdrawalFilter === 'ALL' || w.status === withdrawalFilter).map((item) => (
-                                              <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
+                                              <tr key={item.id} className="hover:bg-brand-base dark:hover:bg-white/5 transition-colors group">
                                                   <td className="p-6">
                                                       <div className="flex flex-col gap-1">
-                                                          <span className="font-mono text-xs font-black text-slate-500 dark:text-zinc-400 uppercase">#{item.id.split('-')[0]}</span>
+                                                          <span className="font-mono text-xs font-black text-brand-base0 dark:text-zinc-400 uppercase">#{item.id.split('-')[0]}</span>
                                                           <span className="text-[10px] font-bold text-slate-400">{new Date(item.created_at).toLocaleString('vi-VN')}</span>
                                                       </div>
                                                   </td>
                                                   <td className="p-6">
                                                       <div className="flex items-center gap-3">
-                                                          <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-slate-500 font-black border border-slate-200 dark:border-white/10">{item.users?.full_name?.charAt(0) || 'U'}</div>
+                                                          <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-brand-base0 font-black border border-slate-200 dark:border-white/10">{item.users?.full_name?.charAt(0) || 'U'}</div>
                                                           <div className="flex flex-col">
                                                               <span className="font-bold text-slate-900 dark:text-white">{item.users?.full_name}</span>
                                                               <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest">{item.users?.role}</span>
@@ -408,7 +408,7 @@ export default function AdminDashboardOverview() {
                                                       <span className="text-lg font-black text-rose-500">{item.amount.toLocaleString()} đ</span>
                                                   </td>
                                                   <td className="p-6 text-center">
-                                                      <span className={`inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border ${item.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/20' : item.status === 'REJECTED' ? 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/20' : 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20'}`}>
+                                                      <span className={`inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border ${item.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-brand-trust/10 dark:border-brand-trust/20' : item.status === 'REJECTED' ? 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/20' : 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20'}`}>
                                                           {item.status === 'PENDING' && <Clock size={12} className="mr-1.5 animate-pulse"/>}
                                                           {item.status === 'COMPLETED' && <CheckCircle size={12} className="mr-1.5"/>}
                                                           {item.status === 'REJECTED' && <XCircle size={12} className="mr-1.5"/>}
@@ -418,7 +418,7 @@ export default function AdminDashboardOverview() {
                                                   <td className="p-6 text-center">
                                                       <button 
                                                           onClick={() => setSelectedWithdrawal(item)} 
-                                                          className={`px-6 py-2.5 font-black text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-sm active:scale-95 ${item.status === 'PENDING' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:scale-105 shadow-slate-900/20' : 'bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-white/10'}`}
+                                                          className={`px-6 py-2.5 font-black text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-sm active:scale-95 ${item.status === 'PENDING' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:scale-105 shadow-slate-900/20' : 'bg-slate-100 text-brand-base0 dark:bg-white/5 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-white/10'}`}
                                                       >
                                                           {item.status === 'PENDING' ? 'Kiểm Duyệt' : 'Xem Chi Tiết'}
                                                       </button>
@@ -438,7 +438,7 @@ export default function AdminDashboardOverview() {
                           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                               <div>
                                   <h2 className="text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3"><Users className="text-amber-500" size={32} /> Nhân sự & Đối tác</h2>
-                                  <p className="text-slate-500 font-medium text-sm mt-1">Quản lý cơ sở dịch vụ, nhà sáng tạo nội dung và đội ngũ kiểm duyệt.</p>
+                                  <p className="text-brand-base0 font-medium text-sm mt-1">Quản lý cơ sở dịch vụ, nhà sáng tạo nội dung và đội ngũ kiểm duyệt.</p>
                               </div>
                               <div className="relative w-full md:w-72">
                                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18}/>
@@ -468,14 +468,14 @@ export default function AdminDashboardOverview() {
                                   <span className="text-3xl font-black text-slate-900 dark:text-white mt-2">{partners.filter(p => p.role === 'CREATOR').length}</span>
                               </div>
                               <div className="p-5 rounded-[2rem] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 shadow-sm flex flex-col justify-between">
-                                  <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest flex items-center gap-1.5"><ShieldCheck size={14}/> Ban Kiểm Duyệt</span>
+                                  <span className="text-[10px] font-black text-brand-trust uppercase tracking-widest flex items-center gap-1.5"><ShieldCheck size={14}/> Ban Kiểm Duyệt</span>
                                   <span className="text-3xl font-black text-slate-900 dark:text-white mt-2">{partners.filter(p => p.role === 'MODERATOR').length}</span>
                               </div>
                           </div>
 
                           {/* BỘ LỌC VÀ DANH SÁCH */}
                           <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm">
-                              <div className="p-6 border-b border-slate-100 dark:border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50/50 dark:bg-black/20">
+                              <div className="p-6 border-b border-slate-100 dark:border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4 bg-brand-base/50 dark:bg-black/20">
                                   <div className="flex gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar pb-2 sm:pb-0">
                                       {[
                                         { id: 'ALL', label: 'Tất cả' }, 
@@ -486,7 +486,7 @@ export default function AdminDashboardOverview() {
                                           <button 
                                               key={filter.id} 
                                               onClick={() => setPartnerFilter(filter.id as any)}
-                                              className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all border ${partnerFilter === filter.id ? 'bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-black dark:border-white shadow-md' : 'bg-transparent text-slate-500 border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5'}`}
+                                              className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all border ${partnerFilter === filter.id ? 'bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-black dark:border-white shadow-md' : 'bg-transparent text-brand-base0 border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5'}`}
                                           >
                                               {filter.label}
                                           </button>
@@ -519,7 +519,7 @@ export default function AdminDashboardOverview() {
                                                                   (p.email || '').toLowerCase().includes(partnerSearch.toLowerCase());
                                               return matchFilter && matchSearch;
                                           }).map((partner) => (
-                                              <tr key={partner.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
+                                              <tr key={partner.id} className="hover:bg-brand-base dark:hover:bg-white/5 transition-colors group">
                                                   <td className="p-6 font-mono text-xs font-black text-slate-400 uppercase">#{partner.id.split('-')[0]}</td>
                                                   <td className="p-6">
                                                       <div className="flex items-center gap-3">
@@ -527,7 +527,7 @@ export default function AdminDashboardOverview() {
                                                               {partner.avatar_url ? (
                                                                   <img src={partner.avatar_url} alt="avatar" className="w-full h-full object-cover" />
                                                               ) : (
-                                                                  <span className="text-slate-500 font-black text-sm">{partner.full_name?.charAt(0) || 'U'}</span>
+                                                                  <span className="text-brand-base0 font-black text-sm">{partner.full_name?.charAt(0) || 'U'}</span>
                                                               )}
                                                           </div>
                                                           <div className="flex flex-col">
@@ -540,7 +540,7 @@ export default function AdminDashboardOverview() {
                                                       <span className={`inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${
                                                           partner.role === 'PARTNER_ADMIN' ? 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20' : 
                                                           partner.role === 'CREATOR' ? 'bg-fuchsia-50 text-fuchsia-600 border-fuchsia-200 dark:bg-fuchsia-500/10 dark:border-fuchsia-500/20' : 
-                                                          'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-500/10 dark:border-blue-500/20'
+                                                          'bg-blue-50 text-brand-trust border-blue-200 dark:bg-brand-trust/10 dark:border-brand-trust/20'
                                                       }`}>
                                                           {partner.role === 'PARTNER_ADMIN' && <Building2 size={12} className="mr-1.5"/>}
                                                           {partner.role === 'CREATOR' && <Sparkles size={12} className="mr-1.5"/>}
@@ -552,7 +552,7 @@ export default function AdminDashboardOverview() {
                                                       <span className="text-xs font-medium text-slate-600 dark:text-zinc-400">{partner.email}</span>
                                                   </td>
                                                   <td className="p-6 text-center">
-                                                      <button className="px-4 py-2 bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-white/10 font-black text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-sm active:scale-95">Hồ Sơ</button>
+                                                      <button className="px-4 py-2 bg-slate-100 text-brand-base0 dark:bg-white/5 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-white/10 font-black text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-sm active:scale-95">Hồ Sơ</button>
                                                   </td>
                                               </tr>
                                           ))}
@@ -571,11 +571,11 @@ export default function AdminDashboardOverview() {
                                   <h2 className="text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3">
                                       <ShieldCheck className="text-amber-500" size={32} /> Giám sát Toàn cầu
                                   </h2>
-                                  <p className="text-slate-500 font-medium text-sm mt-1">Trạng thái thời gian thực của hạ tầng và nhật ký hoạt động kiểm toán.</p>
+                                  <p className="text-brand-base0 font-medium text-sm mt-1">Trạng thái thời gian thực của hạ tầng và nhật ký hoạt động kiểm toán.</p>
                               </div>
-                              <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 rounded-full border border-emerald-500/20">
-                                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></div>
-                                  <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Live Status</span>
+                              <div className="flex items-center gap-2 px-4 py-2 bg-brand-trust/10 rounded-full border border-brand-trust/20">
+                                  <div className="w-2 h-2 bg-brand-trust rounded-full animate-ping"></div>
+                                  <span className="text-[10px] font-black text-brand-trust uppercase tracking-widest">Live Status</span>
                               </div>
                           </div>
 
@@ -584,16 +584,16 @@ export default function AdminDashboardOverview() {
                               <div className="p-6 rounded-[2rem] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 flex flex-col gap-2">
                                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Activity size={14}/> Độ trễ API</span>
                                   <span className="text-3xl font-black text-slate-900 dark:text-white">{systemMetrics.latency} <span className="text-sm font-bold text-slate-400">ms</span></span>
-                                  <div className="w-full bg-slate-100 dark:bg-white/5 h-1.5 rounded-full mt-2 overflow-hidden"><div className="bg-emerald-500 h-full w-[85%]"></div></div>
+                                  <div className="w-full bg-slate-100 dark:bg-white/5 h-1.5 rounded-full mt-2 overflow-hidden"><div className="bg-brand-trust h-full w-[85%]"></div></div>
                               </div>
                               <div className="p-6 rounded-[2rem] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 flex flex-col gap-2">
                                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Database size={14}/> Database</span>
-                                  <span className="text-2xl font-black text-emerald-500 uppercase">{systemMetrics.dbStatus}</span>
+                                  <span className="text-2xl font-black text-brand-trust uppercase">{systemMetrics.dbStatus}</span>
                                   <span className="text-[10px] font-bold text-slate-400 uppercase">PostgreSQL Core Engine (Standalone)</span>
                               </div>
                               <div className="p-6 rounded-[2rem] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 flex flex-col gap-2">
                                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Server size={14}/> API Core</span>
-                                  <span className="text-2xl font-black text-emerald-500 uppercase">{systemMetrics.apiStatus}</span>
+                                  <span className="text-2xl font-black text-brand-trust uppercase">{systemMetrics.apiStatus}</span>
                                   <span className="text-[10px] font-bold text-slate-400 uppercase">Render.com Instance (Production)</span>
                               </div>
                               <div className="p-6 rounded-[2rem] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 flex flex-col gap-2">
@@ -606,25 +606,25 @@ export default function AdminDashboardOverview() {
                           {/* AUDIT LOGS & BIỂU ĐỒ - NHẬT KÝ THẬT TỪ HỆ THỐNG */}
                           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                               <div className="lg:col-span-2 bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-slate-200 dark:border-white/10 overflow-hidden flex flex-col">
-                                  <div className="p-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-black/20 flex justify-between items-center">
+                                  <div className="p-6 border-b border-slate-100 dark:border-white/5 bg-brand-base/50 dark:bg-black/20 flex justify-between items-center">
                                       <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest">Audit Trails (Dữ liệu thực tế)</h3>
                                       <button onClick={fetchDashboardData} className="p-2 hover:bg-slate-200 dark:hover:bg-white/5 rounded-full transition-colors"><Activity size={16} className="text-slate-400"/></button>
                                   </div>
                                   <div className="divide-y divide-slate-100 dark:divide-white/5 flex-1 overflow-y-auto no-scrollbar max-h-[450px]">
                                       {/* LOG 1: New Partner Join */}
                                       {partners.slice(0, 5).map((p, idx) => (
-                                          <div key={`p-${idx}`} className="p-5 flex items-start gap-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                          <div key={`p-${idx}`} className="p-5 flex items-start gap-4 hover:bg-brand-base dark:hover:bg-white/5 transition-colors">
                                               <div className="p-2 bg-amber-500/10 text-amber-500 rounded-xl mt-1"><Users size={16}/></div>
                                               <div className="flex-1">
                                                   <p className="text-sm font-bold text-slate-900 dark:text-white">Thành viên mới gia nhập: {p.full_name || p.email}</p>
                                                   <p className="text-[10px] text-slate-400 mt-1 uppercase font-black">{p.role} • {new Date(p.created_at).toLocaleString('vi-VN')}</p>
                                               </div>
-                                              <span className="text-[9px] font-black text-emerald-500 border border-emerald-500/20 px-2 py-1 rounded bg-emerald-500/5">REGISTRATION</span>
+                                              <span className="text-[9px] font-black text-brand-trust border border-brand-trust/20 px-2 py-1 rounded bg-brand-trust/5">REGISTRATION</span>
                                           </div>
                                       ))}
                                       {/* LOG 2: Financial Events */}
                                       {withdrawals.slice(0, 5).map((w, idx) => (
-                                          <div key={`w-${idx}`} className="p-5 flex items-start gap-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                          <div key={`w-${idx}`} className="p-5 flex items-start gap-4 hover:bg-brand-base dark:hover:bg-white/5 transition-colors">
                                               <div className="p-2 bg-rose-500/10 text-rose-500 rounded-xl mt-1"><DollarSign size={16}/></div>
                                               <div className="flex-1">
                                                   <p className="text-sm font-bold text-slate-900 dark:text-white">Yêu cầu giải ngân: {w.amount.toLocaleString()} đ</p>
@@ -640,7 +640,7 @@ export default function AdminDashboardOverview() {
                               <div className="lg:col-span-1 space-y-6">
                                   {/* Biểu đồ 1: Phân bổ nhân sự */}
                                   <div className="bg-white dark:bg-zinc-900 p-6 rounded-[2.5rem] border border-slate-200 dark:border-white/10 shadow-sm">
-                                      <h3 className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-2">Cơ cấu Mạng lưới</h3>
+                                      <h3 className="text-[10px] font-black text-brand-base0 dark:text-zinc-400 uppercase tracking-widest mb-2">Cơ cấu Mạng lưới</h3>
                                       <div className="h-[180px]">
                                           {typeof window !== 'undefined' && partners.length > 0 ? (
                                               <Chart 
@@ -669,7 +669,7 @@ export default function AdminDashboardOverview() {
 
                                   {/* Biểu đồ 2: Tỉ lệ giải ngân */}
                                   <div className="bg-white dark:bg-zinc-900 p-6 rounded-[2.5rem] border border-slate-200 dark:border-white/10 shadow-sm">
-                                      <h3 className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-2">Tỉ lệ Giải ngân</h3>
+                                      <h3 className="text-[10px] font-black text-brand-base0 dark:text-zinc-400 uppercase tracking-widest mb-2">Tỉ lệ Giải ngân</h3>
                                       <div className="h-[180px]">
                                           {typeof window !== 'undefined' && withdrawals.length > 0 ? (
                                               <Chart 
@@ -715,7 +715,7 @@ export default function AdminDashboardOverview() {
                                   <h2 className="text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3">
                                       <Ticket className="text-amber-500" size={32} /> Tổng Trạm Ưu Đãi
                                   </h2>
-                                  <p className="text-slate-500 font-medium text-sm mt-1">
+                                  <p className="text-brand-base0 font-medium text-sm mt-1">
                                       Quản lý, phát hành và kiểm duyệt mọi mã giảm giá đang lưu hành trên toàn bộ nền tảng.
                                   </p>
                               </div>
@@ -726,8 +726,8 @@ export default function AdminDashboardOverview() {
                             .admin-voucher-override .text-\\[\\#80BF84\\] { color: #f59e0b !important; }
                             .admin-voucher-override .bg-emerald-100 { background-color: rgba(245, 158, 11, 0.1) !important; }
                             .admin-voucher-override .text-emerald-700 { color: #f59e0b !important; }
-                            .admin-voucher-override .dark\\:bg-emerald-500\\/20 { background-color: rgba(245, 158, 11, 0.2) !important; }
-                            .admin-voucher-override .bg-gradient-to-r.from-\\[\\#80BF84\\].to-emerald-500 { background: linear-gradient(to right, #f59e0b, #ea580c) !important; }
+                            .admin-voucher-override .dark\\:bg-brand-trust\\/20 { background-color: rgba(245, 158, 11, 0.2) !important; }
+                            .admin-voucher-override .bg-gradient-to-r.from-\\[\\#80BF84\\].to-brand-trust { background: linear-gradient(to right, #f59e0b, #ea580c) !important; }
                             .admin-voucher-override .shadow-\\[0_10px_20px_rgba\\(128\\,191\\,132\\,0\\.3\\)\\] { box-shadow: 0 10px 20px rgba(245, 158, 11, 0.3) !important; }
                             .admin-voucher-override .focus\\:border-\\[\\#80BF84\\]:focus { border-color: #f59e0b !important; }
                             .admin-voucher-override .border-t-transparent.border-\\[\\#80BF84\\] { border-color: #f59e0b; border-top-color: transparent; }
@@ -748,13 +748,13 @@ export default function AdminDashboardOverview() {
           <div className="fixed inset-0 z-[100] flex justify-center items-center p-4">
               <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeModal}></div>
               <div className="relative w-full max-w-lg bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-slate-200 dark:border-white/10 shadow-2xl animate-slide-up overflow-hidden flex flex-col">
-                  <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-black/20">
+                  <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-white/5 bg-brand-base/50 dark:bg-black/20">
                       <h3 className="font-black text-lg text-slate-900 dark:text-white flex items-center gap-2"><Wallet size={20} className="text-amber-500"/> Xử lý Giải Ngân</h3>
-                      <button onClick={closeModal} className="p-2 bg-slate-200/50 dark:bg-white/5 rounded-full text-slate-500"><X size={16}/></button>
+                      <button onClick={closeModal} className="p-2 bg-slate-200/50 dark:bg-white/5 rounded-full text-brand-base0"><X size={16}/></button>
                   </div>
                   
                   <div className="p-6 space-y-4">
-                      <div className="p-4 bg-slate-50 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/5">
+                      <div className="p-4 bg-brand-base dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/5">
                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Người yêu cầu</p>
                           <p className="font-bold text-slate-900 dark:text-white">{selectedWithdrawal.users?.full_name} ({selectedWithdrawal.users?.email})</p>
                       </div>
@@ -764,7 +764,7 @@ export default function AdminDashboardOverview() {
                           <p className="text-3xl font-black text-rose-600 dark:text-rose-400">{selectedWithdrawal.amount.toLocaleString()} VND</p>
                       </div>
 
-                      <div className="p-4 bg-slate-50 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/5 relative group">
+                      <div className="p-4 bg-brand-base dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/5 relative group">
                           <div className="flex justify-between items-center mb-2">
                               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Thông tin nhận tiền (Bank/Ví)</p>
                               <button 
@@ -772,7 +772,7 @@ export default function AdminDashboardOverview() {
                                       navigator.clipboard.writeText(JSON.stringify(selectedWithdrawal.payout_info, null, 2));
                                       toast.success("Đã sao chép thông tin ngân hàng!");
                                   }}
-                                  className="text-[10px] bg-white dark:bg-zinc-800 px-3 py-1.5 rounded-lg text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 border border-slate-200 dark:border-white/10 transition-all shadow-sm font-bold active:scale-95"
+                                  className="text-[10px] bg-white dark:bg-zinc-800 px-3 py-1.5 rounded-lg text-brand-base0 hover:text-brand-trust dark:hover:text-blue-400 border border-slate-200 dark:border-white/10 transition-all shadow-sm font-bold active:scale-95"
                               >
                                   Sao chép nhanh
                               </button>
@@ -790,16 +790,16 @@ export default function AdminDashboardOverview() {
                                       <strong>Lưu ý quan trọng:</strong> Hệ thống <span className="underline">không tự động chuyển tiền</span>. Bạn phải thực hiện chuyển khoản thủ công cho đối tác trước khi bấm Duyệt.
                                   </p>
                               </div>
-                              <textarea rows={2} className="w-full bg-white dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 resize-none shadow-inner" placeholder="Nhập mã giao dịch ngân hàng (Bắt buộc nếu duyệt) hoặc lý do từ chối..." value={adminNote} onChange={e => setAdminNote(e.target.value)} />
+                              <textarea rows={2} className="w-full bg-white dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-brand-trust resize-none shadow-inner" placeholder="Nhập mã giao dịch ngân hàng (Bắt buộc nếu duyệt) hoặc lý do từ chối..." value={adminNote} onChange={e => setAdminNote(e.target.value)} />
                               <div className="grid grid-cols-2 gap-3 pt-2">
                                   <button onClick={() => handleProcessWithdrawal('REJECTED')} disabled={isProcessing} className="py-3.5 bg-white dark:bg-transparent text-rose-600 dark:text-rose-400 font-black rounded-xl text-xs uppercase tracking-widest border border-rose-200 dark:border-rose-500/30 hover:bg-rose-50 dark:hover:bg-rose-500/10 active:scale-95 transition-all">Từ chối lệnh</button>
-                                  <button onClick={() => handleProcessWithdrawal('COMPLETED')} disabled={isProcessing} className="py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-xl text-xs uppercase tracking-widest shadow-lg shadow-emerald-500/30 active:scale-95 transition-all flex justify-center items-center gap-2">
+                                  <button onClick={() => handleProcessWithdrawal('COMPLETED')} disabled={isProcessing} className="py-3.5 bg-brand-trust hover:bg-emerald-600 text-white font-black rounded-xl text-xs uppercase tracking-widest shadow-lg shadow-brand-trust/30 active:scale-95 transition-all flex justify-center items-center gap-2">
                                       <CheckCircle size={16} /> Đã chuyển tiền
                                   </button>
                               </div>
                           </div>
                       ) : (
-                          <div className="p-4 bg-slate-100 dark:bg-white/5 rounded-2xl text-center"><p className="text-sm font-bold text-slate-500">Lệnh này đã được xử lý ({selectedWithdrawal.status})</p></div>
+                          <div className="p-4 bg-slate-100 dark:bg-white/5 rounded-2xl text-center"><p className="text-sm font-bold text-brand-base0">Lệnh này đã được xử lý ({selectedWithdrawal.status})</p></div>
                       )}
                   </div>
               </div>

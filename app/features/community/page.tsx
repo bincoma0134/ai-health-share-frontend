@@ -88,8 +88,8 @@ export default function CommunityPage() {
   const getRoleBadge = (role: string) => {
     switch (role) {
       case "SUPER_ADMIN": return <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-violet-500/10 border border-violet-500/20 text-violet-500 text-[9px] font-black uppercase tracking-wider"><Crown size={10}/> Tối cao</span>;
-      case "PARTNER_ADMIN": return <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#80BF84]/10 border border-[#80BF84]/20 text-[#80BF84] text-[9px] font-black uppercase tracking-wider"><ShieldCheck size={10}/> Doanh nghiệp</span>;
-      case "MODERATOR": return <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20 text-blue-500 text-[9px] font-black uppercase tracking-wider"><ShieldCheck size={10}/> Kiểm duyệt</span>;
+      case "PARTNER_ADMIN": return <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-brand-primary/10 border border-brand-primary/20 text-brand-primary text-[9px] font-black uppercase tracking-wider"><ShieldCheck size={10}/> Doanh nghiệp</span>;
+      case "MODERATOR": return <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-brand-trust/10 border border-brand-trust/20 text-brand-trust text-[9px] font-black uppercase tracking-wider"><ShieldCheck size={10}/> Kiểm duyệt</span>;
       case "CREATOR": return <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[9px] font-black uppercase tracking-wider"><Sparkles size={10}/> Sáng tạo</span>;
       default: return null; // User thường không hiện badge cho gọn
     }
@@ -154,7 +154,7 @@ export default function CommunityPage() {
   };
 
   return (
-    <div className="relative h-[100dvh] w-full bg-slate-50 dark:bg-zinc-950 overflow-y-auto no-scrollbar scroll-smooth transition-colors duration-500 flex justify-center font-be-vietnam">
+    <div className="relative h-[100dvh] w-full bg-brand-base dark:bg-zinc-950 overflow-y-auto no-scrollbar scroll-smooth transition-colors duration-500 flex justify-center font-be-vietnam">
       
       {/* Nút Sáng Tối & Thông báo */}
       <div className="fixed top-6 right-6 md:top-8 md:right-8 z-[60] flex items-center gap-3">
@@ -169,9 +169,9 @@ export default function CommunityPage() {
       <div className="w-full max-w-2xl pt-20 md:pt-24 pb-32 px-4 md:px-0">
         
         {/* HEADER & FILTERS */}
-        <div className="mb-8 animate-slide-up sticky top-0 pt-4 pb-4 z-50 bg-slate-50/80 dark:bg-zinc-950/80 backdrop-blur-xl">
+        <div className="mb-8 animate-slide-up sticky top-0 pt-4 pb-4 z-50 bg-brand-base/80 dark:bg-zinc-950/80 backdrop-blur-xl">
             <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-4 flex items-center gap-3">
-                Cộng đồng <Sparkles className="text-[#80BF84]" size={28}/>
+                Cộng đồng <Sparkles className="text-brand-primary" size={28}/>
             </h2>
             
             <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
@@ -193,7 +193,7 @@ export default function CommunityPage() {
                         : 'bg-white/60 dark:bg-zinc-900/60 text-slate-600 dark:text-zinc-400 border-white/50 dark:border-white/5 hover:bg-white dark:hover:bg-zinc-800 dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]'
                       }`}
                     >
-                      <Icon size={14} className={isActive ? 'text-[#80BF84]' : ''} /> {tab.name}
+                      <Icon size={14} className={isActive ? 'text-brand-primary' : ''} /> {tab.name}
                     </button>
                   );
                 })}
@@ -202,7 +202,7 @@ export default function CommunityPage() {
 
         {/* KHỐI ĐĂNG BÀI */}
         <div className="mb-8 animate-slide-up relative group/composer" style={{ animationDelay: '0.1s' }}>
-            <div className="absolute inset-[-2px] bg-gradient-to-r from-[#80BF84]/0 via-[#80BF84]/20 to-[#80BF84]/0 rounded-[2.5rem] blur-xl opacity-0 dark:group-focus-within/composer:opacity-100 transition-opacity duration-700"></div>
+            <div className="absolute inset-[-2px] bg-gradient-to-r from-brand-primary/0 via-brand-primary/20 to-brand-primary/0 rounded-[2.5rem] blur-xl opacity-0 dark:group-focus-within/composer:opacity-100 transition-opacity duration-700"></div>
 
             <form onSubmit={handleCreatePost} className="relative bg-white/70 dark:bg-zinc-900/60 backdrop-blur-3xl rounded-[2rem] border border-white/50 dark:border-white/10 p-5 md:p-6 shadow-xl dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_20px_40px_rgba(0,0,0,0.5)] transition-all z-10">
                 <div className="flex gap-4">
@@ -222,9 +222,9 @@ export default function CommunityPage() {
                 
                 <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-200/50 dark:border-white/5">
                     <div className="flex gap-2">
-                        <button type="button" className="p-2.5 rounded-full bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-zinc-400 hover:text-[#80BF84] dark:hover:text-[#80BF84] hover:bg-[#80BF84]/10 transition-colors" title="Đính kèm ảnh/video"><ImageIcon size={20}/></button>
+                        <button type="button" className="p-2.5 rounded-full bg-slate-100 dark:bg-white/5 text-brand-base0 dark:text-zinc-400 hover:text-brand-primary dark:hover:text-brand-primary hover:bg-brand-primary/10 transition-colors" title="Đính kèm ảnh/video"><ImageIcon size={20}/></button>
                     </div>
-                    <button type="submit" disabled={!newPostContent.trim() || isSubmitting} className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#80BF84] to-emerald-500 text-zinc-950 font-black rounded-full hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:hover:scale-100 shadow-[0_10px_20px_rgba(128,191,132,0.3)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_10px_20px_rgba(128,191,132,0.2)]">
+                    <button type="submit" disabled={!newPostContent.trim() || isSubmitting} className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-brand-primary to-brand-trust text-zinc-950 font-black rounded-full hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:hover:scale-100 shadow-[0_10px_20px_rgba(128,191,132,0.3)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_10px_20px_rgba(128,191,132,0.2)]">
                         {isSubmitting ? <div className="w-4 h-4 border-2 border-zinc-950 border-t-transparent rounded-full animate-spin"/> : <Send size={16}/>}
                         Chia sẻ
                     </button>

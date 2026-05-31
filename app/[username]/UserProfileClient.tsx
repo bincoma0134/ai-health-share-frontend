@@ -65,28 +65,28 @@ export default function UserProfileClient({ params }: { params: { username: stri
 
   if (username === "guest") {
     return (
-      <div className="flex-1 relative h-[100dvh] flex flex-col bg-slate-50 dark:bg-zinc-950 transition-colors duration-500 overflow-hidden font-be-vietnam">
+      <div className="flex-1 relative h-[100dvh] flex flex-col bg-brand-base dark:bg-zinc-950 transition-colors duration-500 overflow-hidden font-be-vietnam">
          <GuestProfileView />
       </div>
     );
   }
 
   if (!data) return (
-    <div className="h-[100dvh] flex items-center justify-center bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-white font-black text-xl uppercase tracking-tighter">
+    <div className="h-[100dvh] flex items-center justify-center bg-brand-base dark:bg-zinc-950 text-slate-900 dark:text-white font-black text-xl uppercase tracking-tighter">
       NGƯỜI DÙNG KHÔNG TỒN TẠI!
     </div>
   );
 
   return (
-    <div className="flex-1 relative h-[100dvh] flex flex-col bg-slate-50 dark:bg-zinc-950 transition-colors duration-500 overflow-hidden font-be-vietnam">
+    <div className="flex-1 relative h-[100dvh] flex flex-col bg-brand-base dark:bg-zinc-950 transition-colors duration-500 overflow-hidden font-be-vietnam">
       
       {/* Top Bar */}
-      <div className="absolute top-0 w-full z-40 p-6 flex justify-end items-center bg-gradient-to-b from-slate-50 dark:from-zinc-950 to-transparent pointer-events-none">
+      <div className="absolute top-0 w-full z-40 p-6 flex justify-end items-center bg-gradient-to-b from-brand-base dark:from-zinc-950 to-transparent pointer-events-none">
           <div className="flex items-center gap-3 pointer-events-auto">
               <button onClick={handleToggleTheme} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-3xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:bg-white/80 dark:hover:bg-white/20 active:scale-95 transition-all shadow-lg shadow-black/5 group">
-                  {theme === "dark" ? <Sun size={20} className="group-hover:text-amber-300 transition-colors" /> : <Moon size={20} className="group-hover:text-blue-500 transition-colors" />}
+                  {theme === "dark" ? <Sun size={20} className="group-hover:text-amber-300 transition-colors" /> : <Moon size={20} className="group-hover:text-brand-trust transition-colors" />}
               </button>
-              <button onClick={() => setIsNotifOpen(true)} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-3xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 hover:text-[#80BF84] hover:bg-[#80BF84]/10 active:scale-95 transition-all shadow-lg shadow-black/5">
+              <button onClick={() => setIsNotifOpen(true)} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-3xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-brand-base0 hover:text-brand-primary hover:bg-brand-primary/10 active:scale-95 transition-all shadow-lg shadow-black/5">
                   <Bell size={20} />
               </button>
           </div>

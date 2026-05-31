@@ -125,9 +125,9 @@ export default function VoucherManager() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-            <Ticket className="text-[#80BF84]" /> Quản Lý Ưu Đãi
+            <Ticket className="text-brand-primary" /> Quản Lý Ưu Đãi
           </h2>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-brand-base0 mt-1">
             {userRole === "PARTNER_ADMIN" ? "Tạo và quản lý các mã giảm giá cho cơ sở của bạn." : "Trạm kiểm duyệt và phát hành mã toàn sàn."}
           </p>
         </div>
@@ -147,7 +147,7 @@ export default function VoucherManager() {
       {activeView === "LIST" && (
         <div className="bg-white/60 dark:bg-zinc-900/40 backdrop-blur-xl border border-slate-200/50 dark:border-white/10 rounded-[2rem] overflow-hidden shadow-sm">
           {isLoading ? (
-             <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-[#80BF84] border-t-transparent rounded-full animate-spin"></div></div>
+             <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-brand-primary border-t-transparent rounded-full animate-spin"></div></div>
           ) : vouchers.length === 0 ? (
             <div className="text-center py-20 opacity-60">
               <Ticket className="w-16 h-16 mx-auto mb-4 text-slate-400" />
@@ -156,7 +156,7 @@ export default function VoucherManager() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm whitespace-nowrap">
-                <thead className="bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-zinc-400 font-bold">
+                <thead className="bg-brand-base dark:bg-white/5 text-brand-base0 dark:text-zinc-400 font-bold">
                   <tr>
                     <th className="p-5">Mã Code</th>
                     <th className="p-5">Loại giảm</th>
@@ -168,18 +168,18 @@ export default function VoucherManager() {
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                   {vouchers.map((v) => (
-                    <tr key={v.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                      <td className="p-5 font-black font-mono text-[#80BF84] tracking-widest">{v.code}</td>
+                    <tr key={v.id} className="hover:bg-brand-base dark:hover:bg-white/5 transition-colors">
+                      <td className="p-5 font-black font-mono text-brand-primary tracking-widest">{v.code}</td>
                       <td className="p-5 font-medium text-slate-700 dark:text-zinc-300">
                         {v.discount_type === 'PERCENTAGE' ? `${v.discount_value}%` : `${(v.discount_value/1000)}K`}
                       </td>
                       <td className="p-5 font-bold">
-                        <span className="text-slate-900 dark:text-white">{v.used_quantity}</span> / <span className="text-slate-500">{v.total_quantity}</span>
+                        <span className="text-slate-900 dark:text-white">{v.used_quantity}</span> / <span className="text-brand-base0">{v.total_quantity}</span>
                       </td>
-                      <td className="p-5 text-slate-500">{new Date(v.valid_until).toLocaleDateString('vi-VN')}</td>
+                      <td className="p-5 text-brand-base0">{new Date(v.valid_until).toLocaleDateString('vi-VN')}</td>
                       <td className="p-5">
                         <span className={`px-2.5 py-1 text-[10px] font-black rounded-full uppercase tracking-wider
-                          ${v.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20' : 
+                          ${v.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700 dark:bg-brand-trust/20' : 
                             v.status === 'PENDING' ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 animate-pulse' : 
                             'bg-rose-100 text-rose-700 dark:bg-rose-500/20'}`}>
                           {v.status}
@@ -190,7 +190,7 @@ export default function VoucherManager() {
                         <td className="p-5 flex gap-2">
                           {v.status === 'PENDING' && (
                             <>
-                              <button onClick={() => handleUpdateStatus(v.id, "APPROVED")} className="p-2 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white rounded-lg transition-colors"><CheckCircle2 size={16}/></button>
+                              <button onClick={() => handleUpdateStatus(v.id, "APPROVED")} className="p-2 bg-brand-trust/10 text-brand-trust hover:bg-brand-trust hover:text-white rounded-lg transition-colors"><CheckCircle2 size={16}/></button>
                               <button onClick={() => handleUpdateStatus(v.id, "REJECTED")} className="p-2 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-colors"><X size={16}/></button>
                             </>
                           )}
@@ -210,47 +210,47 @@ export default function VoucherManager() {
         <form onSubmit={handleCreateVoucher} className="bg-white/60 dark:bg-zinc-900/40 backdrop-blur-xl border border-slate-200/50 dark:border-white/10 rounded-[2.5rem] p-6 md:p-8 shadow-xl">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-500 ml-1 uppercase tracking-widest">Mã Ưu Đãi (Code)</label>
-              <input type="text" required placeholder="VD: CHAOHE2026" className="w-full px-5 py-3.5 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl font-mono uppercase font-black focus:border-[#80BF84] outline-none transition-colors" value={formData.code} onChange={e => setFormData({...formData, code: e.target.value})} />
+              <label className="text-xs font-bold text-brand-base0 ml-1 uppercase tracking-widest">Mã Ưu Đãi (Code)</label>
+              <input type="text" required placeholder="VD: CHAOHE2026" className="w-full px-5 py-3.5 bg-brand-base dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl font-mono uppercase font-black focus:border-brand-primary outline-none transition-colors" value={formData.code} onChange={e => setFormData({...formData, code: e.target.value})} />
             </div>
             
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-500 ml-1 uppercase tracking-widest">Loại chiết khấu</label>
-              <select className="w-full px-5 py-3.5 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl font-bold focus:border-[#80BF84] outline-none transition-colors appearance-none" value={formData.discount_type} onChange={e => setFormData({...formData, discount_type: e.target.value})}>
+              <label className="text-xs font-bold text-brand-base0 ml-1 uppercase tracking-widest">Loại chiết khấu</label>
+              <select className="w-full px-5 py-3.5 bg-brand-base dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl font-bold focus:border-brand-primary outline-none transition-colors appearance-none" value={formData.discount_type} onChange={e => setFormData({...formData, discount_type: e.target.value})}>
                 <option value="PERCENTAGE">Giảm theo Phần trăm (%)</option>
                 <option value="FIXED_AMOUNT">Giảm Tiền mặt (VNĐ)</option>
               </select>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-500 ml-1 uppercase tracking-widest">Mức giảm</label>
-              <input type="number" required placeholder={formData.discount_type === 'PERCENTAGE' ? "VD: 20 (%)" : "VD: 50000 (VNĐ)"} className="w-full px-5 py-3.5 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl font-bold focus:border-[#80BF84] outline-none transition-colors" value={formData.discount_value} onChange={e => setFormData({...formData, discount_value: e.target.value})} />
+              <label className="text-xs font-bold text-brand-base0 ml-1 uppercase tracking-widest">Mức giảm</label>
+              <input type="number" required placeholder={formData.discount_type === 'PERCENTAGE' ? "VD: 20 (%)" : "VD: 50000 (VNĐ)"} className="w-full px-5 py-3.5 bg-brand-base dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl font-bold focus:border-brand-primary outline-none transition-colors" value={formData.discount_value} onChange={e => setFormData({...formData, discount_value: e.target.value})} />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-500 ml-1 uppercase tracking-widest">Giảm tối đa (Tùy chọn)</label>
-              <input type="number" placeholder="Chỉ dùng khi giảm %..." className="w-full px-5 py-3.5 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl font-bold focus:border-[#80BF84] outline-none transition-colors" value={formData.max_discount_amount} onChange={e => setFormData({...formData, max_discount_amount: e.target.value})} disabled={formData.discount_type === 'FIXED_AMOUNT'} />
+              <label className="text-xs font-bold text-brand-base0 ml-1 uppercase tracking-widest">Giảm tối đa (Tùy chọn)</label>
+              <input type="number" placeholder="Chỉ dùng khi giảm %..." className="w-full px-5 py-3.5 bg-brand-base dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl font-bold focus:border-brand-primary outline-none transition-colors" value={formData.max_discount_amount} onChange={e => setFormData({...formData, max_discount_amount: e.target.value})} disabled={formData.discount_type === 'FIXED_AMOUNT'} />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-500 ml-1 uppercase tracking-widest">Đơn tối thiểu áp dụng</label>
-              <input type="number" required placeholder="VD: 200000" className="w-full px-5 py-3.5 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl font-bold focus:border-[#80BF84] outline-none transition-colors" value={formData.min_order_value} onChange={e => setFormData({...formData, min_order_value: e.target.value})} />
+              <label className="text-xs font-bold text-brand-base0 ml-1 uppercase tracking-widest">Đơn tối thiểu áp dụng</label>
+              <input type="number" required placeholder="VD: 200000" className="w-full px-5 py-3.5 bg-brand-base dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl font-bold focus:border-brand-primary outline-none transition-colors" value={formData.min_order_value} onChange={e => setFormData({...formData, min_order_value: e.target.value})} />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 ml-1 uppercase tracking-widest">Số lượng</label>
-                <input type="number" required placeholder="VD: 100" className="w-full px-5 py-3.5 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl font-bold focus:border-[#80BF84] outline-none transition-colors" value={formData.total_quantity} onChange={e => setFormData({...formData, total_quantity: e.target.value})} />
+                <label className="text-xs font-bold text-brand-base0 ml-1 uppercase tracking-widest">Số lượng</label>
+                <input type="number" required placeholder="VD: 100" className="w-full px-5 py-3.5 bg-brand-base dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl font-bold focus:border-brand-primary outline-none transition-colors" value={formData.total_quantity} onChange={e => setFormData({...formData, total_quantity: e.target.value})} />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 ml-1 uppercase tracking-widest">Hạn sử dụng</label>
-                <input type="date" required className="w-full px-5 py-3.5 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl font-bold focus:border-[#80BF84] outline-none transition-colors" value={formData.valid_until} onChange={e => setFormData({...formData, valid_until: e.target.value})} />
+                <label className="text-xs font-bold text-brand-base0 ml-1 uppercase tracking-widest">Hạn sử dụng</label>
+                <input type="date" required className="w-full px-5 py-3.5 bg-brand-base dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl font-bold focus:border-brand-primary outline-none transition-colors" value={formData.valid_until} onChange={e => setFormData({...formData, valid_until: e.target.value})} />
               </div>
             </div>
           </div>
 
           <div className="mt-8 pt-6 border-t border-slate-200 dark:border-white/10 flex justify-end">
-             <button type="submit" disabled={isSubmitting} className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-[#80BF84] to-emerald-500 text-zinc-950 font-black rounded-2xl active:scale-95 transition-all shadow-[0_10px_20px_rgba(128,191,132,0.3)] flex justify-center items-center gap-2 uppercase tracking-widest text-sm">
+             <button type="submit" disabled={isSubmitting} className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-brand-primary to-brand-trust text-zinc-950 font-black rounded-2xl active:scale-95 transition-all shadow-[0_10px_20px_rgba(128,191,132,0.3)] flex justify-center items-center gap-2 uppercase tracking-widest text-sm">
                 {isSubmitting ? <div className="w-5 h-5 border-2 border-zinc-950 border-t-transparent rounded-full animate-spin"></div> : <Send size={18} />}
                 {userRole === "PARTNER_ADMIN" ? "Gửi Yêu Cầu Duyệt" : "Phát Hành Mã"}
              </button>

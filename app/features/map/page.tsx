@@ -144,9 +144,9 @@ export default function MapExplorePage() {
         
         <div className="w-full max-w-4xl flex items-center gap-3">
             <div className="relative flex-1 group pointer-events-auto">
-                <div className="absolute inset-0 bg-white/60 dark:bg-black/60 backdrop-blur-[40px] rounded-[2rem] border border-white/40 dark:border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.15)] group-focus-within:ring-2 ring-[#80BF84]/50 transition-all duration-500"></div>
+                <div className="absolute inset-0 bg-white/60 dark:bg-black/60 backdrop-blur-[40px] rounded-[2rem] border border-white/40 dark:border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.15)] group-focus-within:ring-2 ring-brand-primary/50 transition-all duration-500"></div>
                 <div className="relative flex items-center px-6 py-4 md:py-5">
-                    <Search size={22} className="text-slate-500 dark:text-zinc-400 shrink-0" />
+                    <Search size={22} className="text-brand-base0 dark:text-zinc-400 shrink-0" />
                     <input 
                       type="text" 
                       placeholder="Tìm tên cơ sở, địa chỉ hoặc dịch vụ..." 
@@ -165,7 +165,7 @@ export default function MapExplorePage() {
                         </button>
                     )}
                     <div className="w-px h-8 bg-slate-300 dark:bg-white/10 mx-4 hidden md:block" />
-                    <button className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-[#80BF84] text-zinc-950 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all shadow-lg">
+                    <button className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-brand-primary text-zinc-950 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all shadow-lg">
                       <Filter size={14}/> Lọc
                     </button>
                 </div>
@@ -210,7 +210,7 @@ export default function MapExplorePage() {
                 }}
                 className={`whitespace-nowrap px-6 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest transition-all duration-300 border backdrop-blur-[20px] ${
                   isActive 
-                  ? 'bg-[#80BF84] text-zinc-950 border-[#80BF84] shadow-[0_0_20px_rgba(128,191,132,0.4)] scale-105' 
+                  ? 'bg-brand-primary text-zinc-950 border-brand-primary shadow-[0_0_20px_rgba(128,191,132,0.4)] scale-105' 
                   : 'bg-white/40 dark:bg-black/40 text-slate-700 dark:text-zinc-300 border-white/40 dark:border-white/5 hover:bg-white/80 dark:hover:bg-black/80'
                 }`}
               >
@@ -224,16 +224,16 @@ export default function MapExplorePage() {
       {/* 3. MAP CONTROLS */}
       <div className="absolute right-6 top-1/2 -translate-y-1/2 z-40 flex flex-col gap-3 pointer-events-auto">
         <div className="flex flex-col bg-white/60 dark:bg-black/60 backdrop-blur-[40px] rounded-[2rem] border border-white/40 dark:border-white/10 shadow-2xl overflow-hidden p-1">
-          <button onClick={() => setMapState(p => ({ ...p, zoom: Math.min(p.zoom + 1, 18) }))} className="w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-[#80BF84] hover:text-zinc-950 transition-all text-slate-700 dark:text-zinc-300"><Plus size={20}/></button>
+          <button onClick={() => setMapState(p => ({ ...p, zoom: Math.min(p.zoom + 1, 18) }))} className="w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-brand-primary hover:text-zinc-950 transition-all text-slate-700 dark:text-zinc-300"><Plus size={20}/></button>
           <div className="h-px w-8 bg-slate-300 dark:bg-white/10 mx-auto" />
-          <button onClick={() => setMapState(p => ({ ...p, zoom: Math.max(p.zoom - 1, 5) }))} className="w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-[#80BF84] hover:text-zinc-950 transition-all text-slate-700 dark:text-zinc-300"><Minus size={20}/></button>
+          <button onClick={() => setMapState(p => ({ ...p, zoom: Math.max(p.zoom - 1, 5) }))} className="w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-brand-primary hover:text-zinc-950 transition-all text-slate-700 dark:text-zinc-300"><Minus size={20}/></button>
         </div>
 
-        <button onClick={handleLocateMe} className="w-14 h-14 bg-white/60 dark:bg-black/60 backdrop-blur-[40px] rounded-[1.5rem] border border-white/40 dark:border-white/10 shadow-2xl flex items-center justify-center text-blue-500 hover:scale-110 active:scale-95 transition-all">
+        <button onClick={handleLocateMe} className="w-14 h-14 bg-white/60 dark:bg-black/60 backdrop-blur-[40px] rounded-[1.5rem] border border-white/40 dark:border-white/10 shadow-2xl flex items-center justify-center text-brand-trust hover:scale-110 active:scale-95 transition-all">
           <Target size={24} strokeWidth={2.5}/>
         </button>
         
-        <button onClick={() => setMapState(p => ({ ...p, mapType: p.mapType === "street" ? "satellite" : "street" }))} className={`w-14 h-14 rounded-[1.5rem] backdrop-blur-[40px] border shadow-2xl flex items-center justify-center transition-all ${mapState.mapType === "satellite" ? 'bg-[#80BF84] text-zinc-950 border-[#80BF84]' : 'bg-white/60 dark:bg-black/60 text-amber-500 border-white/40 dark:border-white/10'}`}>
+        <button onClick={() => setMapState(p => ({ ...p, mapType: p.mapType === "street" ? "satellite" : "street" }))} className={`w-14 h-14 rounded-[1.5rem] backdrop-blur-[40px] border shadow-2xl flex items-center justify-center transition-all ${mapState.mapType === "satellite" ? 'bg-brand-primary text-zinc-950 border-brand-primary' : 'bg-white/60 dark:bg-black/60 text-amber-500 border-white/40 dark:border-white/10'}`}>
           <Layers size={24}/>
         </button>
       </div>
@@ -242,22 +242,22 @@ export default function MapExplorePage() {
       <div className={`absolute bottom-10 left-1/2 -translate-x-1/2 w-[92%] md:w-[500px] z-50 transition-all duration-700 ease-in-out transform ${selectedPartner ? 'translate-y-0 opacity-100' : 'translate-y-40 opacity-0 pointer-events-none'}`}>
           {selectedPartner && (
             <div className="relative group pointer-events-auto">
-                <div className="absolute inset-[-2px] bg-gradient-to-tr from-[#80BF84]/40 to-emerald-500/40 rounded-[3rem] blur-2xl opacity-50"></div>
-                <div className="relative bg-white/80 dark:bg-zinc-950/90 backdrop-blur-[50px] rounded-[3rem] border border-white/60 dark:border-[#80BF84]/30 shadow-[0_40px_100px_rgba(0,0,0,0.5)] overflow-hidden">
+                <div className="absolute inset-[-2px] bg-gradient-to-tr from-brand-primary/40 to-brand-trust/40 rounded-[3rem] blur-2xl opacity-50"></div>
+                <div className="relative bg-white/80 dark:bg-zinc-950/90 backdrop-blur-[50px] rounded-[3rem] border border-white/60 dark:border-brand-primary/30 shadow-[0_40px_100px_rgba(0,0,0,0.5)] overflow-hidden">
                     <div className="p-8 pb-6 flex items-start gap-6">
                         <button 
                             onClick={() => router.push(`/${selectedPartner.username}`)}
-                            className="w-24 h-24 rounded-3xl bg-slate-100 dark:bg-zinc-900 border border-[#80BF84]/20 overflow-hidden shrink-0 shadow-inner hover:scale-105 hover:shadow-[0_0_20px_rgba(128,191,132,0.4)] transition-all"
+                            className="w-24 h-24 rounded-3xl bg-slate-100 dark:bg-zinc-900 border border-brand-primary/20 overflow-hidden shrink-0 shadow-inner hover:scale-105 hover:shadow-[0_0_20px_rgba(128,191,132,0.4)] transition-all"
                         >
                             <img src={selectedPartner.avatar_url} className="w-full h-full object-cover" alt="partner" />
                         </button>
                         <div className="flex-1 overflow-hidden pt-1">
                             <div className="flex items-center gap-2 mb-2">
-                              <span className="px-3 py-1 bg-[#80BF84]/10 text-[#80BF84] text-[9px] font-black uppercase tracking-widest rounded-full border border-[#80BF84]/20 flex items-center gap-1"><ShieldCheck size={10}/> Đã xác thực</span>
+                              <span className="px-3 py-1 bg-brand-primary/10 text-brand-primary text-[9px] font-black uppercase tracking-widest rounded-full border border-brand-primary/20 flex items-center gap-1"><ShieldCheck size={10}/> Đã xác thực</span>
                               <span className="px-3 py-1 bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 text-[9px] font-black uppercase tracking-widest rounded-full border border-slate-300 dark:border-zinc-700">{selectedPartner.tags[0]}</span>
                             </div>
                             <h3 className="text-2xl font-black text-slate-900 dark:text-white truncate tracking-tight">{selectedPartner.full_name}</h3>
-                            <p className="text-xs font-bold text-slate-500 dark:text-zinc-500 flex items-center gap-1.5 mt-2"><MapPin size={14} className="text-rose-500"/> {selectedPartner.distance} km • Quanh đây</p>
+                            <p className="text-xs font-bold text-brand-base0 dark:text-zinc-500 flex items-center gap-1.5 mt-2"><MapPin size={14} className="text-rose-500"/> {selectedPartner.distance} km • Quanh đây</p>
                         </div>
                         <button onClick={() => setSelectedPartner(null)} className="p-3 rounded-full bg-slate-100 dark:bg-white/5 hover:bg-rose-500/10 hover:text-rose-500 transition-all text-slate-400"><X size={20}/></button>
                     </div>
@@ -265,16 +265,16 @@ export default function MapExplorePage() {
                     <div className="px-8 pb-6">
                         <div className="flex gap-3 overflow-x-auto no-scrollbar">
                             {selectedPartner.services?.map((s: any) => (
-                                <div key={s.id} className="min-w-[200px] bg-white/60 dark:bg-white/5 rounded-[1.5rem] p-5 border border-slate-200 dark:border-white/10 hover:border-[#80BF84] transition-all cursor-pointer group/item">
-                                    <p className="text-xs font-black text-slate-800 dark:text-zinc-200 truncate mb-1 group-hover/item:text-[#80BF84]">{s.service_name}</p>
-                                    <p className="text-sm font-black text-[#80BF84]">{s.price.toLocaleString()}đ</p>
+                                <div key={s.id} className="min-w-[200px] bg-white/60 dark:bg-white/5 rounded-[1.5rem] p-5 border border-slate-200 dark:border-white/10 hover:border-brand-primary transition-all cursor-pointer group/item">
+                                    <p className="text-xs font-black text-slate-800 dark:text-zinc-200 truncate mb-1 group-hover/item:text-brand-primary">{s.service_name}</p>
+                                    <p className="text-sm font-black text-brand-primary">{s.price.toLocaleString()}đ</p>
                                 </div>
                             ))}
                         </div>
                     </div>
 
                     <div className="p-8 pt-2">
-                        <button onClick={() => router.push(`/${selectedPartner.username}`)} className="w-full py-5 bg-gradient-to-r from-[#80BF84] to-emerald-600 text-zinc-950 font-black text-sm rounded-[2rem] shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3">
+                        <button onClick={() => router.push(`/${selectedPartner.username}`)} className="w-full py-5 bg-gradient-to-r from-brand-primary to-emerald-600 text-zinc-950 font-black text-sm rounded-[2rem] shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3">
                             XEM HỒ SƠ & ĐẶT LỊCH <ChevronRight size={20}/>
                         </button>
                     </div>

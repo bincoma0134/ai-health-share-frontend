@@ -467,11 +467,11 @@ export default function CalendarFeature() {
       return false;
   });
 
-  if (isLoading || !isMounted) return <div className="h-[100dvh] bg-slate-50 dark:bg-zinc-950"></div>;
+  if (isLoading || !isMounted) return <div className="h-[100dvh] bg-brand-base dark:bg-zinc-950"></div>;
 
   return (
-    <div className="h-[100dvh] w-full bg-slate-50 dark:bg-black overflow-hidden flex relative transition-colors duration-500">
-      <div className="flex-1 relative h-[100dvh] overflow-y-auto no-scrollbar scroll-smooth bg-slate-50 dark:bg-zinc-950">
+    <div className="h-[100dvh] w-full bg-brand-base dark:bg-black overflow-hidden flex relative transition-colors duration-500">
+      <div className="flex-1 relative h-[100dvh] overflow-y-auto no-scrollbar scroll-smooth bg-brand-base dark:bg-zinc-950">
         
         {/* HEADER CONTROLS */}
         <div className="absolute top-6 right-6 z-[60] flex items-center gap-3">
@@ -481,8 +481,8 @@ export default function CalendarFeature() {
 
         <div className="max-w-4xl mx-auto pt-20 pb-32 px-5">
             <div className="mb-10 animate-slide-up">
-                <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-2 flex items-center gap-3"><CalendarDays className="text-[#80BF84]" size={36} /> Lịch hẹn của tôi</h2>
-                <p className="text-slate-500 dark:text-zinc-400 font-medium">Theo dõi và quản lý hành trình sức khỏe.</p>
+                <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-2 flex items-center gap-3"><CalendarDays className="text-brand-primary" size={36} /> Lịch hẹn của tôi</h2>
+                <p className="text-brand-base0 dark:text-zinc-400 font-medium">Theo dõi và quản lý hành trình sức khỏe.</p>
             </div>
 
             {!user ? (
@@ -492,22 +492,22 @@ export default function CalendarFeature() {
                     {/* THỐNG KÊ TOP METRICS - PHIÊN BẢN TƯƠNG TÁC */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
                         {/* 1. Lịch hôm nay */}
-                        <button onClick={() => openMetricDetails('today')} className="p-5 text-left rounded-[2rem] bg-white dark:bg-[#141416] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-xl hover:border-blue-500/40 active:scale-95 group">
+                        <button onClick={() => openMetricDetails('today')} className="p-5 text-left rounded-[2rem] bg-white dark:bg-[#141416] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-xl hover:border-brand-trust/40 active:scale-95 group">
                             <div className="flex justify-between items-start mb-2">
-                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Lịch hôm nay</p>
-                                <CalendarDays size={16} className="text-blue-500 opacity-50 group-hover:opacity-100 transition-opacity" />
+                                <p className="text-[10px] font-black text-brand-base0 uppercase tracking-widest">Lịch hôm nay</p>
+                                <CalendarDays size={16} className="text-brand-trust opacity-50 group-hover:opacity-100 transition-opacity" />
                             </div>
                             <p className="text-4xl font-black text-slate-900 dark:text-white">{metrics.todayCount}</p>
                             <p className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-tight">Tổng số cuộc hẹn</p>
                         </button>
 
                         {/* 2. Chờ Check-in */}
-                        <button onClick={() => openMetricDetails('checkin')} className="p-5 text-left rounded-[2rem] bg-white dark:bg-[#141416] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-xl hover:border-emerald-500/40 active:scale-95 group">
+                        <button onClick={() => openMetricDetails('checkin')} className="p-5 text-left rounded-[2rem] bg-white dark:bg-[#141416] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-xl hover:border-brand-trust/40 active:scale-95 group">
                             <div className="flex justify-between items-start mb-2">
-                                <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Chờ Check-in</p>
-                                <CheckCircle size={16} className="text-emerald-500 opacity-50 group-hover:opacity-100 transition-opacity" />
+                                <p className="text-[10px] font-black text-brand-trust uppercase tracking-widest">Chờ Check-in</p>
+                                <CheckCircle size={16} className="text-brand-trust opacity-50 group-hover:opacity-100 transition-opacity" />
                             </div>
-                            <p className="text-4xl font-black text-emerald-600 dark:text-emerald-400">{metrics.pendingCheckInCount}</p>
+                            <p className="text-4xl font-black text-emerald-600 dark:text-brand-primary">{metrics.pendingCheckInCount}</p>
                             <p className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-tight">Khách sắp đến</p>
                         </button>
 
@@ -534,8 +534,8 @@ export default function CalendarFeature() {
 
                     {/* VIEW TOGGLE */}
                     <div className="flex p-1.5 bg-white dark:bg-white/5 shadow-sm rounded-2xl w-full md:w-max border border-slate-200 dark:border-white/10">
-                        <button onClick={() => setPartnerViewMode('timeline')} className={`px-6 py-2.5 rounded-xl font-bold text-sm flex-shrink-0 transition-all ${partnerViewMode === 'timeline' ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'}`}>Trục thời gian</button>
-                        <button onClick={() => setPartnerViewMode('analytics')} className={`px-6 py-2.5 rounded-xl font-bold text-sm flex-shrink-0 transition-all ${partnerViewMode === 'analytics' ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'}`}>Biểu đồ Thống kê</button>
+                        <button onClick={() => setPartnerViewMode('timeline')} className={`px-6 py-2.5 rounded-xl font-bold text-sm flex-shrink-0 transition-all ${partnerViewMode === 'timeline' ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-md' : 'text-brand-base0 hover:bg-slate-100 dark:hover:bg-white/5'}`}>Trục thời gian</button>
+                        <button onClick={() => setPartnerViewMode('analytics')} className={`px-6 py-2.5 rounded-xl font-bold text-sm flex-shrink-0 transition-all ${partnerViewMode === 'analytics' ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-md' : 'text-brand-base0 hover:bg-slate-100 dark:hover:bg-white/5'}`}>Biểu đồ Thống kê</button>
                     </div>
 
                     {/* RENDER VIEW - DASHBOARD QUẢN TRỊ 2.0 */}
@@ -544,7 +544,7 @@ export default function CalendarFeature() {
                             
                             {/* Dòng 1: High-level KPIs */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="p-5 rounded-[2rem] bg-gradient-to-br from-emerald-500 to-[#80BF84] text-white shadow-lg shadow-emerald-500/20 relative overflow-hidden">
+                                <div className="p-5 rounded-[2rem] bg-gradient-to-br from-brand-trust to-brand-primary text-white shadow-lg shadow-brand-trust/20 relative overflow-hidden">
                                     <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
                                     <p className="text-xs font-black uppercase tracking-widest opacity-80 mb-1">Tổng doanh thu (7 Ngày)</p>
                                     <p className="text-3xl font-black">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(metrics.weeklyRev)}</p>
@@ -555,7 +555,7 @@ export default function CalendarFeature() {
                                 </div>
                                 <div className="p-5 rounded-[2rem] bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 shadow-sm">
                                     <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Tổng lịch hẹn đã phục vụ</p>
-                                    <p className="text-3xl font-black text-slate-900 dark:text-white">{metrics.totalCompleted} <span className="text-sm font-medium text-slate-500">/ {metrics.totalAppointments} đơn</span></p>
+                                    <p className="text-3xl font-black text-slate-900 dark:text-white">{metrics.totalCompleted} <span className="text-sm font-medium text-brand-base0">/ {metrics.totalAppointments} đơn</span></p>
                                 </div>
                             </div>
 
@@ -563,7 +563,7 @@ export default function CalendarFeature() {
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 {/* Doanh thu (Chiếm 2/3) */}
                                 <div className="md:col-span-2 p-6 rounded-[2rem] bg-white dark:bg-[#0f0f11] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-lg">
-                                    <h3 className="text-sm font-black text-slate-900 dark:text-white mb-4 uppercase tracking-widest flex items-center gap-2"><Activity size={16} className="text-[#80BF84]"/> Dòng tiền 7 ngày qua</h3>
+                                    <h3 className="text-sm font-black text-slate-900 dark:text-white mb-4 uppercase tracking-widest flex items-center gap-2"><Activity size={16} className="text-brand-primary"/> Dòng tiền 7 ngày qua</h3>
                                     <div className="h-[280px] w-full">
                                         <ReactApexChart options={revChartOptions} series={[{ name: 'Doanh thu', data: metrics.last7Days.map(d => metrics.revByDay[d]) }]} type="bar" height="100%" />
                                     </div>
@@ -571,7 +571,7 @@ export default function CalendarFeature() {
                                 
                                 {/* Phễu Trạng thái (Chiếm 1/3) */}
                                 <div className="p-6 rounded-[2rem] bg-white dark:bg-[#0f0f11] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-lg flex flex-col">
-                                    <h3 className="text-sm font-black text-slate-900 dark:text-white mb-4 uppercase tracking-widest flex items-center gap-2"><Compass size={16} className="text-blue-500"/> Tỷ lệ trạng thái</h3>
+                                    <h3 className="text-sm font-black text-slate-900 dark:text-white mb-4 uppercase tracking-widest flex items-center gap-2"><Compass size={16} className="text-brand-trust"/> Tỷ lệ trạng thái</h3>
                                     <div className="flex-1 flex items-center justify-center min-h-[250px]">
                                         <ReactApexChart 
                                             options={statusChartOptions} 
@@ -586,8 +586,8 @@ export default function CalendarFeature() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Giờ cao điểm */}
                                 <div className="p-6 rounded-[2rem] bg-white dark:bg-[#0f0f11] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-lg">
-                                    <h3 className="text-sm font-black text-slate-900 dark:text-white mb-1 uppercase tracking-widest flex items-center gap-2"><Clock size={16} className="text-blue-500"/> Mật độ giờ cao điểm</h3>
-                                    <p className="text-xs text-slate-500 mb-4">Dựa trên thời gian bắt đầu của tất cả lịch hẹn</p>
+                                    <h3 className="text-sm font-black text-slate-900 dark:text-white mb-1 uppercase tracking-widest flex items-center gap-2"><Clock size={16} className="text-brand-trust"/> Mật độ giờ cao điểm</h3>
+                                    <p className="text-xs text-brand-base0 mb-4">Dựa trên thời gian bắt đầu của tất cả lịch hẹn</p>
                                     <div className="h-[220px] w-full">
                                         <ReactApexChart options={peakHourOptions} series={[{ name: 'Khách hàng', data: metrics.hourlyData }]} type="bar" height="100%" />
                                     </div>
@@ -596,7 +596,7 @@ export default function CalendarFeature() {
                                 {/* Cơ cấu dịch vụ */}
                                 <div className="p-6 rounded-[2rem] bg-white dark:bg-[#0f0f11] border border-slate-200 dark:border-white/10 shadow-sm transition-all hover:shadow-lg">
                                     <h3 className="text-sm font-black text-slate-900 dark:text-white mb-1 uppercase tracking-widest flex items-center gap-2"><Receipt size={16} className="text-purple-500"/> Top Dịch vụ mang lại doanh thu</h3>
-                                    <p className="text-xs text-slate-500 mb-4">Các dịch vụ có tỷ trọng dòng tiền lớn nhất</p>
+                                    <p className="text-xs text-brand-base0 mb-4">Các dịch vụ có tỷ trọng dòng tiền lớn nhất</p>
                                     <div className="h-[220px] w-full">
                                         <ReactApexChart 
                                             options={{...serviceOptions, xaxis: { ...serviceOptions.xaxis, categories: metrics.topServices.map(s => s[0]) }}} 
@@ -610,13 +610,13 @@ export default function CalendarFeature() {
                     ) : (
                         <div className="bg-white dark:bg-[#0f0f11] rounded-[2.5rem] border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden flex flex-col animate-fade-in h-[800px]">
                             {/* Calendar Header */}
-                            <div className="grid grid-cols-[80px_1fr] border-b border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/5">
+                            <div className="grid grid-cols-[80px_1fr] border-b border-slate-200 dark:border-white/10 bg-brand-base/50 dark:bg-white/5">
                                 <div className="p-4 border-r border-slate-200 dark:border-white/10 flex items-center justify-center font-bold text-[10px] text-slate-400">GMT+07</div>
                                 <div className="grid grid-cols-7">
                                     {weekDays.map((day, i) => (
-                                        <div key={i} className={`p-4 text-center border-r last:border-0 border-slate-200 dark:border-white/10 ${day.toDateString() === new Date().toDateString() ? 'bg-[#80BF84]/10' : ''}`}>
-                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{day.toLocaleDateString('vi-VN', { weekday: 'short' })}</p>
-                                            <p className={`text-xl font-black mt-1 ${day.toDateString() === new Date().toDateString() ? 'text-[#80BF84]' : 'text-slate-900 dark:text-white'}`}>{day.getDate()}</p>
+                                        <div key={i} className={`p-4 text-center border-r last:border-0 border-slate-200 dark:border-white/10 ${day.toDateString() === new Date().toDateString() ? 'bg-brand-primary/10' : ''}`}>
+                                            <p className="text-[10px] font-black text-brand-base0 uppercase tracking-widest">{day.toLocaleDateString('vi-VN', { weekday: 'short' })}</p>
+                                            <p className={`text-xl font-black mt-1 ${day.toDateString() === new Date().toDateString() ? 'text-brand-primary' : 'text-slate-900 dark:text-white'}`}>{day.getDate()}</p>
                                         </div>
                                     ))}
                                 </div>
@@ -630,7 +630,7 @@ export default function CalendarFeature() {
                                 <div className="grid grid-cols-[80px_1fr] min-h-[1800px] relative">
                                     
                                     {/* CỘT GIỜ (BÊN TRÁI) */}
-                                    <div className="border-r border-slate-200 dark:border-white/10 bg-slate-50/30 dark:bg-black/20">
+                                    <div className="border-r border-slate-200 dark:border-white/10 bg-brand-base/30 dark:bg-black/20">
                                         {hours.map(h => (
                                             <div key={h} className="h-[100px] relative">
                                                 <span className="absolute top-[-10px] right-3 text-[11px] font-black text-slate-400 dark:text-zinc-600 uppercase tracking-tighter">
@@ -671,8 +671,8 @@ export default function CalendarFeature() {
                                                     <div 
                                                         key={appt.id}
                                                         className={`absolute rounded-lg px-2 py-1.5 border-[1.5px] border-white dark:border-[#0a0a0c] transition-all hover:shadow-2xl cursor-pointer group/card overflow-hidden select-none
-                                                            ${isConfirmed ? 'bg-emerald-500 text-white shadow-sm hover:bg-emerald-400' : 
-                                                              isServed ? 'bg-blue-500 text-white shadow-sm hover:bg-blue-400' : 
+                                                            ${isConfirmed ? 'bg-brand-trust text-white shadow-sm hover:bg-brand-primary' : 
+                                                              isServed ? 'bg-brand-trust text-white shadow-sm hover:bg-blue-400' : 
                                                               'bg-slate-400 text-white opacity-80 hover:bg-slate-300'}`}
                                                         style={{ 
                                                             top: `${appt.top}px`, 
@@ -728,12 +728,12 @@ export default function CalendarFeature() {
                     <div className="flex p-1.5 bg-white dark:bg-white/5 shadow-sm rounded-2xl w-full md:w-max mb-8 border border-slate-200 dark:border-white/10 overflow-x-auto no-scrollbar">
                         {!isMyClient && (
                             <>
-                                <button onClick={() => setActiveTab('waiting')} className={`px-6 py-2.5 rounded-xl font-bold text-sm flex-shrink-0 transition-all ${activeTab === 'waiting' ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'}`}>Đang chờ</button>
-                                <button onClick={() => setActiveTab('payment')} className={`px-6 py-2.5 rounded-xl font-bold text-sm flex-shrink-0 transition-all ${activeTab === 'payment' ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'}`}>Thanh toán</button>
+                                <button onClick={() => setActiveTab('waiting')} className={`px-6 py-2.5 rounded-xl font-bold text-sm flex-shrink-0 transition-all ${activeTab === 'waiting' ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-md' : 'text-brand-base0 hover:bg-slate-100 dark:hover:bg-white/5'}`}>Đang chờ</button>
+                                <button onClick={() => setActiveTab('payment')} className={`px-6 py-2.5 rounded-xl font-bold text-sm flex-shrink-0 transition-all ${activeTab === 'payment' ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-md' : 'text-brand-base0 hover:bg-slate-100 dark:hover:bg-white/5'}`}>Thanh toán</button>
                             </>
                         )}
-                        <button onClick={() => setActiveTab('upcoming')} className={`px-6 py-2.5 rounded-xl font-bold text-sm flex-shrink-0 transition-all ${activeTab === 'upcoming' ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'}`}>Sắp tới</button>
-                        <button onClick={() => setActiveTab('history')} className={`px-6 py-2.5 rounded-xl font-bold text-sm flex-shrink-0 transition-all ${activeTab === 'history' ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'}`}>Lịch sử</button>
+                        <button onClick={() => setActiveTab('upcoming')} className={`px-6 py-2.5 rounded-xl font-bold text-sm flex-shrink-0 transition-all ${activeTab === 'upcoming' ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-md' : 'text-brand-base0 hover:bg-slate-100 dark:hover:bg-white/5'}`}>Sắp tới</button>
+                        <button onClick={() => setActiveTab('history')} className={`px-6 py-2.5 rounded-xl font-bold text-sm flex-shrink-0 transition-all ${activeTab === 'history' ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-md' : 'text-brand-base0 hover:bg-slate-100 dark:hover:bg-white/5'}`}>Lịch sử</button>
                     </div>
 
                     <div className="flex flex-col gap-6">
@@ -757,16 +757,16 @@ export default function CalendarFeature() {
                                 const duration = "60 phút";
 
                                 return (
-                                    <div key={appt.id} className={`group flex flex-col md:flex-row overflow-hidden rounded-[1.5rem] border shadow-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-[#80BF84]/10 bg-white/60 dark:bg-zinc-900/40 backdrop-blur-xl border-slate-200/50 dark:border-white/10 relative`}>
+                                    <div key={appt.id} className={`group flex flex-col md:flex-row overflow-hidden rounded-[1.5rem] border shadow-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-brand-primary/10 bg-white/60 dark:bg-zinc-900/40 backdrop-blur-xl border-slate-200/50 dark:border-white/10 relative`}>
                                         <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent dark:from-white/5 dark:to-transparent opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-500"></div>
                                         
                                         {/* CỘT THỜI GIAN (Trái) */}
-                                        <div className="w-full md:w-36 p-6 flex flex-col items-center justify-center bg-slate-50/50 dark:bg-black/20 border-b md:border-b-0 md:border-r border-slate-100/50 dark:border-white/5 relative shrink-0">
-                                            {currentStatus === 'CONFIRMED' && <div className="absolute top-0 left-0 w-full h-1 bg-[#80BF84] shadow-[0_0_10px_#80BF84]"></div>}
+                                        <div className="w-full md:w-36 p-6 flex flex-col items-center justify-center bg-brand-base/50 dark:bg-black/20 border-b md:border-b-0 md:border-r border-slate-100/50 dark:border-white/5 relative shrink-0">
+                                            {currentStatus === 'CONFIRMED' && <div className="absolute top-0 left-0 w-full h-1 bg-brand-primary shadow-[0_0_10px_#80BF84]"></div>}
                                             <CalendarDays size={24} className="text-slate-300 dark:text-zinc-600 mb-2 group-hover:scale-110 transition-transform" />
                                             <span className="text-3xl font-black text-slate-800 dark:text-white text-center leading-tight tracking-tighter">{dayStr}</span>
                                             <div className="flex items-center gap-1.5 mt-3 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-slate-200/50 dark:border-white/10 shadow-sm">
-                                                <Clock size={12} className="text-[#80BF84]"/>
+                                                <Clock size={12} className="text-brand-primary"/>
                                                 <span className="text-xs font-black text-slate-700 dark:text-slate-300">{timeStr}</span>
                                             </div>
                                         </div>
@@ -778,14 +778,14 @@ export default function CalendarFeature() {
                                                     <span className={`w-max px-3 py-1 text-[10px] font-black rounded-full uppercase tracking-widest shadow-sm
                                                         ${currentStatus === 'WAITING_PARTNER' ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 border border-amber-200/50' : 
                                                           currentStatus === 'PENDING_PAYMENT' ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400 border border-rose-200/50 animate-pulse shadow-[0_0_15px_rgba(244,63,94,0.3)]' : 
-                                                          currentStatus === 'CONFIRMED' ? 'bg-[#80BF84]/20 text-emerald-800 dark:text-[#80BF84] border border-[#80BF84]/30' : 
-                                                          currentStatus === 'COMPLETED' ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400 border border-blue-200/50' : 'bg-slate-200 text-slate-600 border border-slate-300/50 dark:bg-zinc-800 dark:border-zinc-700'}`}>
+                                                          currentStatus === 'CONFIRMED' ? 'bg-brand-primary/20 text-emerald-800 dark:text-brand-primary border border-brand-primary/30' : 
+                                                          currentStatus === 'COMPLETED' ? 'bg-blue-100 text-blue-700 dark:bg-brand-trust/20 dark:text-blue-400 border border-blue-200/50' : 'bg-slate-200 text-slate-600 border border-slate-300/50 dark:bg-zinc-800 dark:border-zinc-700'}`}>
                                                         {currentStatus.replace('_', ' ')}
                                                     </span>
                                                     {hasVoucher && (
-                                                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-emerald-500/10 to-emerald-400/5 border border-emerald-500/20 rounded-md w-max backdrop-blur-sm">
-                                                            <Ticket size={10} className="text-emerald-600 dark:text-emerald-400" />
-                                                            <span className="text-[9px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest">Đã dùng Voucher</span>
+                                                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-brand-trust/10 to-brand-primary/5 border border-brand-trust/20 rounded-md w-max backdrop-blur-sm">
+                                                            <Ticket size={10} className="text-emerald-600 dark:text-brand-primary" />
+                                                            <span className="text-[9px] font-black text-emerald-700 dark:text-brand-primary uppercase tracking-widest">Đã dùng Voucher</span>
                                                         </div>
                                                     )}
                                                 </div>
@@ -796,7 +796,7 @@ export default function CalendarFeature() {
                                                                 <span className="px-2 py-0.5 bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[10px] font-black rounded uppercase tracking-tighter mb-0.5 w-max shadow-sm border border-rose-500/20">-{formatPrice(discountAmount)}</span>
                                                                 <span className="font-bold text-slate-400 dark:text-zinc-500 line-through text-sm opacity-60">{formatPrice(originalPrice)}</span>
                                                             </div>
-                                                            <p className="font-black text-3xl text-blue-600 dark:text-blue-400 drop-shadow-md tracking-tighter">{formatPrice(finalPrice)}</p>
+                                                            <p className="font-black text-3xl text-brand-trust dark:text-blue-400 drop-shadow-md tracking-tighter">{formatPrice(finalPrice)}</p>
                                                         </div>
                                                     ) : (
                                                         <p className="font-black text-2xl text-slate-900 dark:text-white drop-shadow-sm tracking-tight">{formatPrice(finalPrice)}</p>
@@ -808,16 +808,16 @@ export default function CalendarFeature() {
                                             
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
                                             {isMyClient ? (
-                                                    <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-zinc-400 bg-slate-50 dark:bg-white/5 p-2.5 rounded-xl border border-slate-100 dark:border-white/5">
-                                                        <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-zinc-800 flex items-center justify-center text-slate-500 shrink-0"><UserIcon size={16}/></div>
+                                                    <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-zinc-400 bg-brand-base dark:bg-white/5 p-2.5 rounded-xl border border-slate-100 dark:border-white/5">
+                                                        <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-zinc-800 flex items-center justify-center text-brand-base0 shrink-0"><UserIcon size={16}/></div>
                                                         <span className="font-semibold line-clamp-1">{appt.users?.full_name || "Khách hàng ẩn danh"}</span>
                                                     </div>
                                                 ) : (
                                                     <button 
                                                         onClick={() => appt.partner?.username && router.push(`/${appt.partner.username}`)}
-                                                        className="flex items-center gap-2 text-sm text-slate-600 dark:text-zinc-400 bg-slate-50 dark:bg-white/5 p-2.5 rounded-xl border border-slate-100 dark:border-white/5 hover:border-[#80BF84] hover:bg-[#80BF84]/5 transition-all cursor-pointer group/addr text-left"
+                                                        className="flex items-center gap-2 text-sm text-slate-600 dark:text-zinc-400 bg-brand-base dark:bg-white/5 p-2.5 rounded-xl border border-slate-100 dark:border-white/5 hover:border-brand-primary hover:bg-brand-primary/5 transition-all cursor-pointer group/addr text-left"
                                                     >
-                                                        <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-zinc-800 flex items-center justify-center text-slate-500 group-hover/addr:text-[#80BF84] group-hover/addr:bg-white dark:group-hover/addr:bg-black transition-colors shrink-0">
+                                                        <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-zinc-800 flex items-center justify-center text-brand-base0 group-hover/addr:text-brand-primary group-hover/addr:bg-white dark:group-hover/addr:bg-black transition-colors shrink-0">
                                                             <MapPin size={16}/>
                                                         </div>
                                                         <div className="flex flex-col">
@@ -826,16 +826,16 @@ export default function CalendarFeature() {
                                                         </div>
                                                     </button>
                                                 )}
-                                                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-zinc-400 bg-slate-50 dark:bg-white/5 p-2.5 rounded-xl border border-slate-100 dark:border-white/5">
-                                                    <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-zinc-800 flex items-center justify-center text-slate-500"><Activity size={16}/></div>
+                                                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-zinc-400 bg-brand-base dark:bg-white/5 p-2.5 rounded-xl border border-slate-100 dark:border-white/5">
+                                                    <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-zinc-800 flex items-center justify-center text-brand-base0"><Activity size={16}/></div>
                                                     <span className="font-semibold">Thời lượng: {duration}</span>
                                                 </div>
                                             </div>
 
                                             {/* Công cụ tương tác nhỏ */}
                                             <div className="flex items-center gap-4 mt-2">
-                                                <button className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-blue-500 transition-colors"><MessageCircle size={14}/> Nhắn tin</button>
-                                                <button className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-green-500 transition-colors"><Phone size={14}/> Gọi điện</button>
+                                                <button className="flex items-center gap-1.5 text-xs font-bold text-brand-base0 hover:text-brand-trust transition-colors"><MessageCircle size={14}/> Nhắn tin</button>
+                                                <button className="flex items-center gap-1.5 text-xs font-bold text-brand-base0 hover:text-green-500 transition-colors"><Phone size={14}/> Gọi điện</button>
                                             </div>
 
                                             {currentStatus === 'CANCELLED' && appt.rejection_reason && (
@@ -844,14 +844,14 @@ export default function CalendarFeature() {
                                         </div>
 
                                         {/* CỘT THAO TÁC / QR (Phải) */}
-                                        <div className="w-full md:w-64 p-6 bg-slate-50/50 dark:bg-[#141416] border-t md:border-t-0 md:border-l border-slate-100 dark:border-white/5 flex flex-col justify-center gap-3">
+                                        <div className="w-full md:w-64 p-6 bg-brand-base/50 dark:bg-[#141416] border-t md:border-t-0 md:border-l border-slate-100 dark:border-white/5 flex flex-col justify-center gap-3">
                                             
                                             {/* Giao diện User */}
                                             {!isMyClient && currentStatus === 'WAITING_PARTNER' && (
                                                 <div className="flex flex-col gap-3">
                                                     <div className="text-center p-4 rounded-xl border border-dashed border-slate-300 dark:border-white/20">
                                                         <Clock size={24} className="mx-auto text-slate-400 mb-2 animate-pulse" />
-                                                        <p className="text-xs font-medium text-slate-500">Cơ sở đang kiểm tra lịch trống và sẽ gửi báo giá sớm.</p>
+                                                        <p className="text-xs font-medium text-brand-base0">Cơ sở đang kiểm tra lịch trống và sẽ gửi báo giá sớm.</p>
                                                     </div>
                                                     <button 
                                                         onClick={() => setCancelConfirmId(appt.id)}
@@ -868,7 +868,7 @@ export default function CalendarFeature() {
                                                         <p className="text-[10px] text-rose-600 dark:text-rose-400 font-bold uppercase mb-1">Hạn thanh toán</p>
                                                         <p className="text-sm font-black text-rose-700 dark:text-rose-300">{deadlineStr}</p>
                                                     </div>
-                                                    <button onClick={() => handlePaymentClick(appt.id)} className="w-full flex items-center justify-center gap-2 py-3 bg-slate-900 dark:bg-white text-white dark:text-black font-bold rounded-xl hover:scale-105 transition-transform shadow-lg shadow-slate-500/20">
+                                                    <button onClick={() => handlePaymentClick(appt.id)} className="w-full flex items-center justify-center gap-2 py-3 bg-slate-900 dark:bg-white text-white dark:text-black font-bold rounded-xl hover:scale-105 transition-transform shadow-lg shadow-brand-base0/20">
                                                         <Receipt size={16} /> Thanh toán ngay
                                                     </button>
                                                     <button 
@@ -881,18 +881,18 @@ export default function CalendarFeature() {
                                             )}  
 
 {!isMyClient && currentStatus === 'CONFIRMED' && (
-    <div className="text-center p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border-2 border-dashed border-emerald-300 dark:border-emerald-500/30">
+    <div className="text-center p-4 rounded-2xl bg-emerald-50 dark:bg-brand-trust/10 border-2 border-dashed border-emerald-300 dark:border-brand-trust/30">
         <QrCode size={32} className="mx-auto text-emerald-600 mb-2" />
-        <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold uppercase mb-1">Mã xác nhận tại quầy</p>
-        <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400 tracking-[0.2em]">{appt.check_in_code || "------"}</p>
+        <p className="text-[10px] text-emerald-700 dark:text-brand-primary font-bold uppercase mb-1">Mã xác nhận tại quầy</p>
+        <p className="text-3xl font-black text-emerald-600 dark:text-brand-primary tracking-[0.2em]">{appt.check_in_code || "------"}</p>
     </div>
 )}
 
                         {/* Nút để User chốt đơn sau khi làm dịch vụ xong */}
                         {!isMyClient && currentStatus === 'SERVED' && (
                             <div className="flex flex-col gap-3">
-                                <div className="text-center p-3 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20">
-                                    <p className="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase mb-1">Cơ sở đã phục vụ</p>
+                                <div className="text-center p-3 rounded-xl bg-blue-50 dark:bg-brand-trust/10 border border-blue-200 dark:border-brand-trust/20">
+                                    <p className="text-[10px] text-brand-trust dark:text-blue-400 font-bold uppercase mb-1">Cơ sở đã phục vụ</p>
                                     <p className="text-sm font-black text-blue-700 dark:text-blue-300">Vui lòng xác nhận để giải ngân</p>
                                 </div>
                                 <button 
@@ -911,7 +911,7 @@ export default function CalendarFeature() {
                                             } else throw new Error();
                                         } catch { toast.error("Lỗi xác nhận", { id: tid }); }
                                     }} 
-                                    className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20"
+                                    className="w-full py-3 bg-brand-trust text-white font-bold rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-brand-trust/20"
                                 >
                                     <CheckCircle size={16} className="inline mr-1" /> Xác nhận hài lòng
                                 </button>
@@ -922,16 +922,16 @@ export default function CalendarFeature() {
                         {isMyClient && currentStatus === 'CONFIRMED' && (
                             <>
                                                     <div className="text-center">
-                                                        <p className="text-xs font-bold text-slate-500 mb-2 uppercase">Xác nhận khách đến</p>
+                                                        <p className="text-xs font-bold text-brand-base0 mb-2 uppercase">Xác nhận khách đến</p>
                                                         <input 
                                                             type="text" 
                                                             placeholder="Nhập 6 số mã khách" 
-                                                            className="w-full px-4 py-3 mb-3 text-lg rounded-xl border border-slate-300 dark:border-white/20 bg-white dark:bg-black text-center font-black tracking-widest outline-none focus:border-[#80BF84]"
+                                                            className="w-full px-4 py-3 mb-3 text-lg rounded-xl border border-slate-300 dark:border-white/20 bg-white dark:bg-black text-center font-black tracking-widest outline-none focus:border-brand-primary"
                                                             value={checkInCodes[appt.id] || ''}
                                                             onChange={(e) => setCheckInCodes({...checkInCodes, [appt.id]: e.target.value})}
                                                         />
                                                     </div>
-                                                    <button onClick={() => handleComplete(appt.id)} className="w-full flex items-center justify-center gap-2 py-3 bg-[#80BF84] text-zinc-950 font-bold rounded-xl hover:scale-105 transition-transform shadow-lg shadow-emerald-500/20">
+                                                    <button onClick={() => handleComplete(appt.id)} className="w-full flex items-center justify-center gap-2 py-3 bg-brand-primary text-zinc-950 font-bold rounded-xl hover:scale-105 transition-transform shadow-lg shadow-brand-trust/20">
                                                         <CheckCircle size={18} /> Hoàn tất dịch vụ
                                                     </button>
                                                 </>
@@ -940,7 +940,7 @@ export default function CalendarFeature() {
                                             {currentStatus === 'COMPLETED' && (
                                                 <div className="text-center p-4">
                                                     <CheckCircle size={32} className="mx-auto text-slate-300 dark:text-zinc-600 mb-2" />
-                                                    <p className="text-sm font-bold text-slate-500">Đã phục vụ xong</p>
+                                                    <p className="text-sm font-bold text-brand-base0">Đã phục vụ xong</p>
                                                 </div>
                                             )}
                                         </div>
@@ -961,7 +961,7 @@ export default function CalendarFeature() {
                         <AlertCircle size={32} className="text-rose-500" />
                     </div>
                     <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">Hủy yêu cầu đặt lịch?</h3>
-                    <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mb-6 leading-relaxed">
+                    <p className="text-sm font-medium text-brand-base0 dark:text-zinc-400 mb-6 leading-relaxed">
                         {appointments.find(a => a.id === cancelConfirmId)?.status === 'PENDING_PAYMENT' 
                             ? "Cơ sở đã xác nhận lịch. Nếu hủy lúc này, Voucher đã áp dụng sẽ bị HỦY BỎ và không thể hoàn lại. Bạn chắc chắn chứ?"
                             : "Thao tác này không thể hoàn tác. Voucher sẽ được hoàn lại vào Ví (nếu có)."}
@@ -988,11 +988,11 @@ export default function CalendarFeature() {
           
           <div className="relative w-full max-w-sm bg-white/40 dark:bg-zinc-900/60 backdrop-blur-3xl rounded-[2.5rem] border border-slate-200/50 dark:border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.3)] p-6 overflow-hidden animate-slide-up">
               {/* Decor Background Effect */}
-              <div className="absolute -right-12 -top-12 w-40 h-40 bg-blue-500/20 rounded-full blur-3xl pointer-events-none"></div>
+              <div className="absolute -right-12 -top-12 w-40 h-40 bg-brand-trust/20 rounded-full blur-3xl pointer-events-none"></div>
 
               <div className="flex justify-between items-center mb-6 relative z-10">
-                  <h3 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Receipt size={20} className="text-blue-500"/> Xác nhận Hóa đơn</h3>
-                  <button onClick={() => !isCreatingPayment && setIsPreviewModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100/50 dark:bg-white/10 text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white transition-colors">
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Receipt size={20} className="text-brand-trust"/> Xác nhận Hóa đơn</h3>
+                  <button onClick={() => !isCreatingPayment && setIsPreviewModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100/50 dark:bg-white/10 text-brand-base0 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white transition-colors">
                       <X size={16} />
                   </button>
               </div>
@@ -1005,18 +1005,18 @@ export default function CalendarFeature() {
 
                   {paymentPreview.discount_amount > 0 ? (
                       <div className="flex flex-col gap-2">
-                          <div className="flex justify-between items-center text-sm font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-500/10 px-3 py-2.5 rounded-xl border border-emerald-100/50 dark:border-emerald-500/20 shadow-sm">
+                          <div className="flex justify-between items-center text-sm font-black text-emerald-600 dark:text-brand-primary bg-emerald-50/50 dark:bg-brand-trust/10 px-3 py-2.5 rounded-xl border border-emerald-100/50 dark:border-brand-trust/20 shadow-sm">
                               <span className="flex items-center gap-2"><Ticket size={16}/> Ưu đãi Voucher</span>
                               <span>- {formatPrice(paymentPreview.discount_amount)}</span>
                           </div>
                           {paymentPreview.applied_voucher_code && (
-                              <p className="text-right text-[10px] font-bold text-emerald-600/70 dark:text-emerald-400/70 uppercase tracking-widest bg-white/50 dark:bg-black/20 w-max ml-auto px-2 py-1 rounded-md">
+                              <p className="text-right text-[10px] font-bold text-emerald-600/70 dark:text-brand-primary/70 uppercase tracking-widest bg-white/50 dark:bg-black/20 w-max ml-auto px-2 py-1 rounded-md">
                                   Mã tự động áp dụng: {paymentPreview.applied_voucher_code}
                               </p>
                           )}
                       </div>
                   ) : (
-                      <p className="text-right text-[10px] italic text-slate-500 dark:text-zinc-500 bg-white/50 dark:bg-black/20 w-max ml-auto px-2 py-1 rounded-md">Không có ưu đãi nào được áp dụng</p>
+                      <p className="text-right text-[10px] italic text-brand-base0 dark:text-zinc-500 bg-white/50 dark:bg-black/20 w-max ml-auto px-2 py-1 rounded-md">Không có ưu đãi nào được áp dụng</p>
                   )}
               </div>
 
@@ -1031,13 +1031,13 @@ export default function CalendarFeature() {
 
               <div className="flex justify-between items-end relative z-10 mb-8">
                   <span className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-xs">Tổng thanh toán</span>
-                  <span className="font-black text-4xl text-blue-600 dark:text-blue-400 drop-shadow-md tracking-tighter">{formatPrice(paymentPreview.final_amount)}</span>
+                  <span className="font-black text-4xl text-brand-trust dark:text-blue-400 drop-shadow-md tracking-tighter">{formatPrice(paymentPreview.final_amount)}</span>
               </div>
 
               <button 
                   onClick={confirmPayment} 
                   disabled={isCreatingPayment}
-                  className="relative w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-black rounded-2xl active:scale-95 transition-all shadow-lg shadow-blue-500/30 overflow-hidden group z-10 flex items-center justify-center gap-2 uppercase tracking-widest text-xs"
+                  className="relative w-full py-4 bg-gradient-to-r from-brand-trust to-brand-surface text-white font-black rounded-2xl active:scale-95 transition-all shadow-lg shadow-brand-trust/30 overflow-hidden group z-10 flex items-center justify-center gap-2 uppercase tracking-widest text-xs"
               >
                   <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full skew-x-12 transition-transform duration-500"></div>
                   {isCreatingPayment ? <Activity className="animate-spin" size={18}/> : <CreditCard size={18} />}
@@ -1056,19 +1056,19 @@ export default function CalendarFeature() {
             <div className={`absolute top-2 right-2 md:top-4 md:right-4 bottom-2 md:bottom-4 w-[calc(100%-16px)] md:w-[450px] bg-white/95 dark:bg-[#121214]/95 backdrop-blur-3xl rounded-[2.5rem] border border-white/40 dark:border-white/10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] transition-transform duration-500 ease-out flex flex-col overflow-hidden ${isDrawerOpen ? 'translate-x-0' : 'translate-x-[120%]'}`}>
                 
                 {/* Header Dùng chung */}
-                <div className="px-8 py-6 flex justify-between items-start border-b border-slate-100 dark:border-white/5 bg-gradient-to-b from-slate-50/50 to-transparent dark:from-white/[0.02]">
+                <div className="px-8 py-6 flex justify-between items-start border-b border-slate-100 dark:border-white/5 bg-gradient-to-b from-brand-base/50 to-transparent dark:from-white/[0.02]">
                     <div>
                         <h3 className="text-2xl font-black text-slate-900 dark:text-white leading-tight">
                             {drawerMode === 'list' ? drawerData.title : "Chi tiết Lịch hẹn"}
                         </h3>
                         {drawerMode === 'list' && (
-                            <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest mt-1">Tổng cộng: {selectedAppointments.length} bản ghi</p>
+                            <p className="text-[11px] font-bold text-brand-base0 dark:text-zinc-500 uppercase tracking-widest mt-1">Tổng cộng: {selectedAppointments.length} bản ghi</p>
                         )}
                         {drawerMode === 'detail' && selectedDetail && (
                             <p className={`text-[10px] font-black uppercase tracking-widest mt-2 px-2.5 py-1 rounded-full inline-block ${
-                                selectedDetail.status === 'CONFIRMED' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' :
+                                selectedDetail.status === 'CONFIRMED' ? 'bg-emerald-100 text-emerald-700 dark:bg-brand-trust/20 dark:text-brand-primary' :
                                 selectedDetail.status === 'PENDING_PAYMENT' ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400' :
-                                selectedDetail.status === 'SERVED' ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400' :
+                                selectedDetail.status === 'SERVED' ? 'bg-blue-100 text-blue-700 dark:bg-brand-trust/20 dark:text-blue-400' :
                                 selectedDetail.status === 'CANCELLED' ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400' : 
                                 'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300'
                             }`}>
@@ -1076,7 +1076,7 @@ export default function CalendarFeature() {
                             </p>
                         )}
                     </div>
-                    <button onClick={() => setIsDrawerOpen(false)} className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 flex items-center justify-center transition-all text-slate-500 dark:text-white active:scale-95">
+                    <button onClick={() => setIsDrawerOpen(false)} className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 flex items-center justify-center transition-all text-brand-base0 dark:text-white active:scale-95">
                         <XCircle size={20} />
                     </button>
                 </div>
@@ -1096,30 +1096,30 @@ export default function CalendarFeature() {
                                 <div key={appt.id} onClick={() => openAppointmentDetail(appt, true)} className="p-5 rounded-[1.5rem] bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-white/10 transition-all group/item cursor-pointer">
                                     <div className="flex justify-between items-start mb-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-slate-500 overflow-hidden border border-white dark:border-zinc-700 shadow-sm shrink-0">
+                                            <div className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-brand-base0 overflow-hidden border border-white dark:border-zinc-700 shadow-sm shrink-0">
                                                 {appt.users?.avatar_url ? <img src={appt.users.avatar_url} className="w-full h-full object-cover" /> : <UserIcon size={20}/>}
                                             </div>
                                             <div>
                                                 <p className="font-black text-slate-900 dark:text-white text-sm line-clamp-1">{appt.customer_name || appt.users?.full_name || "Khách hàng ẩn danh"}</p>
-                                                <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-400">{appt.customer_phone || appt.users?.phone || "Không có SĐT"}</p>
+                                                <p className="text-[10px] font-bold text-brand-base0 dark:text-zinc-400">{appt.customer_phone || appt.users?.phone || "Không có SĐT"}</p>
                                             </div>
                                         </div>
                                         <div className="text-right shrink-0">
-                                            <p className="font-black text-[#80BF84] dark:text-[#80BF84] text-sm">{formatPrice(appt.total_amount || 0)}</p>
+                                            <p className="font-black text-brand-primary dark:text-brand-primary text-sm">{formatPrice(appt.total_amount || 0)}</p>
                                             <span className={`text-[9px] font-black uppercase ${
-                                                appt.status === 'CONFIRMED' ? 'text-emerald-500' :
+                                                appt.status === 'CONFIRMED' ? 'text-brand-trust' :
                                                 appt.status === 'PENDING_PAYMENT' ? 'text-amber-500' :
-                                                appt.status === 'CANCELLED' ? 'text-rose-500' : 'text-slate-500'
+                                                appt.status === 'CANCELLED' ? 'text-rose-500' : 'text-brand-base0'
                                             }`}>{appt.status.replace('_', ' ')}</span>
                                         </div>
                                     </div>
                                     <div className="space-y-2">
                                         <div className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-zinc-400">
-                                            <Activity size={14} className="text-[#80BF84]" />
+                                            <Activity size={14} className="text-brand-primary" />
                                             <span className="line-clamp-1">{appt.services?.service_name}</span>
                                         </div>
                                         <div className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-zinc-400">
-                                            <Clock size={14} className="text-[#80BF84]" />
+                                            <Clock size={14} className="text-brand-primary" />
                                             <span>{new Date(appt.start_time).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}</span>
                                         </div>
                                     </div>
@@ -1132,21 +1132,21 @@ export default function CalendarFeature() {
                     {drawerMode === 'detail' && selectedDetail && (
                         <div className="animate-fade-in space-y-6">
                             {/* Thông tin Khách hàng */}
-                            <div className="p-6 rounded-[2rem] bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
+                            <div className="p-6 rounded-[2rem] bg-brand-base dark:bg-white/5 border border-slate-100 dark:border-white/5">
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Thông tin khách hàng</p>
                                 <div className="flex items-center gap-4">
-                                    <div className="w-14 h-14 rounded-[1.25rem] bg-white dark:bg-zinc-800 flex items-center justify-center text-slate-500 overflow-hidden border-2 border-white dark:border-zinc-700 shadow-sm shrink-0">
+                                    <div className="w-14 h-14 rounded-[1.25rem] bg-white dark:bg-zinc-800 flex items-center justify-center text-brand-base0 overflow-hidden border-2 border-white dark:border-zinc-700 shadow-sm shrink-0">
                                         {selectedDetail.users?.avatar_url ? <img src={selectedDetail.users.avatar_url} className="w-full h-full object-cover" /> : <UserIcon size={24}/>}
                                     </div>
                                     <div>
                                         <p className="font-black text-xl text-slate-900 dark:text-white">{selectedDetail.customer_name || selectedDetail.users?.full_name || "Khách hàng ẩn danh"}</p>
                                         <div className="flex items-center gap-2 mt-1">
                                             {/* Ưu tiên lấy SĐT khách để lại trong đơn hàng */}
-                                            <span className="text-xs font-bold text-slate-500 dark:text-zinc-400">
+                                            <span className="text-xs font-bold text-brand-base0 dark:text-zinc-400">
                                                 {selectedDetail.customer_phone || selectedDetail.users?.phone || "Không có SĐT"}
                                             </span>
                                             {(selectedDetail.customer_phone || selectedDetail.users?.phone) && (
-                                                <a href={`tel:${selectedDetail.customer_phone || selectedDetail.users?.phone}`} className="w-6 h-6 rounded-full bg-[#80BF84]/20 flex items-center justify-center text-[#80BF84] hover:bg-[#80BF84] hover:text-white transition-colors">
+                                                <a href={`tel:${selectedDetail.customer_phone || selectedDetail.users?.phone}`} className="w-6 h-6 rounded-full bg-brand-primary/20 flex items-center justify-center text-brand-primary hover:bg-brand-primary hover:text-white transition-colors">
                                                     <Phone size={10} />
                                                 </a>
                                             )}
@@ -1163,7 +1163,7 @@ export default function CalendarFeature() {
                             {/* Thông tin Dịch vụ & Thanh toán Kế toán (Hóa đơn Glassmorphism) */}
                             <div className="p-6 rounded-[2rem] bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl border border-slate-200/50 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] space-y-5 relative overflow-hidden">
                                 {/* Decor Background Effect */}
-                                <div className="absolute -right-12 -top-12 w-40 h-40 bg-[#80BF84]/10 dark:bg-[#80BF84]/20 rounded-full blur-3xl pointer-events-none"></div>
+                                <div className="absolute -right-12 -top-12 w-40 h-40 bg-brand-primary/10 dark:bg-brand-primary/20 rounded-full blur-3xl pointer-events-none"></div>
 
                                 <div className="flex items-center justify-between mb-2 relative z-10">
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Chi tiết thanh toán</p>
@@ -1171,12 +1171,12 @@ export default function CalendarFeature() {
                                 </div>
                                 
                                 <div className="flex items-start gap-3 mb-4 p-4 rounded-2xl bg-white/60 dark:bg-black/20 border border-slate-100 dark:border-white/5 relative z-10">
-                                    <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-zinc-800/50 flex items-center justify-center shadow-inner shrink-0 border border-slate-100 dark:border-white/5">
-                                        <Activity size={20} className="text-[#80BF84]" />
+                                    <div className="w-12 h-12 rounded-full bg-brand-base dark:bg-zinc-800/50 flex items-center justify-center shadow-inner shrink-0 border border-slate-100 dark:border-white/5">
+                                        <Activity size={20} className="text-brand-primary" />
                                     </div>
                                     <div className="flex-1 mt-0.5">
                                         <span className="font-bold text-sm text-slate-800 dark:text-zinc-200 line-clamp-2 leading-snug">{selectedDetail.services?.service_name || "Dịch vụ Y tế"}</span>
-                                        <span className="text-[10px] font-bold text-slate-500 mt-1 block">Cung cấp bởi: {selectedDetail.partner?.full_name || "Hệ thống AI Health"}</span>
+                                        <span className="text-[10px] font-bold text-brand-base0 mt-1 block">Cung cấp bởi: {selectedDetail.partner?.full_name || "Hệ thống AI Health"}</span>
                                     </div>
                                 </div>
 
@@ -1203,49 +1203,49 @@ export default function CalendarFeature() {
                                                 <div className="absolute inset-0 flex items-center" aria-hidden="true">
                                                     <div className="w-full border-t-2 border-dashed border-slate-200 dark:border-zinc-700/80"></div>
                                                 </div>
-                                                <div className="absolute left-[-32px] top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-50 dark:bg-[#0a0a0a] rounded-full border-r border-slate-200/50 dark:border-white/10 shadow-inner"></div>
-                                                <div className="absolute right-[-32px] top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-50 dark:bg-[#0a0a0a] rounded-full border-l border-slate-200/50 dark:border-white/10 shadow-inner"></div>
+                                                <div className="absolute left-[-32px] top-1/2 -translate-y-1/2 w-6 h-6 bg-brand-base dark:bg-[#0a0a0a] rounded-full border-r border-slate-200/50 dark:border-white/10 shadow-inner"></div>
+                                                <div className="absolute right-[-32px] top-1/2 -translate-y-1/2 w-6 h-6 bg-brand-base dark:bg-[#0a0a0a] rounded-full border-l border-slate-200/50 dark:border-white/10 shadow-inner"></div>
                                             </div>
                                             
                                             <div className="flex justify-between items-end px-2 relative z-10">
                                                 <span className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-[11px]">Tổng thanh toán</span>
                                                 <div className="flex items-center gap-3">
                                                     {dHasVoucher && <span className="font-bold text-slate-400 dark:text-zinc-500 line-through text-lg opacity-60">{formatPrice(dOrig)}</span>}
-                                                    <span className="font-black text-4xl text-blue-600 dark:text-blue-400 drop-shadow-md tracking-tighter">{formatPrice(dFinal)}</span>
+                                                    <span className="font-black text-4xl text-brand-trust dark:text-blue-400 drop-shadow-md tracking-tighter">{formatPrice(dFinal)}</span>
                                                 </div>
                                             </div>
                                         </>
                                     );
                                 })()}
 
-                                <div className="mt-6 p-4 rounded-2xl bg-blue-50/60 dark:bg-blue-900/10 border border-blue-100/50 dark:border-blue-500/20 flex items-center justify-between relative z-10">
+                                <div className="mt-6 p-4 rounded-2xl bg-blue-50/60 dark:bg-blue-900/10 border border-blue-100/50 dark:border-brand-trust/20 flex items-center justify-between relative z-10">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 shadow-inner"><Clock size={16} /></div>
+                                        <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-brand-trust/20 flex items-center justify-center text-brand-trust dark:text-blue-400 shadow-inner"><Clock size={16} /></div>
                                         <div>
                                             <p className="font-black text-sm text-blue-900 dark:text-blue-300 tracking-tight">
                                                 {new Date(selectedDetail.start_time).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})} - {new Date(selectedDetail.end_time).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}
                                             </p>
-                                            <p className="text-[10px] font-bold text-blue-600/70 dark:text-blue-400/70 mt-0.5 uppercase tracking-widest">{new Date(selectedDetail.start_time).toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit' })}</p>
+                                            <p className="text-[10px] font-bold text-brand-trust/70 dark:text-blue-400/70 mt-0.5 uppercase tracking-widest">{new Date(selectedDetail.start_time).toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit' })}</p>
                                         </div>
                                     </div>
-                                    {selectedDetail.status === 'CONFIRMED' && <CheckCircle size={22} className="text-blue-500 drop-shadow-sm" />}
+                                    {selectedDetail.status === 'CONFIRMED' && <CheckCircle size={22} className="text-brand-trust drop-shadow-sm" />}
                                 </div>
                             </div>
 
                             {/* Khu vực Xử lý Trạng thái đặc biệt */}
                             {selectedDetail.status === 'CONFIRMED' && (
                                 <div className="p-6 rounded-[2rem] bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/30 text-center">
-                                    <p className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-4">Hoàn tất dịch vụ</p>
+                                    <p className="text-[10px] font-black text-emerald-600 dark:text-brand-primary uppercase tracking-widest mb-4">Hoàn tất dịch vụ</p>
                                     <input 
                                         type="text" 
                                         placeholder="Nhập 6 số mã khách" 
-                                        className="w-full px-4 py-4 text-center rounded-[1.5rem] border border-emerald-200 dark:border-white/10 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 font-black text-xl tracking-[0.3em] outline-none focus:ring-2 focus:ring-emerald-500/50 mb-4 transition-all placeholder:text-slate-300 dark:placeholder:text-zinc-600"
+                                        className="w-full px-4 py-4 text-center rounded-[1.5rem] border border-emerald-200 dark:border-white/10 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 font-black text-xl tracking-[0.3em] outline-none focus:ring-2 focus:ring-brand-trust/50 mb-4 transition-all placeholder:text-slate-300 dark:placeholder:text-zinc-600"
                                         value={checkInCodes[selectedDetail.id] || ''}
                                         onChange={(e) => setCheckInCodes({...checkInCodes, [selectedDetail.id]: e.target.value})}
                                     />
                                     <button 
                                         onClick={() => handleComplete(selectedDetail.id)} 
-                                        className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-[1.5rem] shadow-lg shadow-emerald-500/30 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
+                                        className="w-full py-4 bg-brand-trust hover:bg-emerald-600 text-white font-black rounded-[1.5rem] shadow-lg shadow-brand-trust/30 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
                                     >
                                         <CheckCircle size={20} /> Xác nhận mã & Check-in
                                     </button>
@@ -1266,7 +1266,7 @@ export default function CalendarFeature() {
                             {drawerData.title && (
                                 <button 
                                     onClick={() => setDrawerMode('list')}
-                                    className="w-full py-3 mt-4 text-slate-500 hover:text-slate-700 dark:text-zinc-500 dark:hover:text-white font-bold text-sm transition-colors"
+                                    className="w-full py-3 mt-4 text-brand-base0 hover:text-slate-700 dark:text-zinc-500 dark:hover:text-white font-bold text-sm transition-colors"
                                 >
                                     &larr; Quay lại danh sách
                                 </button>

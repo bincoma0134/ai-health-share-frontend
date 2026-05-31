@@ -82,12 +82,12 @@ export default function NotificationModal() {
   // Ánh xạ Nhóm Thông Báo (Đã bổ sung ESCROW)
   const getIcon = (type: string) => {
     switch (type) {
-      case 'BOOKING': return { Icon: CalendarDays, color: 'text-emerald-500', bg: 'bg-emerald-500/10' };
+      case 'BOOKING': return { Icon: CalendarDays, color: 'text-brand-trust', bg: 'bg-brand-trust/10' };
       case 'ESCROW': return { Icon: Zap, color: 'text-amber-500', bg: 'bg-amber-500/10' };
       case 'SOCIAL': return { Icon: MessageSquare, color: 'text-rose-500', bg: 'bg-rose-500/10' };
       case 'MODERATION': return { Icon: ShieldCheck, color: 'text-violet-500', bg: 'bg-violet-500/10' };
       case 'SYSTEM': 
-      default: return { Icon: Bell, color: 'text-blue-500', bg: 'bg-blue-500/10' };
+      default: return { Icon: Bell, color: 'text-brand-trust', bg: 'bg-brand-trust/10' };
     }
   };
 
@@ -101,11 +101,11 @@ export default function NotificationModal() {
         <div className="pt-8 pb-4 px-6 border-b border-slate-200 dark:border-white/10 flex justify-between items-center">
           <h3 className="text-xl font-black text-slate-900 dark:text-white">Thông báo</h3>
           <div className="flex items-center gap-3">
-            <button onClick={markAllAsRead} className="text-xs font-bold text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white transition-colors flex items-center gap-1" title="Đọc tất cả">
+            <button onClick={markAllAsRead} className="text-xs font-bold text-brand-base0 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white transition-colors flex items-center gap-1" title="Đọc tất cả">
               <CheckCircle size={18} strokeWidth={2.5} /> <span className="hidden md:inline">Đọc hết</span>
             </button>
             <button onClick={() => setIsNotifOpen(false)} className="p-1.5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-full transition-colors">
-              <X size={20} className="text-slate-500 dark:text-white"/>
+              <X size={20} className="text-brand-base0 dark:text-white"/>
             </button>
           </div>
         </div>
@@ -113,11 +113,11 @@ export default function NotificationModal() {
         {/* Tabs */}
         <div className="px-6 py-3 border-b border-slate-200 dark:border-white/10 flex gap-2">
           <button onClick={() => setActiveNotifTab('all')} 
-            className={`px-4 py-2 rounded-xl font-bold text-xs transition-all ${activeNotifTab === 'all' ? 'bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}>
+            className={`px-4 py-2 rounded-xl font-bold text-xs transition-all ${activeNotifTab === 'all' ? 'bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm' : 'text-brand-base0 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}>
             Tất cả
           </button>
           <button onClick={() => setActiveNotifTab('unread')} 
-            className={`px-4 py-2 rounded-xl font-bold text-xs transition-all flex items-center gap-2 ${activeNotifTab === 'unread' ? 'bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}>
+            className={`px-4 py-2 rounded-xl font-bold text-xs transition-all flex items-center gap-2 ${activeNotifTab === 'unread' ? 'bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm' : 'text-brand-base0 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}>
             Chưa đọc
             {notifications.filter(n => !n.is_read).length > 0 && <span className="px-1.5 py-0.5 bg-rose-500 text-white rounded-md text-[10px] leading-none">{notifications.filter(n => !n.is_read).length}</span>}
           </button>
@@ -129,7 +129,7 @@ export default function NotificationModal() {
             <div className="w-full h-full flex flex-col items-center justify-center text-center px-4">
               <Bell size={40} className="text-slate-300 dark:text-zinc-700 mb-4" />
               <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2">Trống trải quá!</h3>
-              <p className="text-slate-500 dark:text-zinc-400 text-xs font-medium">Bạn chưa có cập nhật mới nào trong thời gian này.</p>
+              <p className="text-brand-base0 dark:text-zinc-400 text-xs font-medium">Bạn chưa có cập nhật mới nào trong thời gian này.</p>
             </div>
           ) : (
             filteredNotifs.map((n) => {
@@ -160,7 +160,7 @@ export default function NotificationModal() {
                     <h4 className={`text-sm font-black leading-tight truncate ${!n.is_read ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-zinc-400'}`}>
                       {n.title}
                     </h4>
-                    <p className={`text-xs mt-1 mb-1.5 leading-relaxed line-clamp-2 ${!n.is_read ? 'text-slate-600 dark:text-zinc-300 font-medium' : 'text-slate-500 dark:text-zinc-500'}`}>
+                    <p className={`text-xs mt-1 mb-1.5 leading-relaxed line-clamp-2 ${!n.is_read ? 'text-slate-600 dark:text-zinc-300 font-medium' : 'text-brand-base0 dark:text-zinc-500'}`}>
                       {n.sender && <span className="font-bold text-slate-800 dark:text-zinc-200 mr-1">{n.sender.full_name}: </span>}
                       {n.message}
                     </p>
@@ -170,7 +170,7 @@ export default function NotificationModal() {
                   </div>
 
                   {!n.is_read && (
-                    <div className="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0 mt-1.5 shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-brand-trust shrink-0 mt-1.5 shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
                   )}
                 </div>
               );

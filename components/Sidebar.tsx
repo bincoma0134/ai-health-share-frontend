@@ -103,9 +103,9 @@ export default function Sidebar() {
           dashboardPath: "/partner/dashboard",
           profileLabel: "Hồ sơ Doanh nghiệp", 
           dashboardLabel: "Quản lý Dịch vụ",
-          colorClass: "text-blue-500", 
-          bgClass: "bg-blue-500/10",
-          glowClass: "shadow-blue-500/40",
+          colorClass: "text-brand-trust", 
+          bgClass: "bg-brand-trust/10",
+          glowClass: "shadow-brand-trust/40",
           roleName: "Partner Admin"
         };
       case "MODERATOR":
@@ -133,9 +133,9 @@ export default function Sidebar() {
       default:
         return { 
             roleName: "Thành viên", 
-            colorClass: "text-[#80BF84]", 
-            bgClass: "bg-[#80BF84]/10",
-            glowClass: "shadow-[#80BF84]/20"
+            colorClass: "text-brand-primary", 
+            bgClass: "bg-brand-primary/10",
+            glowClass: "shadow-brand-primary/20"
         };
     }
   };
@@ -161,10 +161,10 @@ export default function Sidebar() {
       {/* LOGO AREA */}
       <div className="px-7 mb-10 cursor-pointer group" onClick={() => router.push('/')}>
         <div className="flex items-center gap-2">
-            <div className="w-9 h-9 bg-[#80BF84] rounded-xl flex items-center justify-center shadow-lg shadow-[#80BF84]/30 group-hover:scale-110 transition-transform">
+            <div className="w-9 h-9 bg-brand-primary rounded-xl flex items-center justify-center shadow-lg shadow-brand-primary/30 group-hover:scale-110 transition-transform">
                 <Layout size={20} className="text-zinc-950" strokeWidth={3} />
             </div>
-            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">AI<span className="text-[#80BF84]">HEALTH</span></h1>
+            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">AI<span className="text-brand-primary">HEALTH</span></h1>
         </div>
       </div>
       
@@ -178,16 +178,16 @@ export default function Sidebar() {
                 className={`w-full flex items-center justify-between px-4 py-3.5 rounded-[1.4rem] font-black transition-all duration-500 group/btn ${
                     pathname === item.path 
                     ? 'bg-white/80 dark:bg-white/10 text-slate-900 dark:text-white shadow-[0_8px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_20px_rgba(0,0,0,0.3)] border border-white dark:border-white/20 scale-[1.02]' 
-                    : 'text-slate-500 dark:text-zinc-400 hover:bg-white/30 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+                    : 'text-brand-base0 dark:text-zinc-400 hover:bg-white/30 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
                 }`}
             >
                 <div className="flex items-center gap-3.5">
-                    <div className={`p-2 rounded-xl transition-all duration-300 ${pathname === item.path ? 'bg-[#80BF84] text-zinc-950 shadow-lg shadow-[#80BF84]/30' : 'bg-slate-100 dark:bg-zinc-800/50 text-slate-500 dark:text-zinc-400 group-hover/btn:text-[#80BF84]'}`}>
+                    <div className={`p-2 rounded-xl transition-all duration-300 ${pathname === item.path ? 'bg-brand-primary text-zinc-950 shadow-lg shadow-brand-primary/30' : 'bg-slate-100 dark:bg-zinc-800/50 text-brand-base0 dark:text-zinc-400 group-hover/btn:text-brand-primary'}`}>
                         <item.icon size={18} strokeWidth={pathname === item.path ? 2.5 : 2} />
                     </div>
                     <span className="text-sm tracking-tight">{item.name}</span>
                 </div>
-                {pathname === item.path && <div className="w-1.5 h-1.5 rounded-full bg-[#80BF84] shadow-[0_0_10px_#80BF84] animate-pulse"></div>}
+                {pathname === item.path && <div className="w-1.5 h-1.5 rounded-full bg-brand-primary shadow-[0_0_10px_#80BF84] animate-pulse"></div>}
             </button>
             ))}
         </div>
@@ -195,8 +195,8 @@ export default function Sidebar() {
         {/* AI ASSISTANT BUTTON: Elevated Premium Glow */}
         <div className="mt-6 mb-2">
             <button onClick={() => router.push('/features/AI')} className="w-full relative group/ai">
-              <div className="absolute inset-0 bg-gradient-to-r from-[#80BF84] to-emerald-500 rounded-[1.5rem] blur-xl opacity-30 group-hover/ai:opacity-60 transition-opacity duration-500"></div>
-              <div className="relative flex items-center justify-center gap-3 px-4 py-4 rounded-[1.5rem] bg-gradient-to-br from-[#80BF84] via-[#75b479] to-[#5e9662] text-zinc-950 font-black shadow-lg group-hover/ai:shadow-[#80BF84]/50 group-hover/ai:-translate-y-0.5 transition-all duration-300 active:scale-95 border border-white/40 dark:border-white/20">
+              <div className="absolute inset-0 bg-gradient-to-r from-brand-primary to-brand-trust rounded-[1.5rem] blur-xl opacity-30 group-hover/ai:opacity-60 transition-opacity duration-500"></div>
+              <div className="relative flex items-center justify-center gap-3 px-4 py-4 rounded-[1.5rem] bg-gradient-to-br from-brand-primary via-[#75b479] to-[#5e9662] text-zinc-950 font-black shadow-lg group-hover/ai:shadow-brand-primary/50 group-hover/ai:-translate-y-0.5 transition-all duration-300 active:scale-95 border border-white/40 dark:border-white/20">
                 <Sparkles size={18} strokeWidth={3} className="animate-pulse" />
                 <span className="text-sm tracking-widest uppercase font-black">AI Trợ lý</span>
               </div>
@@ -213,14 +213,14 @@ export default function Sidebar() {
             </div>
             
             <div className="space-y-1.5">
-                <button onClick={() => router.push(mgmt.profilePath as string)} className={`w-full flex items-center gap-3.5 px-4 py-3.5 rounded-[1.4rem] font-black transition-all duration-500 border ${pathname === mgmt.profilePath ? `${mgmt.bgClass} ${mgmt.colorClass} border-white/40 dark:border-white/20 shadow-lg ${mgmt.glowClass} scale-[1.02] bg-white/80 dark:bg-white/10` : 'text-slate-500 dark:text-zinc-400 hover:bg-white/30 dark:hover:bg-white/5 border-transparent'}`}>
-                    <div className={`p-2 rounded-xl ${pathname === mgmt.profilePath ? 'bg-white/20 dark:bg-white/10 text-current' : 'bg-slate-100 dark:bg-zinc-800/50 text-slate-500 dark:text-zinc-400'}`}>
+                <button onClick={() => router.push(mgmt.profilePath as string)} className={`w-full flex items-center gap-3.5 px-4 py-3.5 rounded-[1.4rem] font-black transition-all duration-500 border ${pathname === mgmt.profilePath ? `${mgmt.bgClass} ${mgmt.colorClass} border-white/40 dark:border-white/20 shadow-lg ${mgmt.glowClass} scale-[1.02] bg-white/80 dark:bg-white/10` : 'text-brand-base0 dark:text-zinc-400 hover:bg-white/30 dark:hover:bg-white/5 border-transparent'}`}>
+                    <div className={`p-2 rounded-xl ${pathname === mgmt.profilePath ? 'bg-white/20 dark:bg-white/10 text-current' : 'bg-slate-100 dark:bg-zinc-800/50 text-brand-base0 dark:text-zinc-400'}`}>
                         <Crown size={18} strokeWidth={pathname === mgmt.profilePath ? 2.5 : 2} />
                     </div>
                     <span className="text-sm tracking-tight">{mgmt.profileLabel}</span>
                 </button>
-                <button onClick={() => router.push(mgmt.dashboardPath as string)} className={`w-full flex items-center gap-3.5 px-4 py-3.5 rounded-[1.4rem] font-black transition-all duration-500 border ${pathname === mgmt.dashboardPath ? `${mgmt.bgClass} ${mgmt.colorClass} border-white/40 dark:border-white/20 shadow-lg ${mgmt.glowClass} scale-[1.02] bg-white/80 dark:bg-white/10` : 'text-slate-500 dark:text-zinc-400 hover:bg-white/30 dark:hover:bg-white/5 border-transparent'}`}>
-                    <div className={`p-2 rounded-xl ${pathname === mgmt.dashboardPath ? 'bg-white/20 dark:bg-white/10 text-current' : 'bg-slate-100 dark:bg-zinc-800/50 text-slate-500 dark:text-zinc-400'}`}>
+                <button onClick={() => router.push(mgmt.dashboardPath as string)} className={`w-full flex items-center gap-3.5 px-4 py-3.5 rounded-[1.4rem] font-black transition-all duration-500 border ${pathname === mgmt.dashboardPath ? `${mgmt.bgClass} ${mgmt.colorClass} border-white/40 dark:border-white/20 shadow-lg ${mgmt.glowClass} scale-[1.02] bg-white/80 dark:bg-white/10` : 'text-brand-base0 dark:text-zinc-400 hover:bg-white/30 dark:hover:bg-white/5 border-transparent'}`}>
+                    <div className={`p-2 rounded-xl ${pathname === mgmt.dashboardPath ? 'bg-white/20 dark:bg-white/10 text-current' : 'bg-slate-100 dark:bg-zinc-800/50 text-brand-base0 dark:text-zinc-400'}`}>
                         <LayoutDashboard size={18} strokeWidth={pathname === mgmt.dashboardPath ? 2.5 : 2} />
                     </div>
                     <span className="text-sm tracking-tight">{mgmt.dashboardLabel}</span>
@@ -273,7 +273,7 @@ export default function Sidebar() {
                     <span className="text-sm font-black text-slate-900 dark:text-white truncate leading-tight mt-0.5">
                         {dbProfile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || "User"}
                     </span>
-                    <span className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 truncate opacity-80">
+                    <span className="text-[10px] font-bold text-brand-base0 dark:text-zinc-400 truncate opacity-80">
                         @{dbProfile?.username || user.user_metadata?.username || 'user'}
                     </span>
                 </div>
@@ -281,7 +281,7 @@ export default function Sidebar() {
                 <ChevronRight size={14} className={`text-slate-400 transition-transform duration-300 ${isUserMenuOpen ? 'rotate-90' : 'group-hover:translate-x-1'}`} />
             </button>
         ) : (
-            <button onClick={() => setIsAuthModalOpen(true)} className="w-full flex items-center justify-center gap-3 p-4 rounded-[2rem] bg-gradient-to-br from-[#80BF84] to-[#6da871] text-zinc-950 font-black shadow-lg shadow-[#80BF84]/30 hover:shadow-[#80BF84]/50 hover:scale-[1.02] active:scale-95 transition-all border border-white/40 dark:border-white/20">
+            <button onClick={() => setIsAuthModalOpen(true)} className="w-full flex items-center justify-center gap-3 p-4 rounded-[2rem] bg-gradient-to-br from-brand-primary to-[#6da871] text-zinc-950 font-black shadow-lg shadow-brand-primary/30 hover:shadow-brand-primary/50 hover:scale-[1.02] active:scale-95 transition-all border border-white/40 dark:border-white/20">
                 <UserIcon size={18} strokeWidth={3} /> <span className="text-sm uppercase tracking-wider font-black">Đăng nhập</span>
             </button>
         )}

@@ -148,18 +148,18 @@ export default function PrivateProfilePage() {
   if (isLoading) return <Loading />;
 
   return (
-    <div className="flex-1 relative h-[100dvh] flex flex-col bg-slate-50 dark:bg-zinc-950 transition-colors duration-500 overflow-hidden font-be-vietnam">
+    <div className="flex-1 relative h-[100dvh] flex flex-col bg-brand-base dark:bg-zinc-950 transition-colors duration-500 overflow-hidden font-be-vietnam">
       
       {/* INPUT ẨN ĐỂ CHỌN FILE */}
       <input type="file" accept="image/*" className="hidden" ref={avatarInputRef} onChange={handleAvatarUpload} />
 
       {/* TOP BAR ĐIỀU KHIỂN */}
-      <div className="absolute top-0 w-full z-40 p-6 flex justify-end items-center bg-gradient-to-b from-slate-50 dark:from-zinc-950 to-transparent pointer-events-none">
+      <div className="absolute top-0 w-full z-40 p-6 flex justify-end items-center bg-gradient-to-b from-brand-base dark:from-zinc-950 to-transparent pointer-events-none">
           <div className="flex items-center gap-3 pointer-events-auto">
             <button onClick={toggleTheme} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-3xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:bg-white/80 dark:hover:bg-white/20 active:scale-95 transition-all shadow-lg group">
-              {theme === "dark" ? <Sun size={20} className="group-hover:text-amber-300" /> : <Moon size={20} className="group-hover:text-blue-500" />}
+              {theme === "dark" ? <Sun size={20} className="group-hover:text-amber-300" /> : <Moon size={20} className="group-hover:text-brand-trust" />}
             </button>
-            <button onClick={() => setIsNotifOpen(true)} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-3xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 hover:text-[#80BF84] hover:bg-[#80BF84]/10 active:scale-95 transition-all shadow-lg">
+            <button onClick={() => setIsNotifOpen(true)} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-3xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-brand-base0 hover:text-brand-primary hover:bg-brand-primary/10 active:scale-95 transition-all shadow-lg">
               <Bell size={20} />
             </button>
           </div>
@@ -180,7 +180,7 @@ export default function PrivateProfilePage() {
                 
                 {/* AVATAR GLOW CHUẨN PUBLIC VIEW */}
                 <div className="relative group shrink-0">
-                  <div className="absolute -inset-1.5 bg-gradient-to-tr from-[#80BF84] to-emerald-400 rounded-full blur-md opacity-20"></div>
+                  <div className="absolute -inset-1.5 bg-gradient-to-tr from-brand-primary to-brand-primary rounded-full blur-md opacity-20"></div>
                   <div 
                     onClick={() => avatarInputRef.current?.click()}
                     className="relative w-32 h-32 md:w-36 md:h-36 rounded-full overflow-hidden border-4 border-white dark:border-zinc-800 shadow-2xl backdrop-blur-md bg-slate-100 cursor-pointer"
@@ -203,7 +203,7 @@ export default function PrivateProfilePage() {
                     <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-md">
                       {profileData?.profile?.full_name || profileData?.profile?.email?.split('@')[0] || "Chưa có tên"}
                     </h1>
-                    <h2 className="text-base md:text-lg font-medium text-slate-500 dark:text-zinc-400 tracking-tight">
+                    <h2 className="text-base md:text-lg font-medium text-brand-base0 dark:text-zinc-400 tracking-tight">
                       @{profileData?.profile?.username || "username_chua_cap_nhat"}
                     </h2>
                   </div>
@@ -214,7 +214,7 @@ export default function PrivateProfilePage() {
                     {/* View As Button */}
                     <button 
                       onClick={() => profileData?.profile?.username ? router.push(`/${profileData.profile.username}`) : toast.error("Vui lòng thiết lập Username trước!")}
-                      className="px-10 py-3.5 bg-gradient-to-br from-[#80BF84] to-[#6da871] text-zinc-950 font-black rounded-2xl hover:shadow-[0_0_25px_rgba(128,191,132,0.4)] transition-all active:scale-95 flex items-center gap-2 shadow-lg"
+                      className="px-10 py-3.5 bg-gradient-to-br from-brand-primary to-[#6da871] text-zinc-950 font-black rounded-2xl hover:shadow-[0_0_25px_rgba(128,191,132,0.4)] transition-all active:scale-95 flex items-center gap-2 shadow-lg"
                     >
                       <Eye size={20} strokeWidth={3} /> <span>Xem công khai</span>
                     </button>
@@ -259,11 +259,11 @@ export default function PrivateProfilePage() {
 
             {/* --- STACK PHÍA DƯỚI: TABS NỘI DUNG PRIVATE --- */}
             <div className="border-t border-slate-200 dark:border-white/10">
-              <div className="flex justify-center md:justify-start gap-12 sticky top-0 bg-slate-50/80 dark:bg-zinc-950/80 backdrop-blur-md z-20">
-                <button onClick={() => setActiveTab('saves')} className={`flex items-center gap-2 py-5 text-xs font-black transition-all border-t-2 -mt-[2px] ${activeTab === 'saves' ? 'border-[#80BF84] text-[#80BF84]' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300'}`}>
+              <div className="flex justify-center md:justify-start gap-12 sticky top-0 bg-brand-base/80 dark:bg-zinc-950/80 backdrop-blur-md z-20">
+                <button onClick={() => setActiveTab('saves')} className={`flex items-center gap-2 py-5 text-xs font-black transition-all border-t-2 -mt-[2px] ${activeTab === 'saves' ? 'border-brand-primary text-brand-primary' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300'}`}>
                   <Bookmark size={18} strokeWidth={3}/> <span className="uppercase tracking-widest">Dịch vụ đã lưu</span>
                 </button>
-                <button onClick={() => setActiveTab('history')} className={`flex items-center gap-2 py-5 text-xs font-black transition-all border-t-2 -mt-[2px] ${activeTab === 'history' ? 'border-[#80BF84] text-[#80BF84]' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300'}`}>
+                <button onClick={() => setActiveTab('history')} className={`flex items-center gap-2 py-5 text-xs font-black transition-all border-t-2 -mt-[2px] ${activeTab === 'history' ? 'border-brand-primary text-brand-primary' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300'}`}>
                   <Clock size={18} strokeWidth={3}/> <span className="uppercase tracking-widest">Lịch sử khám</span>
                 </button>
               </div>
@@ -275,7 +275,7 @@ export default function PrivateProfilePage() {
                       {profileData?.saved_services?.length === 0 ? (
                         <div className="col-span-full text-center py-32 bg-white/40 dark:bg-white/5 backdrop-blur-2xl rounded-[4rem] mt-8 border-2 border-dashed border-slate-200 dark:border-white/10">
                           <div className="w-20 h-20 bg-white/50 dark:bg-white/5 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner">
-                              <LayoutGrid size={32} className="text-[#80BF84] opacity-50" />
+                              <LayoutGrid size={32} className="text-brand-primary opacity-50" />
                           </div>
                           <p className="text-slate-900 dark:text-white font-black text-lg uppercase tracking-widest">Chưa lưu dịch vụ</p>
                         </div>
@@ -305,18 +305,18 @@ export default function PrivateProfilePage() {
                           <div key={idx} className="p-6 rounded-[2rem] bg-white/80 dark:bg-zinc-900/50 backdrop-blur-xl border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4 transition-all">
                             <div>
                               <div className="flex items-center gap-2 mb-2">
-                                <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${bk.payment_status === 'UNPAID' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'}`}>
+                                <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${bk.payment_status === 'UNPAID' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : 'bg-brand-trust/10 text-brand-trust border border-brand-trust/20'}`}>
                                   {bk.payment_status === 'UNPAID' ? 'Chờ thanh toán' : 'Đã thanh toán'}
                                 </span>
                                 <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500">Mã: #{bk.order_code}</span>
                               </div>
                               <h4 className="text-lg font-black text-slate-900 dark:text-white leading-tight">{bk.services?.service_name || "Gói dịch vụ"}</h4>
-                              <p className="text-xs font-bold text-slate-500 dark:text-zinc-400 mt-2">Ngày tạo: {new Date(bk.created_at).toLocaleDateString('vi-VN')}</p>
+                              <p className="text-xs font-bold text-brand-base0 dark:text-zinc-400 mt-2">Ngày tạo: {new Date(bk.created_at).toLocaleDateString('vi-VN')}</p>
                             </div>
                             <div className="text-left md:text-right w-full md:w-auto">
-                              <p className="text-xl font-black text-blue-600 dark:text-blue-400">{parseFloat(bk.total_amount).toLocaleString()} <span className="text-[10px] text-blue-600/70 dark:text-blue-400/70 uppercase">VNĐ</span></p>
+                              <p className="text-xl font-black text-brand-trust dark:text-blue-400">{parseFloat(bk.total_amount).toLocaleString()} <span className="text-[10px] text-brand-trust/70 dark:text-blue-400/70 uppercase">VNĐ</span></p>
                               {bk.service_status === 'COMPLETED' && (
-                                <p className="text-xs text-emerald-500 font-black flex items-center justify-start md:justify-end gap-1 mt-2"><CheckCircle2 size={14}/> Đã hoàn thành</p>
+                                <p className="text-xs text-brand-trust font-black flex items-center justify-start md:justify-end gap-1 mt-2"><CheckCircle2 size={14}/> Đã hoàn thành</p>
                               )}
                             </div>
                           </div>
@@ -336,7 +336,7 @@ export default function PrivateProfilePage() {
           <div className="absolute inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm transition-opacity duration-500" onClick={() => setIsEditModalOpen(false)}></div>
           
           <div className="relative w-full md:w-[480px] bg-white/90 dark:bg-zinc-900/90 backdrop-blur-3xl rounded-[2.5rem] border border-slate-200 dark:border-white/10 flex flex-col animate-slide-up shadow-2xl overflow-hidden">
-            <div className="pt-6 pb-4 px-8 border-b border-slate-200 dark:border-white/10 flex justify-between items-center bg-slate-50/50 dark:bg-black/20">
+            <div className="pt-6 pb-4 px-8 border-b border-slate-200 dark:border-white/10 flex justify-between items-center bg-brand-base/50 dark:bg-black/20">
               <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">Chỉnh sửa hồ sơ</h3>
               <button onClick={() => setIsEditModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-200/50 dark:bg-white/5 rounded-full transition-all active:scale-90">
                 <X size={18} strokeWidth={3}/>
@@ -345,25 +345,25 @@ export default function PrivateProfilePage() {
             
             <form onSubmit={handleUpdateProfile} className="p-8 space-y-6">
               <div>
-                <label className="block text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-2">Tên hiển thị</label>
+                <label className="block text-[10px] font-black text-brand-base0 dark:text-zinc-400 uppercase tracking-widest mb-2">Tên hiển thị</label>
                 <input 
                   type="text" 
-                  className="w-full bg-slate-100 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-[#80BF84] dark:focus:border-[#80BF84] transition-colors shadow-inner"
+                  className="w-full bg-slate-100 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-brand-primary dark:focus:border-brand-primary transition-colors shadow-inner"
                   placeholder="Nhập tên của bạn..."
                   value={editForm.full_name} onChange={e => setEditForm({...editForm, full_name: e.target.value})}
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-2">Tiểu sử (Bio)</label>
+                <label className="block text-[10px] font-black text-brand-base0 dark:text-zinc-400 uppercase tracking-widest mb-2">Tiểu sử (Bio)</label>
                 <textarea 
                   rows={4}
-                  className="w-full bg-slate-100 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-[#80BF84] dark:focus:border-[#80BF84] transition-colors resize-none shadow-inner"
+                  className="w-full bg-slate-100 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-brand-primary dark:focus:border-brand-primary transition-colors resize-none shadow-inner"
                   placeholder="Giới thiệu đôi nét về bạn..."
                   value={editForm.bio} onChange={e => setEditForm({...editForm, bio: e.target.value})}
                 ></textarea>
               </div>
               
-              <button type="submit" disabled={isUpdating} className="w-full py-4 mt-4 bg-[#80BF84] hover:bg-[#6da871] text-zinc-950 font-black rounded-2xl transition-all shadow-lg active:scale-95 disabled:opacity-50">
+              <button type="submit" disabled={isUpdating} className="w-full py-4 mt-4 bg-brand-primary hover:bg-[#6da871] text-zinc-950 font-black rounded-2xl transition-all shadow-lg active:scale-95 disabled:opacity-50">
                 {isUpdating ? "Đang xử lý..." : "Lưu thay đổi"}
               </button>
             </form>

@@ -126,16 +126,16 @@ export default function ExploreFeature() {
     return matchesSearch && matchesFilter;
   });
 
-  if (!isMounted) return <div className="h-[100dvh] bg-slate-50 dark:bg-[#0a0a0a]"></div>;
+  if (!isMounted) return <div className="h-[100dvh] bg-brand-base dark:bg-[#0a0a0a]"></div>;
 
   return (
-    <div className="flex-1 relative h-[100dvh] bg-slate-50 dark:bg-[#09090b] overflow-hidden flex flex-col font-be-vietnam transition-colors duration-500">
+    <div className="flex-1 relative h-[100dvh] bg-brand-base dark:bg-[#09090b] overflow-hidden flex flex-col font-be-vietnam transition-colors duration-500">
       
       {/* ================= HEADER (STICKY GLASSMORPHISM) ================= */}
-      <header className="absolute top-0 inset-x-0 z-50 px-6 md:px-10 py-5 bg-slate-50/80 dark:bg-[#09090b]/80 backdrop-blur-2xl border-b border-slate-200/50 dark:border-white/5 flex justify-between items-center pointer-events-none">
+      <header className="absolute top-0 inset-x-0 z-50 px-6 md:px-10 py-5 bg-brand-base/80 dark:bg-[#09090b]/80 backdrop-blur-2xl border-b border-slate-200/50 dark:border-white/5 flex justify-between items-center pointer-events-none">
           <div className="pointer-events-auto">
               <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-                  Khám phá <Sparkles size={24} className="text-[#80BF84] hidden md:block" />
+                  Khám phá <Sparkles size={24} className="text-brand-primary hidden md:block" />
               </h1>
           </div>
           
@@ -145,7 +145,7 @@ export default function ExploreFeature() {
               </button>
               <button onClick={() => setIsNotifOpen(true)} className="relative w-10 h-10 rounded-full bg-white/50 dark:bg-white/5 border border-slate-200/50 dark:border-white/10 flex items-center justify-center text-slate-600 dark:text-zinc-300 hover:bg-white dark:hover:bg-white/10 transition-all shadow-sm hover:shadow-md">
                   <Bell size={18} />
-                  <span className="absolute top-2 right-2.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-slate-50 dark:border-zinc-950"></span>
+                  <span className="absolute top-2 right-2.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-brand-base dark:border-zinc-950"></span>
               </button>
           </div>
       </header>
@@ -159,7 +159,7 @@ export default function ExploreFeature() {
               <div className="flex flex-col xl:flex-row gap-5 mb-10 animate-slide-up">
                   {/* Search Bar */}
                   <div className="relative flex-1 group">
-                      <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#80BF84] transition-colors">
+                      <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-primary transition-colors">
                           <Search size={22} strokeWidth={2.5}/>
                       </div>
                       <input 
@@ -167,7 +167,7 @@ export default function ExploreFeature() {
                           placeholder="Bạn đang tìm dịch vụ gì hôm nay?..." 
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
-                          className="w-full pl-14 pr-6 py-4 bg-white/60 dark:bg-zinc-900/50 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-full text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-[#80BF84] dark:focus:border-[#80BF84] shadow-sm hover:shadow-md transition-all placeholder:font-medium placeholder:text-slate-400"
+                          className="w-full pl-14 pr-6 py-4 bg-white/60 dark:bg-zinc-900/50 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-full text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-brand-primary dark:focus:border-brand-primary shadow-sm hover:shadow-md transition-all placeholder:font-medium placeholder:text-slate-400"
                       />
                   </div>
                   
@@ -201,7 +201,7 @@ export default function ExploreFeature() {
                   <div className="w-full py-20 flex flex-col items-center justify-center rounded-[3rem] bg-white/40 dark:bg-zinc-900/40 border-2 border-dashed border-slate-200 dark:border-white/10 animate-fade-in text-center">
                       <div className="w-24 h-24 bg-slate-100 dark:bg-black rounded-full flex items-center justify-center mb-6 shadow-inner"><Search size={40} className="text-slate-400" /></div>
                       <h3 className="text-2xl font-black text-slate-800 dark:text-white mb-2">Không có dịch vụ nào</h3>
-                      <p className="text-slate-500 font-medium">Rất tiếc, chúng tôi không tìm thấy dịch vụ nào khớp với tìm kiếm của bạn.</p>
+                      <p className="text-brand-base0 font-medium">Rất tiếc, chúng tôi không tìm thấy dịch vụ nào khớp với tìm kiếm của bạn.</p>
                   </div>
               ) : (
                   // DATA GRID
@@ -238,20 +238,20 @@ export default function ExploreFeature() {
                                       </div>
                                       <div className="flex-1 min-w-0">
                                           <p className="text-xs font-black text-slate-900 dark:text-white truncate">{service.users?.full_name || "Đối tác Y tế"}</p>
-                                          <p className="text-[10px] font-bold text-slate-500 truncate flex items-center gap-1"><MapPin size={10}/> {service.users?.physical_address || "Cơ sở xác thực"}</p>
+                                          <p className="text-[10px] font-bold text-brand-base0 truncate flex items-center gap-1"><MapPin size={10}/> {service.users?.physical_address || "Cơ sở xác thực"}</p>
                                       </div>
-                                      <ShieldCheck size={18} className="text-blue-500 shrink-0" />
+                                      <ShieldCheck size={18} className="text-brand-trust shrink-0" />
                                   </div>
 
                                   <h3 className="font-black text-lg text-slate-900 dark:text-white leading-snug mb-2 line-clamp-2">{service.service_name}</h3>
-                                  <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 line-clamp-2 mb-4 flex-1">{service.description}</p>
+                                  <p className="text-xs font-medium text-brand-base0 dark:text-zinc-400 line-clamp-2 mb-4 flex-1">{service.description}</p>
                                   
                                   <div className="flex items-end justify-between mt-auto pt-4 border-t border-slate-100 dark:border-white/5">
                                       <div>
                                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Giá trọn gói</p>
-                                          <p className="text-xl font-black text-[#80BF84]">{Number(service.price).toLocaleString()} <span className="text-xs text-slate-500">đ</span></p>
+                                          <p className="text-xl font-black text-brand-primary">{Number(service.price).toLocaleString()} <span className="text-xs text-brand-base0">đ</span></p>
                                       </div>
-                                      <button onClick={(e) => { e.stopPropagation(); handleBookingClick(service); }} className="w-12 h-12 rounded-full bg-slate-900 dark:bg-white text-white dark:text-black flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-lg group-hover:bg-[#80BF84] group-hover:text-zinc-950">
+                                      <button onClick={(e) => { e.stopPropagation(); handleBookingClick(service); }} className="w-12 h-12 rounded-full bg-slate-900 dark:bg-white text-white dark:text-black flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-lg group-hover:bg-brand-primary group-hover:text-zinc-950">
                                           <CalendarPlus size={20} />
                                       </button>
                                   </div>
@@ -266,18 +266,18 @@ export default function ExploreFeature() {
       {/* ================= MOBILE BOTTOM DOCK ================= */}
       <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-max animate-slide-up pointer-events-auto">
         <div className="px-8 py-3.5 rounded-full flex items-center justify-center gap-8 sm:gap-10 shadow-2xl border border-slate-200 dark:border-white/10 bg-white/80 dark:bg-[#121214]/80 backdrop-blur-2xl transition-colors duration-500">
-          <button onClick={() => router.push('/')} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Home size={26} strokeWidth={2.5} /></button>
+          <button onClick={() => router.push('/')} className="text-brand-base0 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Home size={26} strokeWidth={2.5} /></button>
           
-          <button className="text-[#80BF84] transition-colors group relative">
+          <button className="text-brand-primary transition-colors group relative">
             <Compass size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
-            <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-[#80BF84] rounded-full"></span>
+            <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-brand-primary rounded-full"></span>
           </button>
           
           <button onClick={() => router.push('/features/AI')} className="relative -mt-10 group">
             <div className="w-14 h-14 rounded-full bg-slate-200/50 dark:bg-zinc-800 p-[2px] shadow-[0_0_20px_rgba(0,0,0,0.1)] group-hover:scale-105 transition-all duration-300"><div className="w-full h-full bg-white dark:bg-zinc-950 rounded-full flex items-center justify-center transition-colors duration-500"><Sparkles size={26} className="text-slate-400" strokeWidth={2.5} /></div></div>
           </button>
           
-          <button onClick={() => router.push('/features/calendar')} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><CalendarDays size={26} strokeWidth={2.5} /></button>
+          <button onClick={() => router.push('/features/calendar')} className="text-brand-base0 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><CalendarDays size={26} strokeWidth={2.5} /></button>
           
           <div className="relative">
             {isUserMenuOpen && user && (
@@ -289,7 +289,7 @@ export default function ExploreFeature() {
                 </div>
               </>
             )}
-            <button onClick={() => { if(!user) router.push('/'); else setIsUserMenuOpen(!isUserMenuOpen); }} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group">
+            <button onClick={() => { if(!user) router.push('/'); else setIsUserMenuOpen(!isUserMenuOpen); }} className="text-brand-base0 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group">
               <UserIcon size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
             </button>
           </div>
@@ -317,24 +317,24 @@ export default function ExploreFeature() {
 
             {/* Cột phải: Thông tin */}
             <div className="flex-1 p-6 md:p-10 flex flex-col overflow-y-auto no-scrollbar relative">
-                <button onClick={() => setExpandedService(null)} className="hidden md:flex absolute top-6 right-6 p-2 rounded-full bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-zinc-400 transition-colors"><X size={20}/></button>
+                <button onClick={() => setExpandedService(null)} className="hidden md:flex absolute top-6 right-6 p-2 rounded-full bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-brand-base0 dark:text-zinc-400 transition-colors"><X size={20}/></button>
                 
                 {/* Thông tin Partner (Clickable) */}
                 <div 
                     onClick={(e) => { e.stopPropagation(); handlePartnerClick(expandedService.users?.username); }}
-                    className="flex items-center gap-3 mb-6 p-3 -ml-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-colors group/partner"
+                    className="flex items-center gap-3 mb-6 p-3 -ml-3 rounded-2xl hover:bg-brand-base dark:hover:bg-white/5 cursor-pointer transition-colors group/partner"
                 >
-                    <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-zinc-800 overflow-hidden shrink-0 border border-slate-200 dark:border-white/10 group-hover/partner:border-[#80BF84] transition-colors">
+                    <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-zinc-800 overflow-hidden shrink-0 border border-slate-200 dark:border-white/10 group-hover/partner:border-brand-primary transition-colors">
                         {expandedService.users?.avatar_url ? <img src={expandedService.users.avatar_url} className="w-full h-full object-cover"/> : <UserIcon size={24} className="m-auto mt-3 text-slate-400"/>}
                     </div>
                     <div>
-                        <p className="text-sm font-black text-slate-900 dark:text-white group-hover/partner:text-[#80BF84] transition-colors">{expandedService.users?.full_name || "Đối tác Y tế"}</p>
-                        <p className="text-xs font-bold text-slate-500 flex items-center gap-1"><MapPin size={12}/> {expandedService.users?.physical_address || "Cơ sở xác thực"}</p>
+                        <p className="text-sm font-black text-slate-900 dark:text-white group-hover/partner:text-brand-primary transition-colors">{expandedService.users?.full_name || "Đối tác Y tế"}</p>
+                        <p className="text-xs font-bold text-brand-base0 flex items-center gap-1"><MapPin size={12}/> {expandedService.users?.physical_address || "Cơ sở xác thực"}</p>
                     </div>
-                    <ShieldCheck size={20} className="text-blue-500 ml-auto opacity-50 group-hover/partner:opacity-100 transition-opacity" />
+                    <ShieldCheck size={20} className="text-brand-trust ml-auto opacity-50 group-hover/partner:opacity-100 transition-opacity" />
                 </div>
 
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#80BF84]/10 border border-[#80BF84]/20 rounded-full text-[10px] font-bold text-[#80BF84] mb-4 uppercase tracking-wider w-max">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-brand-primary/10 border border-brand-primary/20 rounded-full text-[10px] font-bold text-brand-primary mb-4 uppercase tracking-wider w-max">
                   <Sparkles size={12} /> {expandedService.service_type_enum === 'TREATMENT' ? 'Trị liệu' : 'Thư giãn'}
                 </div>
 
@@ -344,7 +344,7 @@ export default function ExploreFeature() {
                 <div className="mt-auto pt-6 border-t border-slate-100 dark:border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                     <div>
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Giá dịch vụ</p>
-                        <p className="text-3xl font-black text-[#80BF84]">{Number(expandedService.price).toLocaleString()} <span className="text-base text-slate-500">VND</span></p>
+                        <p className="text-3xl font-black text-brand-primary">{Number(expandedService.price).toLocaleString()} <span className="text-base text-brand-base0">VND</span></p>
                     </div>
                     <button 
                         onClick={(e) => {
@@ -352,7 +352,7 @@ export default function ExploreFeature() {
                             setExpandedService(null);
                             handleBookingClick(expandedService);
                         }} 
-                        className="w-full sm:w-auto px-8 py-4 bg-[#80BF84] hover:bg-emerald-400 text-zinc-950 font-black rounded-2xl shadow-xl hover:shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-xs"
+                        className="w-full sm:w-auto px-8 py-4 bg-brand-primary hover:bg-brand-primary text-zinc-950 font-black rounded-2xl shadow-xl hover:shadow-brand-trust/20 active:scale-95 transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-xs"
                     >
                         <CalendarPlus size={18}/> Đặt lịch ngay
                     </button>

@@ -82,7 +82,7 @@ export default function AffiliateDashboard() {
     <div className="min-h-screen bg-zinc-950 text-white p-6 md:p-10">
       <div className="max-w-5xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-teal-500 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-brand-primary to-teal-500 bg-clip-text text-transparent">
             Affiliate & Wallet Dashboard
           </h1>
           <p className="text-zinc-400 mt-2">Theo dõi doanh thu tự động và yêu cầu rút tiền.</p>
@@ -95,7 +95,7 @@ export default function AffiliateDashboard() {
             <input 
               type="text" 
               placeholder="Nhập User ID để tra cứu số dư ví..." 
-              className="w-full pl-12 pr-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl focus:border-emerald-500 focus:outline-none"
+              className="w-full pl-12 pr-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl focus:border-brand-trust focus:outline-none"
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
             />
@@ -103,7 +103,7 @@ export default function AffiliateDashboard() {
           <button 
             onClick={fetchWallet}
             disabled={isLoading}
-            className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-colors disabled:opacity-50"
+            className="px-6 py-3 bg-emerald-600 hover:bg-brand-trust text-white font-bold rounded-xl transition-colors disabled:opacity-50"
           >
             {isLoading ? "Đang tải..." : "Tra cứu"}
           </button>
@@ -119,14 +119,14 @@ export default function AffiliateDashboard() {
               <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 p-6 rounded-2xl border border-zinc-800 shadow-xl relative overflow-hidden">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3 text-zinc-400">
-                    <Wallet className="text-emerald-400" />
+                    <Wallet className="text-brand-primary" />
                     <h3 className="font-semibold">Số dư khả dụng</h3>
                   </div>
                   {/* NÚT RÚT TIỀN */}
                   <button 
                     onClick={() => setIsWithdrawModalOpen(true)}
                     disabled={walletData.wallet.balance <= 0}
-                    className="px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 text-sm font-bold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 bg-brand-trust/10 hover:bg-brand-trust/20 text-brand-primary border border-brand-trust/20 text-sm font-bold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Rút tiền ngay
                   </button>
@@ -179,7 +179,7 @@ export default function AffiliateDashboard() {
                                 <ArrowDownLeft size={14} /> Hoa hồng Affiliate
                               </span>
                             ) : tx.transaction_type === 'partner_revenue' ? (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-medium">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-trust/10 text-brand-primary text-xs font-medium">
                                 <ArrowUpRight size={14} /> Doanh thu Dịch vụ
                               </span>
                             ) : tx.transaction_type === 'withdrawal_request' ? (
@@ -192,7 +192,7 @@ export default function AffiliateDashboard() {
                               </span>
                             )}
                           </td>
-                          <td className={`p-4 text-right font-bold ${tx.amount < 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                          <td className={`p-4 text-right font-bold ${tx.amount < 0 ? 'text-rose-400' : 'text-brand-primary'}`}>
                             {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString()} VND
                           </td>
                         </tr>
@@ -211,16 +211,16 @@ export default function AffiliateDashboard() {
             <div className="w-full max-w-md bg-zinc-900 rounded-2xl p-6 border border-zinc-800 shadow-2xl animate-fade-in">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                  <CreditCard className="text-emerald-400" /> Yêu cầu Rút tiền
+                  <CreditCard className="text-brand-primary" /> Yêu cầu Rút tiền
                 </h3>
                 <button onClick={() => setIsWithdrawModalOpen(false)} className="p-2 text-zinc-400 hover:text-white rounded-full bg-zinc-800">
                   <X size={20} />
                 </button>
               </div>
 
-              <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+              <div className="mb-6 p-4 bg-brand-trust/10 border border-brand-trust/20 rounded-xl">
                 <p className="text-sm text-zinc-400">Số dư khả dụng hiện tại:</p>
-                <p className="text-2xl font-bold text-emerald-400 mt-1">{walletData?.wallet.balance.toLocaleString()} VND</p>
+                <p className="text-2xl font-bold text-brand-primary mt-1">{walletData?.wallet.balance.toLocaleString()} VND</p>
               </div>
 
               <form onSubmit={handleWithdraw} className="space-y-4">
@@ -229,7 +229,7 @@ export default function AffiliateDashboard() {
                   <input 
                     type="number" required min="10000" max={walletData?.wallet.balance}
                     placeholder="VD: 500000"
-                    className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-emerald-500"
+                    className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-brand-trust"
                     value={withdrawAmount} onChange={(e) => setWithdrawAmount(e.target.value)}
                   />
                 </div>
@@ -237,7 +237,7 @@ export default function AffiliateDashboard() {
                   <label className="block text-sm text-zinc-400 mb-1">Ngân hàng thụ hưởng</label>
                   <input 
                     type="text" required placeholder="VD: Vietcombank, MB Bank..."
-                    className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-emerald-500"
+                    className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-brand-trust"
                     value={bankInfo.bankName} onChange={(e) => setBankInfo({...bankInfo, bankName: e.target.value})}
                   />
                 </div>
@@ -245,7 +245,7 @@ export default function AffiliateDashboard() {
                   <label className="block text-sm text-zinc-400 mb-1">Số tài khoản</label>
                   <input 
                     type="text" required placeholder="Nhập số tài khoản..."
-                    className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-emerald-500"
+                    className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-brand-trust"
                     value={bankInfo.accountNumber} onChange={(e) => setBankInfo({...bankInfo, accountNumber: e.target.value})}
                   />
                 </div>
@@ -253,14 +253,14 @@ export default function AffiliateDashboard() {
                   <label className="block text-sm text-zinc-400 mb-1">Tên chủ tài khoản</label>
                   <input 
                     type="text" required placeholder="VD: NGUYEN VAN A"
-                    className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-emerald-500 uppercase"
+                    className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-brand-trust uppercase"
                     value={bankInfo.accountName} onChange={(e) => setBankInfo({...bankInfo, accountName: e.target.value})}
                   />
                 </div>
                 
                 <button 
                   type="submit" disabled={isSubmitting}
-                  className="w-full py-4 mt-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl transition-all disabled:opacity-50"
+                  className="w-full py-4 mt-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-brand-trust hover:to-teal-500 text-white font-bold rounded-xl transition-all disabled:opacity-50"
                 >
                   {isSubmitting ? "Đang xử lý..." : "Xác nhận Rút tiền"}
                 </button>

@@ -94,7 +94,7 @@ export default function CreatorDashboard() {
   if (!isMounted) return null;
 
   if (isLoading) return (
-    <div className="flex-1 bg-slate-50 dark:bg-zinc-950 flex flex-col items-center justify-center gap-6 h-[100dvh]">
+    <div className="flex-1 bg-brand-base dark:bg-zinc-950 flex flex-col items-center justify-center gap-6 h-[100dvh]">
       <div className="relative">
         <div className="absolute inset-0 bg-rose-400 rounded-full animate-ping opacity-50"></div>
         <div className="relative bg-rose-500 p-4 rounded-full"><BarChart2 className="text-white w-6 h-6 animate-bounce" /></div>
@@ -104,7 +104,7 @@ export default function CreatorDashboard() {
   );
 
   return (
-    <div className="flex-1 relative h-[100dvh] overflow-y-auto no-scrollbar scroll-smooth bg-slate-50 dark:bg-zinc-950 transition-colors duration-500 font-be-vietnam">
+    <div className="flex-1 relative h-[100dvh] overflow-y-auto no-scrollbar scroll-smooth bg-brand-base dark:bg-zinc-950 transition-colors duration-500 font-be-vietnam">
       
       {/* Nút Sáng Tối & Thông báo */}
       <div className="absolute top-6 right-6 md:top-8 md:right-8 z-[60] flex items-center gap-3">
@@ -125,7 +125,7 @@ export default function CreatorDashboard() {
                 </div>
                 <div>
                     <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-1 tracking-tighter">Trung tâm Sáng tạo</h2>
-                    <p className="text-slate-500 dark:text-zinc-400 font-medium text-sm">Theo dõi hiệu suất, tăng trưởng và chất lượng nội dung.</p>
+                    <p className="text-brand-base0 dark:text-zinc-400 font-medium text-sm">Theo dõi hiệu suất, tăng trưởng và chất lượng nội dung.</p>
                 </div>
               </div>
               
@@ -141,7 +141,7 @@ export default function CreatorDashboard() {
                   <div className="relative z-10">
                       <div className="w-12 h-12 rounded-2xl bg-pink-500/20 text-pink-600 dark:text-pink-400 flex items-center justify-center mb-4"><Film size={24} strokeWidth={2.5} /></div>
                       <p className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white">{stats.total_videos}</p>
-                      <p className="text-[10px] md:text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest mt-1">Video Đã Đăng</p>
+                      <p className="text-[10px] md:text-xs font-bold text-brand-base0 dark:text-zinc-400 uppercase tracking-widest mt-1">Video Đã Đăng</p>
                   </div>
               </div>
 
@@ -150,7 +150,7 @@ export default function CreatorDashboard() {
                   <div className="relative z-10">
                       <div className="w-12 h-12 rounded-2xl bg-fuchsia-500/20 text-fuchsia-600 dark:text-fuchsia-400 flex items-center justify-center mb-4"><MessageCircle size={24} strokeWidth={2.5} /></div>
                       <p className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white">{stats.total_posts}</p>
-                      <p className="text-[10px] md:text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest mt-1">Bài Viết Cộng Đồng</p>
+                      <p className="text-[10px] md:text-xs font-bold text-brand-base0 dark:text-zinc-400 uppercase tracking-widest mt-1">Bài Viết Cộng Đồng</p>
                   </div>
               </div>
 
@@ -159,7 +159,7 @@ export default function CreatorDashboard() {
                   <div className="relative z-10">
                       <div className="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center mb-4"><Heart size={24} strokeWidth={2.5} /></div>
                       <p className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white">{stats.total_likes.toLocaleString()}</p>
-                      <p className="text-[10px] md:text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest mt-1">Tổng Lượt Thích</p>
+                      <p className="text-[10px] md:text-xs font-bold text-brand-base0 dark:text-zinc-400 uppercase tracking-widest mt-1">Tổng Lượt Thích</p>
                   </div>
               </div>
 
@@ -219,7 +219,7 @@ export default function CreatorDashboard() {
                       
                       <div className="space-y-4">
                           {recentVideos.length === 0 ? (
-                              <p className="text-sm text-slate-500 text-center py-4">Chưa có video nào.</p>
+                              <p className="text-sm text-brand-base0 text-center py-4">Chưa có video nào.</p>
                           ) : recentVideos.map((item) => (
                               <div key={item.id} className="flex gap-4 p-3 rounded-2xl hover:bg-white dark:hover:bg-white/5 border border-transparent hover:border-slate-200 dark:hover:border-white/10 transition-all cursor-pointer group">
                                   <div className="w-14 h-16 rounded-xl bg-black overflow-hidden relative shrink-0">
@@ -228,9 +228,9 @@ export default function CreatorDashboard() {
                                   </div>
                                   <div className="flex-1 flex flex-col justify-center min-w-0">
                                       <h4 className="font-bold text-sm text-slate-900 dark:text-white truncate mb-1 group-hover:text-rose-500 transition-colors">{item.title}</h4>
-                                      <div className="flex items-center gap-3 text-[10px] font-bold text-slate-500 dark:text-zinc-400">
+                                      <div className="flex items-center gap-3 text-[10px] font-bold text-brand-base0 dark:text-zinc-400">
                                           <span className="flex items-center gap-1"><Heart size={12}/> {item.likes_count || 0}</span>
-                                          <span className={`px-1.5 py-0.5 rounded uppercase tracking-widest ${item.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>{item.status === 'APPROVED' ? 'Đã duyệt' : 'Chờ duyệt'}</span>
+                                          <span className={`px-1.5 py-0.5 rounded uppercase tracking-widest ${item.status === 'APPROVED' ? 'bg-brand-trust/10 text-brand-trust' : 'bg-amber-500/10 text-amber-500'}`}>{item.status === 'APPROVED' ? 'Đã duyệt' : 'Chờ duyệt'}</span>
                                       </div>
                                   </div>
                               </div>
@@ -245,7 +245,7 @@ export default function CreatorDashboard() {
                       </h3>
                       <div className="space-y-4">
                           {recentPosts.length === 0 ? (
-                              <p className="text-sm text-slate-500 text-center py-4">Chưa có bài đăng nào.</p>
+                              <p className="text-sm text-brand-base0 text-center py-4">Chưa có bài đăng nào.</p>
                           ) : recentPosts.map((item) => (
                               <div key={item.id} className="flex gap-4 items-center p-3 rounded-2xl hover:bg-white dark:hover:bg-white/5 border border-transparent hover:border-slate-200 dark:hover:border-white/10 transition-all cursor-pointer group">
                                   {item.image_url ? (

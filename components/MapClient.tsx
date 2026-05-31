@@ -12,15 +12,15 @@ const createCustomMarker = (partner: any) => {
     const htmlString = `
         <div class="relative flex items-center justify-center w-12 h-12">
             <!-- Vòng tròn tỏa sáng (Glow Pulse) -->
-            <div class="absolute inset-0 bg-[#80BF84] rounded-full animate-ping opacity-40"></div>
+            <div class="absolute inset-0 bg-brand-primary rounded-full animate-ping opacity-40"></div>
             
             <!-- Khối Glassmorphism Avatar -->
-            <div class="relative w-10 h-10 bg-white/80 backdrop-blur-md rounded-full border-[3px] border-[#80BF84] shadow-[0_0_20px_rgba(128,191,132,0.8)] flex items-center justify-center overflow-hidden transition-transform hover:scale-110">
+            <div class="relative w-10 h-10 bg-white/80 backdrop-blur-md rounded-full border-[3px] border-brand-primary shadow-[0_0_20px_rgba(128,191,132,0.8)] flex items-center justify-center overflow-hidden transition-transform hover:scale-110">
                 <img src="${avatarUrl}" class="w-full h-full object-cover" />
             </div>
             
             <!-- Mũi ghim nhọn chĩa xuống mặt đất -->
-            <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-[#80BF84]"></div>
+            <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-brand-primary"></div>
         </div>
     `;
 

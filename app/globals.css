@@ -1,4 +1,13 @@
-@import "tailwindcss";
+@import "tailwindcss"; /* Có thể file của bạn đã có dòng này */
+
+@theme {
+  /* ĐỊNH NGHĨA DẢI MÀU HEALTHTECH - TAILWIND V4 */
+  --color-brand-primary: #16B4F2; /* Xanh lơ sáng (CTA, Điểm nhấn chính) */
+  --color-brand-trust: #169EF2;   /* Xanh dương đậm (Bảo chứng, Escrow) */
+  --color-brand-surface: #AEF2EB; /* Xanh ngọc pastel (Nền phụ, Tag) */
+  --color-brand-muted: #91CDF2;   /* Xanh dương nhạt (Hover, Border phụ) */
+  --color-brand-base: #F2F2F2;    /* Xám nhạt (Nền tổng thể) */
+}
 
 @import "leaflet/dist/leaflet.css";
 

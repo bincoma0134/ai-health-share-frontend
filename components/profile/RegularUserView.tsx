@@ -44,7 +44,7 @@ export default function RegularUserView({ profile, videoTiktokFeeds = [], commun
       <div className="flex flex-col md:flex-row items-start gap-10 mb-12">
         {/* Avatar với Glow Glassmorphism */}
         <div className="relative group shrink-0">
-          <div className="absolute -inset-1.5 bg-gradient-to-tr from-[#80BF84] to-emerald-400 rounded-full blur-md opacity-20"></div>
+          <div className="absolute -inset-1.5 bg-gradient-to-tr from-brand-primary to-brand-primary rounded-full blur-md opacity-20"></div>
           <div className="relative w-32 h-32 md:w-36 md:h-36 rounded-full overflow-hidden border-4 border-white dark:border-zinc-800 shadow-2xl backdrop-blur-md bg-slate-100">
             <img 
               src={profile.avatar_url || `https://ui-avatars.com/api/?name=${profile.full_name}&background=80BF84&color=fff`} 
@@ -60,7 +60,7 @@ export default function RegularUserView({ profile, videoTiktokFeeds = [], commun
             <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-md">
               {profile.full_name || "Chưa có tên"}
             </h1>
-            <h2 className="text-base md:text-lg font-medium text-slate-500 dark:text-zinc-400 tracking-tight">
+            <h2 className="text-base md:text-lg font-medium text-brand-base0 dark:text-zinc-400 tracking-tight">
               @{profile.username || "username"}
             </h2>
           </div>
@@ -71,8 +71,8 @@ export default function RegularUserView({ profile, videoTiktokFeeds = [], commun
               onClick={handleToggleFollow} 
               className={`relative px-10 py-3.5 font-black rounded-2xl transition-all duration-300 ease-out flex items-center justify-center gap-2 overflow-hidden group active:scale-95 min-w-[160px] shadow-lg ${
                 isFollowing 
-                ? 'bg-slate-100 dark:bg-zinc-800/80 text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700/50 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-500 dark:hover:text-rose-400 hover:border-rose-200 dark:hover:border-rose-500/30' 
-                : 'bg-gradient-to-br from-[#80BF84] to-[#6da871] text-zinc-950 hover:scale-[1.02] hover:-translate-y-0.5 hover:shadow-[0_15px_25px_-6px_rgba(128,191,132,0.5)]'
+                ? 'bg-slate-100 dark:bg-zinc-800/80 text-brand-base0 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700/50 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-500 dark:hover:text-rose-400 hover:border-rose-200 dark:hover:border-rose-500/30' 
+                : 'bg-gradient-to-br from-brand-primary to-[#6da871] text-zinc-950 hover:scale-[1.02] hover:-translate-y-0.5 hover:shadow-[0_15px_25px_-6px_rgba(128,191,132,0.5)]'
               }`}
             >
               {!isFollowing && <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-700 skew-x-12"></div>}
@@ -88,10 +88,10 @@ export default function RegularUserView({ profile, videoTiktokFeeds = [], commun
             </button>
 
             <div className="flex gap-2">
-              <button onClick={handleShare} className="p-3.5 bg-white/40 dark:bg-white/5 backdrop-blur-3xl border border-white/50 dark:border-white/10 text-slate-500 hover:text-[#80BF84] rounded-xl transition-all shadow-xl active:scale-90">
+              <button onClick={handleShare} className="p-3.5 bg-white/40 dark:bg-white/5 backdrop-blur-3xl border border-white/50 dark:border-white/10 text-brand-base0 hover:text-brand-primary rounded-xl transition-all shadow-xl active:scale-90">
                 <Share2 size={20} />
               </button>
-              <button className="p-3.5 bg-white/40 dark:bg-white/5 backdrop-blur-3xl border border-white/50 dark:border-white/10 text-slate-500 hover:text-slate-900 dark:hover:text-white rounded-xl transition-all shadow-xl active:scale-90">
+              <button className="p-3.5 bg-white/40 dark:bg-white/5 backdrop-blur-3xl border border-white/50 dark:border-white/10 text-brand-base0 hover:text-slate-900 dark:hover:text-white rounded-xl transition-all shadow-xl active:scale-90">
                 <MoreHorizontal size={20} />
               </button>
             </div>
@@ -121,7 +121,7 @@ export default function RegularUserView({ profile, videoTiktokFeeds = [], commun
 
       {/* --- STACK PHÍA DƯỚI: TABS & VIDEO GRID --- */}
       <div className="border-t border-slate-200 dark:border-white/10">
-        <div className="flex justify-center md:justify-start gap-12 sticky top-0 bg-slate-50/80 dark:bg-zinc-950/80 backdrop-blur-md z-20">
+        <div className="flex justify-center md:justify-start gap-12 sticky top-0 bg-brand-base/80 dark:bg-zinc-950/80 backdrop-blur-md z-20">
           {[
             { id: "videos", label: "Videos", icon: LayoutGrid },
             { id: "saved", label: "Đã lưu", icon: Bookmark, private: true },
@@ -132,7 +132,7 @@ export default function RegularUserView({ profile, videoTiktokFeeds = [], commun
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 py-5 text-xs font-black transition-all border-t-2 -mt-[2px] ${
                 activeTab === tab.id 
-                ? "border-[#80BF84] text-[#80BF84]" 
+                ? "border-brand-primary text-brand-primary" 
                 : "border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300"
               }`}
             >
@@ -158,7 +158,7 @@ export default function RegularUserView({ profile, videoTiktokFeeds = [], commun
         {activeTab === "videos" && communityPosts.length === 0 && (
           <div className="text-center py-32 bg-white/40 dark:bg-white/5 backdrop-blur-2xl rounded-[4rem] mt-8 border-2 border-dashed border-slate-200 dark:border-white/10">
             <div className="w-20 h-20 bg-white/50 dark:bg-white/5 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner">
-                <LayoutGrid size={32} className="text-[#80BF84] opacity-50" />
+                <LayoutGrid size={32} className="text-brand-primary opacity-50" />
             </div>
             <p className="text-slate-900 dark:text-white font-black text-lg uppercase tracking-widest">Chưa có video được đăng tải</p>
             <p className="text-slate-400 text-sm font-bold mt-2">Theo dõi người dùng để xem những cập nhật mới nhất.</p>

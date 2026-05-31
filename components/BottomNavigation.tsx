@@ -27,7 +27,7 @@ export default function BottomNavigation() {
   return (
     <>
       {/* Tấm nền vô hình lấp đầy khoảng trắng Safe Area ở đáy màn hình */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-50 dark:bg-black z-[80]" style={{ height: 'env(safe-area-inset-bottom, 0px)' }}></div>
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-brand-base dark:bg-black z-[80]" style={{ height: 'env(safe-area-inset-bottom, 0px)' }}></div>
       
       <div 
         className="md:hidden fixed left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[400px] z-[90] bottom-4"
@@ -37,13 +37,13 @@ export default function BottomNavigation() {
       <div className="relative bg-white/30 dark:bg-[#09090b]/40 backdrop-blur-3xl border border-white/60 dark:border-white/10 rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.6)] px-4 py-3 flex justify-between items-center">
         
         {/* 1. Trang chủ */}
-        <button onClick={() => router.push('/')} className={`flex-1 flex flex-col items-center gap-1.5 active:scale-95 transition-all duration-300 ${pathname === '/' ? 'text-[#80BF84] drop-shadow-md' : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}>
+        <button onClick={() => router.push('/')} className={`flex-1 flex flex-col items-center gap-1.5 active:scale-95 transition-all duration-300 ${pathname === '/' ? 'text-brand-primary drop-shadow-md' : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}>
           <Home size={22} strokeWidth={pathname === '/' ? 2.5 : 2} />
           <span className="text-[9px] font-bold tracking-wide">Trang chủ</span>
         </button>
 
         {/* 2. Bản đồ */}
-        <button onClick={() => router.push('/features/map')} className={`flex-1 flex flex-col items-center gap-1.5 active:scale-95 transition-all duration-300 ${pathname.includes('/features/map') ? 'text-[#80BF84] drop-shadow-md' : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}>
+        <button onClick={() => router.push('/features/map')} className={`flex-1 flex flex-col items-center gap-1.5 active:scale-95 transition-all duration-300 ${pathname.includes('/features/map') ? 'text-brand-primary drop-shadow-md' : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}>
           <Map size={22} strokeWidth={pathname.includes('/features/map') ? 2.5 : 2} />
           <span className="text-[9px] font-bold tracking-wide">Bản đồ</span>
         </button>
@@ -55,20 +55,20 @@ export default function BottomNavigation() {
               <div className="w-[62px] h-[62px] rounded-full bg-white/20 dark:bg-black/20 backdrop-blur-2xl p-[1px] shadow-[0_10px_30px_rgba(128,191,132,0.35)] border border-white/60 dark:border-white/10">
                 {/* Khối cầu bên trong */}
                 <div className="w-full h-full bg-gradient-to-tr from-white/95 to-white/70 dark:from-zinc-900/95 dark:to-zinc-800/70 rounded-full flex items-center justify-center">
-                  <Sparkles size={28} className="text-[#80BF84] group-hover:scale-110 transition-transform duration-500" strokeWidth={2.5} />
+                  <Sparkles size={28} className="text-brand-primary group-hover:scale-110 transition-transform duration-500" strokeWidth={2.5} />
                 </div>
               </div>
             </button>
         </div>
 
         {/* 4. Lịch hẹn */}
-        <button onClick={() => router.push('/features/calendar')} className={`flex-1 flex flex-col items-center gap-1.5 active:scale-95 transition-all duration-300 ${pathname.includes('/features/calendar') ? 'text-[#80BF84] drop-shadow-md' : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}>
+        <button onClick={() => router.push('/features/calendar')} className={`flex-1 flex flex-col items-center gap-1.5 active:scale-95 transition-all duration-300 ${pathname.includes('/features/calendar') ? 'text-brand-primary drop-shadow-md' : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}>
           <CalendarDays size={22} strokeWidth={pathname.includes('/features/calendar') ? 2.5 : 2} />
           <span className="text-[9px] font-bold tracking-wide">Lịch hẹn</span>
         </button>
 
         {/* 5. Hồ sơ cá nhân */}
-        <button onClick={handleProfileClick} className={`flex-1 flex flex-col items-center gap-1.5 active:scale-95 transition-all duration-300 ${pathname.includes('profile') ? 'text-[#80BF84] drop-shadow-md' : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}>
+        <button onClick={handleProfileClick} className={`flex-1 flex flex-col items-center gap-1.5 active:scale-95 transition-all duration-300 ${pathname.includes('profile') ? 'text-brand-primary drop-shadow-md' : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}>
           <UserIcon size={22} strokeWidth={pathname.includes('profile') ? 2.5 : 2} />
           <span className="text-[9px] font-bold tracking-wide">Hồ sơ</span>
         </button>

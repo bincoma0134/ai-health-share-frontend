@@ -23,8 +23,8 @@ export default function ProfessorXPanel() {
     { role: "SUPER_ADMIN", email: "admin.gsx@gmail.com", label: "Super Admin Tối Cao", icon: <Crown size={14} />, color: "text-red-500" },
     { role: "PARTNER_ADMIN", email: "partner.gsx@gmail.com", label: "Đối Tác Spa (Lưới Kín)", icon: <Building2 size={14} />, color: "text-amber-500" },
     { role: "CREATOR", email: "creator.gsx@gmail.com", label: "Creator Sáng Tạo", icon: <Sparkles size={14} />, color: "text-fuchsia-500" },
-    { role: "MODERATOR", email: "moderator.gsx@gmail.com", label: "Ban Kiểm Duyệt", icon: <ShieldCheck size={14} />, color: "text-blue-500" },
-    { role: "USER", email: "user.gsx@gmail.com", label: "Khách Hàng VIP", icon: <User size={14} />, color: "text-emerald-500" }
+    { role: "MODERATOR", email: "moderator.gsx@gmail.com", label: "Ban Kiểm Duyệt", icon: <ShieldCheck size={14} />, color: "text-brand-trust" },
+    { role: "USER", email: "user.gsx@gmail.com", label: "Khách Hàng VIP", icon: <User size={14} />, color: "text-brand-trust" }
   ];
 
   useEffect(() => {

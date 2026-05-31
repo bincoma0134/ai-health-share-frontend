@@ -81,7 +81,7 @@ export default function ModeratorView({ profile, likedTiktokFeeds = [], savedTik
               {profile?.full_name || "Kiểm Duyệt Viên"}
               <ShieldCheck size={24} className="text-violet-500" />
             </h1>
-            <h2 className="text-base font-medium text-slate-500 dark:text-zinc-400 tracking-tight">
+            <h2 className="text-base font-medium text-brand-base0 dark:text-zinc-400 tracking-tight">
               @{profile?.username || "moderator_account"}
             </h2>
           </div>
@@ -93,7 +93,7 @@ export default function ModeratorView({ profile, likedTiktokFeeds = [], savedTik
               onClick={handleToggleFollow} 
               className={`relative px-8 py-3.5 font-black rounded-2xl transition-all duration-300 ease-out flex items-center justify-center gap-2 overflow-hidden group active:scale-95 text-xs uppercase tracking-widest min-w-[160px] shadow-lg ${
                 isFollowing 
-                ? 'bg-slate-100 dark:bg-zinc-800/80 text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700/50 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-500 dark:hover:text-rose-400 hover:border-rose-200 dark:hover:border-rose-500/30' 
+                ? 'bg-slate-100 dark:bg-zinc-800/80 text-brand-base0 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700/50 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-500 dark:hover:text-rose-400 hover:border-rose-200 dark:hover:border-rose-500/30' 
                 : 'bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white hover:scale-[1.02] hover:-translate-y-0.5 hover:shadow-[0_15px_25px_-6px_rgba(139,92,246,0.6)]'
               }`}
             >
@@ -188,7 +188,7 @@ export default function ModeratorView({ profile, likedTiktokFeeds = [], savedTik
         {(activeTab === "liked" ? likedTiktokFeeds : savedTiktokFeeds).length === 0 && (
           <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-[2rem] mt-8">
             <LayoutGrid size={48} className="mx-auto text-slate-300 dark:text-zinc-700 mb-4" />
-            <p className="text-slate-500 font-bold">Chưa có nội dung {activeTab === "liked" ? "đã thích" : "đã lưu"}.</p>
+            <p className="text-brand-base0 font-bold">Chưa có nội dung {activeTab === "liked" ? "đã thích" : "đã lưu"}.</p>
           </div>
         )}
       </div>

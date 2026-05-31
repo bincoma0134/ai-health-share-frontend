@@ -80,7 +80,7 @@ export default function CreatorView({ profile, videoTiktokFeeds = [], communityP
               <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter flex items-center justify-center md:justify-start gap-3 mb-1 drop-shadow-md">
                   {profile?.full_name || "Nhà Sáng Tạo"} <CheckCircle size={24} className="text-rose-500 fill-rose-500/20" />
               </h1>
-              <h2 className="text-base font-medium text-slate-500 dark:text-zinc-400 tracking-tight">
+              <h2 className="text-base font-medium text-brand-base0 dark:text-zinc-400 tracking-tight">
                   @{profile?.username || "creator"}
               </h2>
           </div>
@@ -92,7 +92,7 @@ export default function CreatorView({ profile, videoTiktokFeeds = [], communityP
                 onClick={handleToggleFollow} 
                 className={`relative px-8 py-3.5 font-black rounded-2xl transition-all duration-300 ease-out flex items-center justify-center gap-2 overflow-hidden group active:scale-95 text-xs uppercase tracking-widest min-w-[160px] shadow-lg ${
                   isFollowing 
-                  ? 'bg-slate-100 dark:bg-zinc-800/80 text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700/50 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-500 dark:hover:text-rose-400 hover:border-rose-200 dark:hover:border-rose-500/30' 
+                  ? 'bg-slate-100 dark:bg-zinc-800/80 text-brand-base0 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700/50 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-500 dark:hover:text-rose-400 hover:border-rose-200 dark:hover:border-rose-500/30' 
                   : 'bg-gradient-to-r from-rose-500 to-pink-500 text-white hover:scale-[1.02] hover:-translate-y-0.5 shadow-[0_8px_20px_-6px_rgba(244,63,94,0.5)] hover:shadow-[0_15px_25px_-6px_rgba(244,63,94,0.6)]'
                 }`}
               >
@@ -186,7 +186,7 @@ export default function CreatorView({ profile, videoTiktokFeeds = [], communityP
             {(activeTab === "videos" ? videoTiktokFeeds : activeTab === "liked" ? likedTiktokFeeds : savedTiktokFeeds).length === 0 && (
               <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-[2rem]">
                   <LayoutGrid size={48} className="mx-auto text-slate-300 dark:text-zinc-700 mb-4" />
-                  <p className="text-slate-500 font-bold">Chưa có video nào để hiển thị.</p>
+                  <p className="text-brand-base0 font-bold">Chưa có video nào để hiển thị.</p>
               </div>
             )}
           </div>
@@ -220,7 +220,7 @@ export default function CreatorView({ profile, videoTiktokFeeds = [], communityP
                 {communityPosts.length === 0 && (
                     <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-[2rem]">
                         <MessageCircle size={48} className="mx-auto text-slate-300 dark:text-zinc-700 mb-4" />
-                        <p className="text-slate-500 font-bold">Chưa có bài viết nào trên cộng đồng.</p>
+                        <p className="text-brand-base0 font-bold">Chưa có bài viết nào trên cộng đồng.</p>
                     </div>
                 )}
             </div>

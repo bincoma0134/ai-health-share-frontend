@@ -128,7 +128,7 @@ export default function ModeratorDashboard() {
   if (!isMounted) return null;
 
   return (
-    <div className="h-[100dvh] w-full bg-slate-50 dark:bg-zinc-950 overflow-hidden flex flex-col transition-colors duration-500 font-be-vietnam">
+    <div className="h-[100dvh] w-full bg-brand-base dark:bg-zinc-950 overflow-hidden flex flex-col transition-colors duration-500 font-be-vietnam">
       
       {/* TOP HEADER */}
       <div className="flex justify-between items-center px-6 md:px-10 py-5 bg-white/60 dark:bg-black/60 backdrop-blur-2xl border-b border-slate-200 dark:border-white/10 z-20">
@@ -150,25 +150,25 @@ export default function ModeratorDashboard() {
           {/* SIDEBAR */}
           <div className="w-20 md:w-64 border-r border-slate-200 dark:border-white/10 bg-white/40 dark:bg-black/20 backdrop-blur-xl flex flex-col py-6 z-10">
               <div className="flex-1 px-4 space-y-2">
-                  <button onClick={() => setActiveTab('overview')} className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl font-bold transition-all ${activeTab === 'overview' ? 'bg-violet-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-200/50 dark:hover:bg-white/5'}`}>
+                  <button onClick={() => setActiveTab('overview')} className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl font-bold transition-all ${activeTab === 'overview' ? 'bg-violet-500 text-white shadow-md' : 'text-brand-base0 hover:bg-slate-200/50 dark:hover:bg-white/5'}`}>
                       <LayoutDashboard size={20}/> <span className="hidden md:block">Tổng quan</span>
                   </button>
-                  <button onClick={() => setActiveTab('queue')} className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl font-bold transition-all ${activeTab === 'queue' ? 'bg-violet-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-200/50 dark:hover:bg-white/5'}`}>
+                  <button onClick={() => setActiveTab('queue')} className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl font-bold transition-all ${activeTab === 'queue' ? 'bg-violet-500 text-white shadow-md' : 'text-brand-base0 hover:bg-slate-200/50 dark:hover:bg-white/5'}`}>
                       <div className="flex items-center gap-4"><Clock size={20}/> <span className="hidden md:block">Hàng đợi</span></div>
                       {(queue || []).length > 0 && <span className="hidden md:flex px-2 py-0.5 bg-rose-500 text-white text-[10px] rounded-full">{queue.length}</span>}
                   </button>
-                  <button onClick={() => setActiveTab('history')} className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl font-bold transition-all ${activeTab === 'history' ? 'bg-violet-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-200/50 dark:hover:bg-white/5'}`}>
+                  <button onClick={() => setActiveTab('history')} className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl font-bold transition-all ${activeTab === 'history' ? 'bg-violet-500 text-white shadow-md' : 'text-brand-base0 hover:bg-slate-200/50 dark:hover:bg-white/5'}`}>
                       <History size={20}/> <span className="hidden md:block">Lịch sử xử lý</span>
                   </button>
                   <div className="my-2 border-b border-slate-200 dark:border-white/10 hidden md:block"></div>
-                  <button onClick={() => setActiveTab('vouchers')} className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl font-bold transition-all ${activeTab === 'vouchers' ? 'bg-violet-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-200/50 dark:hover:bg-white/5'}`}>
+                  <button onClick={() => setActiveTab('vouchers')} className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl font-bold transition-all ${activeTab === 'vouchers' ? 'bg-violet-500 text-white shadow-md' : 'text-brand-base0 hover:bg-slate-200/50 dark:hover:bg-white/5'}`}>
                       <Ticket size={20}/> <span className="hidden md:block">Kho Ưu đãi Toàn sàn</span>
                   </button>
               </div>
           </div>
 
           {/* CONTENT AREA */}
-          <div className="flex-1 overflow-y-auto no-scrollbar bg-slate-50/50 dark:bg-zinc-950/50 p-6 md:p-10">
+          <div className="flex-1 overflow-y-auto no-scrollbar bg-brand-base/50 dark:bg-zinc-950/50 p-6 md:p-10">
               {isLoading ? (
                   <div className="h-full flex items-center justify-center"><div className="w-8 h-8 border-4 border-violet-500 border-t-transparent rounded-full animate-spin"></div></div>
               ) : (
@@ -185,7 +185,7 @@ export default function ModeratorDashboard() {
                                   </div>
                                   <div className="p-8 bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-slate-200 dark:border-white/10 shadow-sm flex flex-col gap-2 relative overflow-hidden group">
                                       <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-110 transition-transform"><ShieldCheck size={100}/></div>
-                                      <span className="text-xs font-bold text-emerald-500 uppercase tracking-widest flex items-center gap-2"><CheckCircle size={16}/> Hiệu suất cá nhân</span>
+                                      <span className="text-xs font-bold text-brand-trust uppercase tracking-widest flex items-center gap-2"><CheckCircle size={16}/> Hiệu suất cá nhân</span>
                                       <span className="text-5xl font-black text-slate-900 dark:text-white">{stats.total_processed}</span>
                                   </div>
                                   <div className="p-8 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-[2.5rem] shadow-xl flex flex-col gap-2 text-white relative overflow-hidden">
@@ -252,7 +252,7 @@ export default function ModeratorDashboard() {
 
                               {filteredQueue.length === 0 ? (
                                   <div className="py-20 text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-[3rem]">
-                                      <ShieldCheck size={48} className="mx-auto text-emerald-500 opacity-50 mb-4"/>
+                                      <ShieldCheck size={48} className="mx-auto text-brand-trust opacity-50 mb-4"/>
                                       <p className="font-black text-lg text-slate-700 dark:text-zinc-300">Không có yêu cầu nào!</p>
                                   </div>
                               ) : (
@@ -260,7 +260,7 @@ export default function ModeratorDashboard() {
                                       {filteredQueue.map(item => (
                                           <div key={item.id} onClick={() => setSelectedItem(item)} className="bg-white dark:bg-zinc-900 rounded-3xl p-5 border border-slate-200 dark:border-white/10 cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all group">
                                               <div className="flex justify-between items-center mb-3">
-                                                  <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase flex items-center gap-1 ${item.type === 'service' ? 'bg-blue-100 text-blue-600' : item.type === 'video' ? 'bg-fuchsia-100 text-fuchsia-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                                                  <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase flex items-center gap-1 ${item.type === 'service' ? 'bg-blue-100 text-brand-trust' : item.type === 'video' ? 'bg-fuchsia-100 text-fuchsia-600' : 'bg-emerald-100 text-emerald-600'}`}>
                                                       {item.type === 'service' ? <Package size={10}/> : item.type === 'video' ? <Video size={10}/> : <Ticket size={10}/>} {item.type}
                                                   </span>
                                                   <span className={`text-[10px] font-black uppercase ${item.status.includes('DELETE') ? 'text-rose-500' : item.status.includes('UPDATE') ? 'text-amber-500' : 'text-violet-500'}`}>
@@ -269,7 +269,7 @@ export default function ModeratorDashboard() {
                                               </div>
                                               
                                               {item.type === 'voucher' ? (
-                                                  <div className="aspect-[16/9] rounded-xl bg-gradient-to-br from-emerald-400 to-[#80BF84] overflow-hidden mb-3 relative flex items-center justify-center border border-emerald-500/20 shadow-inner">
+                                                  <div className="aspect-[16/9] rounded-xl bg-gradient-to-br from-brand-primary to-brand-primary overflow-hidden mb-3 relative flex items-center justify-center border border-brand-trust/20 shadow-inner">
                                                       <div className="absolute -left-4 w-8 h-8 bg-white dark:bg-zinc-900 rounded-full"></div>
                                                       <div className="absolute -right-4 w-8 h-8 bg-white dark:bg-zinc-900 rounded-full"></div>
                                                       <div className="text-center text-white px-4">
@@ -288,7 +288,7 @@ export default function ModeratorDashboard() {
                                               )}
                                               
                                               <h3 className="font-bold text-slate-900 dark:text-white truncate">{item.title}</h3>
-                                              <p className="text-xs text-slate-500 mt-1 truncate">Bởi: {item.author?.full_name}</p>
+                                              <p className="text-xs text-brand-base0 mt-1 truncate">Bởi: {item.author?.full_name}</p>
                                           </div>
                                       ))}
                                   </div>
@@ -303,8 +303,8 @@ export default function ModeratorDashboard() {
                               <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm">
                                   <div className="overflow-x-auto no-scrollbar">
                                       <table className="w-full text-left min-w-[1000px]">
-                                          <thead className="bg-slate-50 dark:bg-black/50 border-b border-slate-200 dark:border-white/10">
-                                              <tr className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                          <thead className="bg-brand-base dark:bg-black/50 border-b border-slate-200 dark:border-white/10">
+                                              <tr className="text-[10px] font-black text-brand-base0 uppercase tracking-widest">
                                                   <th className="p-5">STT</th>
                                                   <th className="p-5">Thời gian</th>
                                                   <th className="p-5">Người duyệt</th>
@@ -319,7 +319,7 @@ export default function ModeratorDashboard() {
                                                   <tr><td colSpan={7} className="p-10 text-center text-slate-400 font-bold uppercase tracking-widest text-xs">Chưa có lịch sử</td></tr>
                                               ) : (
                                                   history.map((item, idx) => (
-                                                      <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                                      <tr key={item.id} className="hover:bg-brand-base dark:hover:bg-white/5 transition-colors">
                                                           <td className="p-5 font-black text-xs text-slate-400">{idx + 1}</td>
                                                           
                                                           <td className="p-5">
@@ -350,12 +350,12 @@ export default function ModeratorDashboard() {
                                                           </td>
 
                                                           <td className="p-5">
-                                                              <span className={`px-2.5 py-1 rounded-md text-[9px] font-black uppercase border ${item.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/20' : item.status === 'DELETED' ? 'bg-slate-100 text-slate-600 border-slate-300 dark:bg-zinc-800 dark:text-zinc-400 dark:border-white/10' : 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/20'}`}>
+                                                              <span className={`px-2.5 py-1 rounded-md text-[9px] font-black uppercase border ${item.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-brand-trust/10 dark:border-brand-trust/20' : item.status === 'DELETED' ? 'bg-slate-100 text-slate-600 border-slate-300 dark:bg-zinc-800 dark:text-zinc-400 dark:border-white/10' : 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/20'}`}>
                                                                   {item.status}
                                                               </span>
                                                           </td>
 
-                                                          <td className="p-5 text-xs text-slate-500 italic max-w-[150px] truncate" title={item.moderation_note}>{item.moderation_note || '-'}</td>
+                                                          <td className="p-5 text-xs text-brand-base0 italic max-w-[150px] truncate" title={item.moderation_note}>{item.moderation_note || '-'}</td>
                                                       </tr>
                                                   ))
                                               )}
@@ -387,7 +387,7 @@ export default function ModeratorDashboard() {
                 <div className={`w-full md:w-3/5 h-1/2 md:h-full flex ${selectedItem.status === 'PENDING_UPDATE' ? 'divide-x divide-white/20' : ''}`}>
                     {selectedItem.status === 'PENDING_UPDATE' && (
                         <div className="flex-1 bg-slate-200 dark:bg-zinc-900 relative p-6 flex flex-col">
-                            <div className="absolute top-4 left-4"><span className="px-2 py-1 bg-slate-500 text-white text-[10px] font-black rounded-md">BẢN CŨ ĐANG LƯU</span></div>
+                            <div className="absolute top-4 left-4"><span className="px-2 py-1 bg-brand-base0 text-white text-[10px] font-black rounded-md">BẢN CŨ ĐANG LƯU</span></div>
                             <div className="flex-1 mt-8 opacity-70 grayscale overflow-y-auto no-scrollbar">
                                 <h3 className="text-xl font-bold line-through">{selectedItem.title}</h3>
                                 <p className="text-rose-500 font-bold my-2">{(selectedItem.price || 0) - 50000} VND</p>
@@ -400,7 +400,7 @@ export default function ModeratorDashboard() {
                         {selectedItem.status === 'PENDING_DELETE' && <div className="absolute inset-0 bg-rose-500/20 z-10 pointer-events-none flex items-center justify-center"><ShieldAlert size={100} className="text-rose-500 opacity-50"/></div>}
                         
                         {/* THÔNG BÁO DÀNH CHO TAB LỊCH SỬ (ĐÃ XỬ LÝ) */}
-                        {isReadonlyModal && <div className="absolute top-4 right-4 z-10"><span className="px-3 py-1.5 bg-emerald-500 text-white text-[10px] font-black rounded-lg shadow-lg flex items-center gap-1"><CheckCircle size={14}/> ĐÃ HOÀN TẤT XỬ LÝ</span></div>}
+                        {isReadonlyModal && <div className="absolute top-4 right-4 z-10"><span className="px-3 py-1.5 bg-brand-trust text-white text-[10px] font-black rounded-lg shadow-lg flex items-center gap-1"><CheckCircle size={14}/> ĐÃ HOÀN TẤT XỬ LÝ</span></div>}
 
                         <div className="w-full max-h-full overflow-hidden flex justify-center rounded-xl">
                             {getMediaUrl(selectedItem) ? (
@@ -414,14 +414,14 @@ export default function ModeratorDashboard() {
                     <div className="flex justify-between items-center p-6 border-b border-slate-200 dark:border-white/5">
                         <div className="flex items-center gap-3">
                             <img src={selectedItem.author?.avatar_url || `https://ui-avatars.com/api/?name=${selectedItem.author?.full_name}`} className="w-10 h-10 rounded-full border border-slate-200"/>
-                            <div><p className="text-sm font-black text-slate-900 dark:text-white">{selectedItem.author?.full_name}</p><p className="text-[10px] text-slate-500">ID: {selectedItem.id.split('-')[0]}</p></div>
+                            <div><p className="text-sm font-black text-slate-900 dark:text-white">{selectedItem.author?.full_name}</p><p className="text-[10px] text-brand-base0">ID: {selectedItem.id.split('-')[0]}</p></div>
                         </div>
-                        <button onClick={closeModal} className="p-2 bg-slate-100 dark:bg-white/5 rounded-full text-slate-500"><X size={18}/></button>
+                        <button onClick={closeModal} className="p-2 bg-slate-100 dark:bg-white/5 rounded-full text-brand-base0"><X size={18}/></button>
                     </div>
                     <div className="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar">
                         <h2 className="text-xl font-black text-slate-900 dark:text-white leading-snug">{selectedItem.title}</h2>
-                        {selectedItem.price && <p className="text-lg font-black text-emerald-500">{selectedItem.price.toLocaleString()} VND</p>}
-                        <div className="p-4 bg-slate-50 dark:bg-black/30 rounded-xl text-sm text-slate-700 dark:text-zinc-300 whitespace-pre-wrap border border-slate-200 dark:border-white/5">{selectedItem.description || "Nội dung này không có mô tả chi tiết."}</div>
+                        {selectedItem.price && <p className="text-lg font-black text-brand-trust">{selectedItem.price.toLocaleString()} VND</p>}
+                        <div className="p-4 bg-brand-base dark:bg-black/30 rounded-xl text-sm text-slate-700 dark:text-zinc-300 whitespace-pre-wrap border border-slate-200 dark:border-white/5">{selectedItem.description || "Nội dung này không có mô tả chi tiết."}</div>
                         
                         {/* Hiện Ghi chú cũ nếu xem trong Lịch sử */}
                         {isReadonlyModal && selectedItem.moderation_note && (
@@ -438,7 +438,7 @@ export default function ModeratorDashboard() {
                             </div>
                         )}
                     </div>
-                    <div className="p-6 border-t border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-black/20 flex flex-col gap-3">
+                    <div className="p-6 border-t border-slate-200 dark:border-white/5 bg-brand-base dark:bg-black/20 flex flex-col gap-3">
                         
                         {isReadonlyModal ? (
                             <button onClick={closeModal} className="w-full py-4 bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 font-black rounded-xl hover:bg-slate-300 dark:hover:bg-zinc-700 transition-all flex justify-center gap-2">

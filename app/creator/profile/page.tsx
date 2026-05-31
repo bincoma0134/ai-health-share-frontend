@@ -236,25 +236,25 @@ export default function CreatorProfile() {
   const updateSocial = (idx: number, field: keyof SocialLink, value: string) => { const ns = [...socials]; ns[idx] = { ...ns[idx], [field]: value }; setSocials(ns); };
 
   if (isLoading) return (
-      <div className="h-[100dvh] w-full bg-slate-50 dark:bg-zinc-950 flex flex-col items-center justify-center transition-colors duration-500">
+      <div className="h-[100dvh] w-full bg-brand-base dark:bg-zinc-950 flex flex-col items-center justify-center transition-colors duration-500">
           <Sparkles className="text-rose-500 w-10 h-10 animate-pulse" />
-          <p className="text-slate-500 mt-4 text-xs font-black tracking-widest uppercase">Đang nạp không gian sáng tạo...</p>
+          <p className="text-brand-base0 mt-4 text-xs font-black tracking-widest uppercase">Đang nạp không gian sáng tạo...</p>
       </div>
   );
 
   return (
-    <div className="flex-1 relative h-[100dvh] overflow-y-auto no-scrollbar scroll-smooth bg-slate-50 dark:bg-zinc-950 transition-colors duration-500 font-be-vietnam">
+    <div className="flex-1 relative h-[100dvh] overflow-y-auto no-scrollbar scroll-smooth bg-brand-base dark:bg-zinc-950 transition-colors duration-500 font-be-vietnam">
       
       <input type="file" accept="image/*" className="hidden" ref={avatarInputRef} onChange={e => handleImageUpload(e, 'avatar')} />
       <input type="file" accept="image/*" className="hidden" ref={coverInputRef} onChange={e => handleImageUpload(e, 'cover')} />
 
       {/* TOP NAV OVERLAY */}
-      <div className="absolute top-0 w-full z-40 p-6 flex justify-end items-center bg-gradient-to-b from-slate-50 dark:from-zinc-950 to-transparent pointer-events-none">
+      <div className="absolute top-0 w-full z-40 p-6 flex justify-end items-center bg-gradient-to-b from-brand-base dark:from-zinc-950 to-transparent pointer-events-none">
           <div className="flex items-center gap-3 pointer-events-auto">
             <button onClick={toggleTheme} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-3xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white shadow-lg group transition-all">
               {theme === 'dark' ? <Sun size={20} className="group-hover:text-amber-300" /> : <Moon size={20} className="group-hover:text-rose-500" />}
             </button>
-            <button onClick={() => setIsNotifOpen(true)} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-3xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 hover:text-rose-500 shadow-lg transition-all"><Bell size={20} /></button>
+            <button onClick={() => setIsNotifOpen(true)} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-3xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-brand-base0 hover:text-rose-500 shadow-lg transition-all"><Bell size={20} /></button>
           </div>
       </div>
 
@@ -299,7 +299,7 @@ export default function CreatorProfile() {
                               <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter flex items-center justify-center md:justify-start gap-2 mb-1 drop-shadow-md">
                                   {profileData?.full_name || "Nhà Sáng Tạo"} <CheckCircle size={24} className="text-rose-500 fill-rose-500/20" />
                               </h1>
-                              <h2 className="text-base font-medium text-slate-500 dark:text-zinc-400">@{profileData?.username || "creator"}</h2>
+                              <h2 className="text-base font-medium text-brand-base0 dark:text-zinc-400">@{profileData?.username || "creator"}</h2>
                           </div>
                           
                           {/* ĐÃ CẬP NHẬT: NÚT NGANG HÀNG TRÊN CÙNG ROW (CHUẨN ADMIN) */}
@@ -369,7 +369,7 @@ export default function CreatorProfile() {
                                   {videos.length === 0 ? (
                                       <div className="py-20 text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-3xl">
                                           <Video size={40} className="mx-auto text-slate-300 dark:text-zinc-700 mb-3"/>
-                                          <p className="text-slate-500 font-bold">Bạn chưa đăng tải video nào.</p>
+                                          <p className="text-brand-base0 font-bold">Bạn chưa đăng tải video nào.</p>
                                       </div>
                                   ) : (
                                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
@@ -377,7 +377,7 @@ export default function CreatorProfile() {
                                               <div key={vid.id} className="relative aspect-[9/16] bg-black rounded-2xl overflow-hidden group border border-slate-200 dark:border-white/10 shadow-sm">
                                                   <video src={vid.video_url} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700" muted playsInline />
                                                   <div className="absolute top-3 left-3 z-10">
-                                                      <span className={`px-2 py-1 rounded-md text-[8px] font-black uppercase backdrop-blur-md border ${vid.status === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : vid.status === 'REJECTED' ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' : 'bg-amber-500/20 text-amber-400 border-amber-500/30'}`}>
+                                                      <span className={`px-2 py-1 rounded-md text-[8px] font-black uppercase backdrop-blur-md border ${vid.status === 'APPROVED' ? 'bg-brand-trust/20 text-brand-primary border-brand-trust/30' : vid.status === 'REJECTED' ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' : 'bg-amber-500/20 text-amber-400 border-amber-500/30'}`}>
                                                           {vid.status}
                                                       </span>
                                                   </div>
@@ -405,7 +405,7 @@ export default function CreatorProfile() {
                                   {posts.length === 0 ? (
                                       <div className="py-20 text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-3xl">
                                           <MessageCircle size={40} className="mx-auto text-slate-300 dark:text-zinc-700 mb-3"/>
-                                          <p className="text-slate-500 font-bold">Chưa có bài viết nào trên cộng đồng.</p>
+                                          <p className="text-brand-base0 font-bold">Chưa có bài viết nào trên cộng đồng.</p>
                                       </div>
                                   ) : (
                                       <div className="space-y-6">
@@ -462,7 +462,7 @@ export default function CreatorProfile() {
                                       </div>
                                       <div className="space-y-4">
                                           {socials.map((social, idx) => (
-                                              <div key={idx} className="flex flex-col sm:flex-row items-center gap-3 bg-slate-50 dark:bg-white/5 p-3 rounded-2xl border border-slate-200 dark:border-white/5">
+                                              <div key={idx} className="flex flex-col sm:flex-row items-center gap-3 bg-brand-base dark:bg-white/5 p-3 rounded-2xl border border-slate-200 dark:border-white/5">
                                                   <select value={social.platform} onChange={(e) => updateSocial(idx, 'platform', e.target.value as SocialPlatform)} className="w-full sm:w-1/3 bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-rose-500">
                                                       <option value="tiktok">TikTok</option><option value="youtube">YouTube</option><option value="instagram">Instagram</option><option value="facebook">Facebook</option>
                                                   </select>
@@ -493,7 +493,7 @@ export default function CreatorProfile() {
                               <span className="text-5xl font-black text-slate-800 dark:text-white tracking-tighter">{stats.approval_rate || 100}</span>
                               <span className="text-xl font-bold text-slate-400">%</span>
                           </div>
-                          <p className="text-[11px] text-slate-500 dark:text-zinc-500 font-medium leading-relaxed mt-2 border-t border-slate-200 dark:border-white/10 pt-4">
+                          <p className="text-[11px] text-brand-base0 dark:text-zinc-500 font-medium leading-relaxed mt-2 border-t border-slate-200 dark:border-white/10 pt-4">
                               Tỷ lệ bài đăng và video được hệ thống kiểm duyệt phê duyệt thành công.
                           </p>
                       </div>
@@ -507,9 +507,9 @@ export default function CreatorProfile() {
         <div className="fixed inset-0 z-[100] flex justify-center items-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsAddVideoModalOpen(false)}></div>
             <div className="relative w-full max-w-[800px] bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-slate-200 dark:border-white/10 shadow-2xl animate-slide-up overflow-hidden flex flex-col max-h-[90vh]">
-                <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-black/20">
+                <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-white/5 bg-brand-base/50 dark:bg-black/20">
                     <h3 className="font-black text-lg text-slate-900 dark:text-white flex items-center gap-2"><Video size={20} className="text-rose-500"/> Đăng Video Lên Studio</h3>
-                    <button onClick={() => setIsAddVideoModalOpen(false)} className="p-2 bg-slate-200/50 dark:bg-white/5 rounded-full text-slate-500"><X size={16}/></button>
+                    <button onClick={() => setIsAddVideoModalOpen(false)} className="p-2 bg-slate-200/50 dark:bg-white/5 rounded-full text-brand-base0"><X size={16}/></button>
                 </div>
                 
                 <div className="p-6 md:p-8 overflow-y-auto no-scrollbar">
@@ -538,11 +538,11 @@ export default function CreatorProfile() {
                         {/* Thông tin */}
                         <div className="lg:col-span-7 flex flex-col justify-center space-y-4">
                             <div>
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Tiêu đề (Bắt buộc)</label>
+                                <label className="text-[10px] font-black text-brand-base0 uppercase tracking-widest mb-1 block">Tiêu đề (Bắt buộc)</label>
                                 <input type="text" className="w-full bg-slate-100/50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-5 py-3.5 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-rose-500" placeholder="Viết một tiêu đề thu hút..." value={studioData.title} onChange={e => setStudioData({...studioData, title: e.target.value})} />
                             </div>
                             <div>
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Mô tả nội dung</label>
+                                <label className="text-[10px] font-black text-brand-base0 uppercase tracking-widest mb-1 block">Mô tả nội dung</label>
                                 <textarea rows={3} className="w-full bg-slate-100/50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-5 py-3.5 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-rose-500 resize-none" placeholder="Chia sẻ thêm thông tin..." value={studioData.content} onChange={e => setStudioData({...studioData, content: e.target.value})} />
                             </div>
                             
@@ -562,9 +562,9 @@ export default function CreatorProfile() {
         <div className="fixed inset-0 z-[100] flex justify-center items-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsAddPostModalOpen(false)}></div>
             <div className="relative w-full max-w-lg bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-slate-200 dark:border-white/10 shadow-2xl animate-slide-up overflow-hidden flex flex-col">
-                <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-black/20">
+                <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-white/5 bg-brand-base/50 dark:bg-black/20">
                     <h3 className="font-black text-lg text-slate-900 dark:text-white flex items-center gap-2"><Edit3 size={20} className="text-rose-500"/> Tạo Bài Đăng Mới</h3>
-                    <button onClick={() => setIsAddPostModalOpen(false)} className="p-2 bg-slate-200/50 dark:bg-white/5 rounded-full text-slate-500"><X size={16}/></button>
+                    <button onClick={() => setIsAddPostModalOpen(false)} className="p-2 bg-slate-200/50 dark:bg-white/5 rounded-full text-brand-base0"><X size={16}/></button>
                 </div>
                 
                 <form onSubmit={handleAddPost} className="p-6 space-y-4">
@@ -573,13 +573,13 @@ export default function CreatorProfile() {
                         <div className="font-bold text-slate-900 dark:text-white text-sm">{profileData?.full_name}</div>
                     </div>
 
-                    <textarea rows={5} className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-rose-500 resize-none" placeholder="Chia sẻ suy nghĩ của bạn..." value={postData.content} onChange={e => setPostData({...postData, content: e.target.value})} required />
+                    <textarea rows={5} className="w-full bg-brand-base dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-rose-500 resize-none" placeholder="Chia sẻ suy nghĩ của bạn..." value={postData.content} onChange={e => setPostData({...postData, content: e.target.value})} required />
 
-                    <div className="relative h-40 w-full rounded-2xl border-2 border-dashed border-slate-300 dark:border-white/10 bg-slate-50 dark:bg-black/40 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-100 dark:hover:bg-white/5 transition-colors overflow-hidden" onClick={() => postInputRef.current?.click()}>
+                    <div className="relative h-40 w-full rounded-2xl border-2 border-dashed border-slate-300 dark:border-white/10 bg-brand-base dark:bg-black/40 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-100 dark:hover:bg-white/5 transition-colors overflow-hidden" onClick={() => postInputRef.current?.click()}>
                         {postPreview ? (
                             <img src={postPreview} className="w-full h-full object-cover"/>
                         ) : (
-                            <><UploadCloud className="text-slate-400 mb-2"/><p className="text-xs font-bold text-slate-500">Tải lên ảnh đính kèm (Tùy chọn)</p></>
+                            <><UploadCloud className="text-slate-400 mb-2"/><p className="text-xs font-bold text-brand-base0">Tải lên ảnh đính kèm (Tùy chọn)</p></>
                         )}
                         <input type="file" accept="image/*" ref={postInputRef} className="hidden" onChange={(e) => {
                             const f = e.target.files?.[0];

@@ -196,10 +196,10 @@ export default function PartnerDashboard() {
   const pendingEscrow = validBookings.filter(b => b.service_status !== "COMPLETED").reduce((sum, b) => sum + (Number(b.total_amount) * 0.7), 0); 
   const pendingAppointments = appointments.filter(a => a.status === 'WAITING_PARTNER');
 
-  if (!isMounted) return <div className="h-[100dvh] bg-slate-50 dark:bg-zinc-950"></div>;
+  if (!isMounted) return <div className="h-[100dvh] bg-brand-base dark:bg-zinc-950"></div>;
 
   return (
-    <div className="h-[100dvh] w-full bg-slate-50 dark:bg-zinc-950 overflow-hidden flex relative transition-colors duration-500 font-be-vietnam">
+    <div className="h-[100dvh] w-full bg-brand-base dark:bg-zinc-950 overflow-hidden flex relative transition-colors duration-500 font-be-vietnam">
       <div className="flex-1 relative h-[100dvh] overflow-y-auto no-scrollbar scroll-smooth">
         <div className="absolute top-6 right-6 md:top-8 md:right-8 z-[60] flex items-center gap-3">
           <button onClick={handleThemeToggle} className="w-10 h-10 rounded-full bg-white/60 dark:bg-black/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white hover:scale-105 transition-all shadow-lg">
@@ -211,26 +211,26 @@ export default function PartnerDashboard() {
             <div className="mb-8 animate-slide-up flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
                     <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-2 flex items-center gap-3 tracking-tight">
-                        <ShieldCheck className="text-[#80BF84]" size={36} /> Quản lý Đối tác
+                        <ShieldCheck className="text-brand-primary" size={36} /> Quản lý Đối tác
                     </h2>
-                    <p className="text-slate-500 dark:text-zinc-400 font-medium text-sm">Theo dõi lịch đặt, kiểm soát dòng tiền an toàn và xác nhận giải ngân.</p>
+                    <p className="text-brand-base0 dark:text-zinc-400 font-medium text-sm">Theo dõi lịch đặt, kiểm soát dòng tiền an toàn và xác nhận giải ngân.</p>
                 </div>
 
                 <div className="flex p-1.5 bg-white dark:bg-white/5 shadow-sm rounded-2xl w-full md:w-max border border-slate-200 dark:border-white/10 overflow-x-auto no-scrollbar">
-                    <button onClick={() => setActiveTab('escrow')} className={`px-5 py-2.5 rounded-xl font-bold text-sm flex-1 md:flex-none transition-all flex items-center justify-center gap-2 ${activeTab === 'escrow' ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
+                    <button onClick={() => setActiveTab('escrow')} className={`px-5 py-2.5 rounded-xl font-bold text-sm flex-1 md:flex-none transition-all flex items-center justify-center gap-2 ${activeTab === 'escrow' ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-md' : 'text-brand-base0 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
                         <Wallet size={16} /> Escrow
                     </button>
-                    <button onClick={() => setActiveTab('appointments')} className={`px-5 py-2.5 rounded-xl font-bold text-sm flex-1 md:flex-none transition-all flex items-center justify-center gap-2 relative ${activeTab === 'appointments' ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
+                    <button onClick={() => setActiveTab('appointments')} className={`px-5 py-2.5 rounded-xl font-bold text-sm flex-1 md:flex-none transition-all flex items-center justify-center gap-2 relative ${activeTab === 'appointments' ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-md' : 'text-brand-base0 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
                         <CalendarClock size={16} /> Lịch hẹn
                         {pendingAppointments.length > 0 && <span className="absolute -top-2 -right-2 bg-rose-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-black animate-bounce">{pendingAppointments.length}</span>}
                     </button>
-                    <button onClick={() => setActiveTab('wallet')} className={`px-5 py-2.5 rounded-xl font-bold text-sm flex-shrink-0 transition-all flex items-center justify-center gap-2 ${activeTab === 'wallet' ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
+                    <button onClick={() => setActiveTab('wallet')} className={`px-5 py-2.5 rounded-xl font-bold text-sm flex-shrink-0 transition-all flex items-center justify-center gap-2 ${activeTab === 'wallet' ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-md' : 'text-brand-base0 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
                         <CreditCard size={16} /> Ví & Rút tiền
                     </button>
-                    <button onClick={() => setActiveTab('withdrawals')} className={`px-5 py-2.5 rounded-xl font-bold text-sm flex-shrink-0 transition-all flex items-center justify-center gap-2 ${activeTab === 'withdrawals' ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
+                    <button onClick={() => setActiveTab('withdrawals')} className={`px-5 py-2.5 rounded-xl font-bold text-sm flex-shrink-0 transition-all flex items-center justify-center gap-2 ${activeTab === 'withdrawals' ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-md' : 'text-brand-base0 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
                         <History size={16} /> Lịch sử rút tiền
                     </button>
-                    <button onClick={() => setActiveTab('vouchers')} className={`px-5 py-2.5 rounded-xl font-bold text-sm flex-shrink-0 transition-all flex items-center justify-center gap-2 ${activeTab === 'vouchers' ? 'bg-[#80BF84] text-zinc-950 shadow-md' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
+                    <button onClick={() => setActiveTab('vouchers')} className={`px-5 py-2.5 rounded-xl font-bold text-sm flex-shrink-0 transition-all flex items-center justify-center gap-2 ${activeTab === 'vouchers' ? 'bg-brand-primary text-zinc-950 shadow-md' : 'text-brand-base0 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
                         <Ticket size={16} /> Quản lý Ưu đãi
                     </button>
                 </div>
@@ -248,15 +248,15 @@ export default function PartnerDashboard() {
                         <>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                                 <div className="glass-panel p-6 rounded-[2rem] bg-white/70 dark:bg-black/40 border border-slate-200 dark:border-white/10 flex flex-col gap-2 shadow-sm">
-                                    <span className="text-xs font-black text-slate-500 dark:text-zinc-400 flex items-center gap-2 tracking-widest uppercase"><Wallet size={16}/> TỔNG ĐƠN GIAO DỊCH</span>
+                                    <span className="text-xs font-black text-brand-base0 dark:text-zinc-400 flex items-center gap-2 tracking-widest uppercase"><Wallet size={16}/> TỔNG ĐƠN GIAO DỊCH</span>
                                     <span className="text-4xl font-black text-slate-800 dark:text-white">{bookings.length} <span className="text-base font-bold text-slate-400">đơn</span></span>
                                 </div>
                                 <div className="glass-panel p-6 rounded-[2rem] bg-gradient-to-br from-amber-500/10 to-transparent border border-amber-500/20 flex flex-col gap-2 shadow-sm">
                                     <span className="text-xs font-black text-amber-600 dark:text-amber-500 flex items-center gap-2 tracking-widest uppercase"><Clock size={16}/> ĐANG NEO GIỮ (ƯỚC TÍNH 70%)</span>
                                     <span className="text-4xl font-black text-slate-800 dark:text-white">{pendingEscrow.toLocaleString()} <span className="text-base font-bold text-slate-400">VND</span></span>
                                 </div>
-                                <div className="glass-panel p-6 rounded-[2rem] bg-gradient-to-br from-[#80BF84]/10 to-transparent border border-[#80BF84]/20 flex flex-col gap-2 shadow-sm">
-                                    <span className="text-xs font-black text-emerald-600 dark:text-emerald-500 flex items-center gap-2 tracking-widest uppercase"><TrendingUp size={16}/> DOANH THU THỰC NHẬN</span>
+                                <div className="glass-panel p-6 rounded-[2rem] bg-gradient-to-br from-brand-primary/10 to-transparent border border-brand-primary/20 flex flex-col gap-2 shadow-sm">
+                                    <span className="text-xs font-black text-emerald-600 dark:text-brand-trust flex items-center gap-2 tracking-widest uppercase"><TrendingUp size={16}/> DOANH THU THỰC NHẬN</span>
                                     <span className="text-4xl font-black text-slate-800 dark:text-white">{totalRevenue.toLocaleString()} <span className="text-base font-bold text-slate-400">VND</span></span>
                                 </div>
                             </div>
@@ -265,7 +265,7 @@ export default function PartnerDashboard() {
                                 <div className="overflow-x-auto no-scrollbar">
                                     <table className="w-full text-left border-collapse min-w-[900px]">
                                         <thead>
-                                            <tr className="bg-slate-100/50 dark:bg-zinc-900/50 text-slate-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest border-b border-slate-200 dark:border-white/10">
+                                            <tr className="bg-slate-100/50 dark:bg-zinc-900/50 text-brand-base0 dark:text-zinc-400 text-[10px] uppercase tracking-widest border-b border-slate-200 dark:border-white/10">
                                                 <th className="p-6 font-black">Mã Đơn</th>
                                                 <th className="p-6 font-black">Nguồn đơn</th>
                                                 <th className="p-6 font-black">Trạng thái Tiền</th>
@@ -287,33 +287,33 @@ export default function PartnerDashboard() {
                                                     const appt = appointments.find(a => a.booking_id === booking.id);
                                                     return (
                                                     <tr key={booking.id} className="hover:bg-white dark:hover:bg-white/5 transition-colors group">
-                                                        <td className="p-6 font-mono text-xs font-bold text-slate-500 dark:text-zinc-400">#{booking.id.substring(0, 8)}</td>
+                                                        <td className="p-6 font-mono text-xs font-bold text-brand-base0 dark:text-zinc-400">#{booking.id.substring(0, 8)}</td>
                                                         <td className="p-6"><span className="inline-block px-2.5 py-1 bg-slate-100 dark:bg-white/10 rounded-md text-[10px] font-black text-slate-600 dark:text-slate-300 tracking-wider">{booking.video_id ? 'TỪ TIKTOK FEED' : 'TỪ HỒ SƠ DỊCH VỤ'}</span></td>
                                                         <td className="p-6">
-                                                            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold border border-blue-500/20"><CreditCard size={14} /> Đã Thanh Toán</div>
+                                                            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand-trust/10 text-brand-trust dark:text-blue-400 text-xs font-bold border border-brand-trust/20"><CreditCard size={14} /> Đã Thanh Toán</div>
                                                         </td>
                                                         <td className="p-6">
                                                             {booking.service_status === "COMPLETED" ? (
-                                                                <div className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-[#80BF84] text-xs font-black"><CheckCircle size={16} /> HOÀN TẤT</div>
+                                                                <div className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-brand-primary text-xs font-black"><CheckCircle size={16} /> HOÀN TẤT</div>
                                                             ) : appt?.status === "SERVED" ? (
-                                                                <div className="inline-flex items-center gap-1.5 text-blue-500 text-xs font-black"><Check size={16} /> ĐÃ CHECK-IN</div>
+                                                                <div className="inline-flex items-center gap-1.5 text-brand-trust text-xs font-black"><Check size={16} /> ĐÃ CHECK-IN</div>
                                                             ) : (
                                                                 <div className="inline-flex items-center gap-1.5 text-amber-500 text-xs font-black"><Clock size={16} /> CHỜ KHÁCH ĐẾN</div>
                                                             )}
                                                         </td>
                                                         <td className="p-6 font-black text-slate-800 dark:text-white text-right">
-                                                            {booking.service_status === "COMPLETED" ? <span className="text-[#80BF84]">{Number(booking.partner_revenue).toLocaleString()} đ</span> : <span>~{(Number(booking.total_amount) * 0.7).toLocaleString()} đ</span>}
+                                                            {booking.service_status === "COMPLETED" ? <span className="text-brand-primary">{Number(booking.partner_revenue).toLocaleString()} đ</span> : <span>~{(Number(booking.total_amount) * 0.7).toLocaleString()} đ</span>}
                                                         </td>
                                                         <td className="p-6 text-center min-w-[200px]">
                                                             {booking.service_status === "COMPLETED" ? (
                                                                 <span className="text-xs font-bold text-slate-400">Đã cộng tiền vào Ví</span>
                                                             ) : appt?.status === "CONFIRMED" ? (
                                                                 <div className="flex justify-center gap-2">
-                                                                    <input type="text" maxLength={6} placeholder="Mã 6 số..." value={checkInCodes[appt.id] || ''} onChange={e => setCheckInCodes(prev => ({...prev, [appt.id]: e.target.value}))} className="w-24 px-3 py-2 rounded-xl text-center text-xs font-bold border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black focus:border-[#80BF84] outline-none" />
+                                                                    <input type="text" maxLength={6} placeholder="Mã 6 số..." value={checkInCodes[appt.id] || ''} onChange={e => setCheckInCodes(prev => ({...prev, [appt.id]: e.target.value}))} className="w-24 px-3 py-2 rounded-xl text-center text-xs font-bold border border-slate-200 dark:border-white/10 bg-brand-base dark:bg-black focus:border-brand-primary outline-none" />
                                                                     <button onClick={() => handleCheckIn(appt.id)} className="px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-black text-xs font-bold rounded-xl hover:scale-105 transition-all">Check-in</button>
                                                                 </div>
                                                             ) : appt?.status === "SERVED" ? (
-                                                                <button onClick={() => handleCompleteService(booking.id)} className="w-full px-6 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black tracking-widest uppercase rounded-xl transition-all shadow-lg hover:scale-105 active:scale-95">Hoàn Thành & Rút Tiền</button>
+                                                                <button onClick={() => handleCompleteService(booking.id)} className="w-full px-6 py-2.5 bg-brand-trust hover:bg-emerald-600 text-white text-xs font-black tracking-widest uppercase rounded-xl transition-all shadow-lg hover:scale-105 active:scale-95">Hoàn Thành & Rút Tiền</button>
                                                             ) : (
                                                                 <span className="text-xs font-bold text-slate-400 italic">Đang chờ xử lý</span>
                                                             )}
@@ -349,7 +349,7 @@ export default function PartnerDashboard() {
                                                     <div className="inline-block px-3 py-1 bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 text-[10px] font-black rounded-full uppercase tracking-wider border border-amber-200 dark:border-amber-500/30">
                                                         YÊU CẦU ĐẶT CHỖ MỚI
                                                     </div>
-                                                    <span className="font-black text-lg text-[#80BF84] bg-[#80BF84]/10 px-3 py-1 rounded-xl shadow-sm">
+                                                    <span className="font-black text-lg text-brand-primary bg-brand-primary/10 px-3 py-1 rounded-xl shadow-sm">
                                                         {appt.total_amount ? Number(appt.total_amount).toLocaleString() + ' đ' : 'Chưa có giá'}
                                                     </span>
                                                 </div>
@@ -358,13 +358,13 @@ export default function PartnerDashboard() {
                                                     {appt.services?.service_name || (appt.video_id ? "Dịch vụ từ Video Khám phá" : "Dịch vụ chăm sóc sức khỏe")}
                                                 </h3>
                                                 
-                                                <div className="flex flex-col gap-1.5 p-3.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 mb-2">
+                                                <div className="flex flex-col gap-1.5 p-3.5 rounded-xl bg-brand-base dark:bg-white/5 border border-slate-100 dark:border-white/5 mb-2">
                                                     <p className="text-sm font-medium text-slate-600 dark:text-zinc-400 flex items-center gap-2">Khách hàng: <span className="font-bold text-slate-900 dark:text-white">{appt.customer_name || appt.users?.full_name || "Khách ẩn danh"}</span></p>
                                                     <p className="text-sm font-medium text-slate-600 dark:text-zinc-400 flex items-center gap-2">Liên hệ: <span className="font-bold text-slate-900 dark:text-white">{appt.customer_phone || appt.users?.phone || "Chưa cập nhật SĐT"}</span></p>
                                                 </div>
 
                                                 {appt.note && (
-                                                    <div className="mt-4 p-3 bg-slate-50 dark:bg-black/50 rounded-xl border border-slate-100 dark:border-white/5 text-sm text-slate-600 dark:text-zinc-400 italic">
+                                                    <div className="mt-4 p-3 bg-brand-base dark:bg-black/50 rounded-xl border border-slate-100 dark:border-white/5 text-sm text-slate-600 dark:text-zinc-400 italic">
                                                         " {appt.note} "
                                                     </div>
                                                 )}
@@ -374,19 +374,19 @@ export default function PartnerDashboard() {
                                             <div className="w-full xl:w-[380px] flex flex-col gap-4">
                                                 
                                                 {/* Khối Đồng Ý */}
-                                                <div className="p-4 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-2xl border border-emerald-100 dark:border-emerald-500/20 flex flex-col gap-3">
-                                                    <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 uppercase"><Check size={14}/> Xếp lịch & Báo giá</span>
+                                                <div className="p-4 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-2xl border border-emerald-100 dark:border-brand-trust/20 flex flex-col gap-3">
+                                                    <span className="text-xs font-black text-emerald-600 dark:text-brand-primary flex items-center gap-1.5 uppercase"><Check size={14}/> Xếp lịch & Báo giá</span>
                                                     <div className="grid grid-cols-2 gap-2">
                                                         <div className="flex flex-col gap-1">
-                                                            <label className="text-[10px] text-slate-500 font-bold uppercase pl-1">Giờ Bắt Đầu</label>
-                                                            <input type="datetime-local" className="text-xs p-2 rounded-lg border border-emerald-200 dark:border-emerald-500/30 bg-white dark:bg-black outline-none" value={form.start || ''} onChange={e => handleFormChange(appt.id, 'start', e.target.value)} />
+                                                            <label className="text-[10px] text-brand-base0 font-bold uppercase pl-1">Giờ Bắt Đầu</label>
+                                                            <input type="datetime-local" className="text-xs p-2 rounded-lg border border-emerald-200 dark:border-brand-trust/30 bg-white dark:bg-black outline-none" value={form.start || ''} onChange={e => handleFormChange(appt.id, 'start', e.target.value)} />
                                                         </div>
                                                         <div className="flex flex-col gap-1">
-                                                            <label className="text-[10px] text-slate-500 font-bold uppercase pl-1">Giờ Kết Thúc</label>
-                                                            <input type="datetime-local" className="text-xs p-2 rounded-lg border border-emerald-200 dark:border-emerald-500/30 bg-white dark:bg-black outline-none" value={form.end || ''} onChange={e => handleFormChange(appt.id, 'end', e.target.value)} />
+                                                            <label className="text-[10px] text-brand-base0 font-bold uppercase pl-1">Giờ Kết Thúc</label>
+                                                            <input type="datetime-local" className="text-xs p-2 rounded-lg border border-emerald-200 dark:border-brand-trust/30 bg-white dark:bg-black outline-none" value={form.end || ''} onChange={e => handleFormChange(appt.id, 'end', e.target.value)} />
                                                         </div>
                                                     </div>
-                                                    <button onClick={() => handleRespondAppointment(appt.id, 'ACCEPT')} className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl text-sm transition-colors shadow-md shadow-emerald-500/20">Chốt lịch gửi cho khách</button>
+                                                    <button onClick={() => handleRespondAppointment(appt.id, 'ACCEPT')} className="w-full py-2.5 bg-brand-trust hover:bg-emerald-600 text-white font-bold rounded-xl text-sm transition-colors shadow-md shadow-brand-trust/20">Chốt lịch gửi cho khách</button>
                                                 </div>
 
                                                 {/* Khối Từ Chối */}
@@ -414,7 +414,7 @@ export default function PartnerDashboard() {
                                     <div className="flex flex-col gap-2">
                                         <span className="text-slate-400 font-bold text-sm tracking-widest uppercase flex items-center gap-2"><Wallet size={18}/> Số dư hiện tại</span>
                                         <span className="text-5xl font-black text-white">{walletInfo.balance.toLocaleString()} <span className="text-2xl text-slate-400">VND</span></span>
-                                        <p className="text-emerald-400 text-sm mt-2 font-medium bg-emerald-500/10 w-max px-3 py-1 rounded-lg">Tổng doanh thu đã kiếm: {walletInfo.total_earned.toLocaleString()} VND</p>
+                                        <p className="text-brand-primary text-sm mt-2 font-medium bg-brand-trust/10 w-max px-3 py-1 rounded-lg">Tổng doanh thu đã kiếm: {walletInfo.total_earned.toLocaleString()} VND</p>
                                     </div>
                                     <div className="text-right">
                                         <span className="text-slate-400 text-xs mb-2 block font-medium">Bảo chứng bởi AI Health Escrow</span>
@@ -428,26 +428,26 @@ export default function PartnerDashboard() {
                                 <h3 className="text-xl font-black text-slate-900 dark:text-white mb-6">Yêu cầu Giải ngân (Rút tiền)</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-bold text-slate-500 uppercase">Ngân hàng thụ hưởng</label>
-                                        <input type="text" placeholder="VD: Vietcombank, Techcombank..." value={withdrawalForm.bank_name} onChange={e => setWithdrawalForm({...withdrawalForm, bank_name: e.target.value})} className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black outline-none focus:border-blue-500 transition-colors font-medium text-slate-900 dark:text-white" />
+                                        <label className="text-xs font-bold text-brand-base0 uppercase">Ngân hàng thụ hưởng</label>
+                                        <input type="text" placeholder="VD: Vietcombank, Techcombank..." value={withdrawalForm.bank_name} onChange={e => setWithdrawalForm({...withdrawalForm, bank_name: e.target.value})} className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-white/10 bg-brand-base dark:bg-black outline-none focus:border-brand-trust transition-colors font-medium text-slate-900 dark:text-white" />
                                     </div>
                                     <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-bold text-slate-500 uppercase">Số tài khoản</label>
-                                        <input type="text" placeholder="Nhập số tài khoản..." value={withdrawalForm.account_number} onChange={e => setWithdrawalForm({...withdrawalForm, account_number: e.target.value})} className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black outline-none focus:border-blue-500 transition-colors font-mono font-medium text-slate-900 dark:text-white" />
+                                        <label className="text-xs font-bold text-brand-base0 uppercase">Số tài khoản</label>
+                                        <input type="text" placeholder="Nhập số tài khoản..." value={withdrawalForm.account_number} onChange={e => setWithdrawalForm({...withdrawalForm, account_number: e.target.value})} className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-white/10 bg-brand-base dark:bg-black outline-none focus:border-brand-trust transition-colors font-mono font-medium text-slate-900 dark:text-white" />
                                     </div>
                                     <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-bold text-slate-500 uppercase">Tên chủ tài khoản</label>
-                                        <input type="text" placeholder="NGUYEN VAN A" value={withdrawalForm.account_name} onChange={e => setWithdrawalForm({...withdrawalForm, account_name: e.target.value})} className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black outline-none focus:border-blue-500 transition-colors font-medium uppercase text-slate-900 dark:text-white" />
+                                        <label className="text-xs font-bold text-brand-base0 uppercase">Tên chủ tài khoản</label>
+                                        <input type="text" placeholder="NGUYEN VAN A" value={withdrawalForm.account_name} onChange={e => setWithdrawalForm({...withdrawalForm, account_name: e.target.value})} className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-white/10 bg-brand-base dark:bg-black outline-none focus:border-brand-trust transition-colors font-medium uppercase text-slate-900 dark:text-white" />
                                     </div>
                                     <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-bold text-slate-500 uppercase">Số tiền muốn rút (VND)</label>
-                                        <input type="number" placeholder="Tối thiểu 50.000" value={withdrawalForm.amount} onChange={e => setWithdrawalForm({...withdrawalForm, amount: e.target.value})} className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black outline-none focus:border-blue-500 transition-colors font-black text-blue-600 dark:text-blue-400" />
+                                        <label className="text-xs font-bold text-brand-base0 uppercase">Số tiền muốn rút (VND)</label>
+                                        <input type="number" placeholder="Tối thiểu 50.000" value={withdrawalForm.amount} onChange={e => setWithdrawalForm({...withdrawalForm, amount: e.target.value})} className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-white/10 bg-brand-base dark:bg-black outline-none focus:border-brand-trust transition-colors font-black text-brand-trust dark:text-blue-400" />
                                     </div>
                                 </div>
                                 <button onClick={handleWithdrawal} className="w-full mt-6 py-4 bg-slate-900 dark:bg-white text-white dark:text-black font-black uppercase tracking-widest rounded-xl hover:scale-[1.01] transition-transform shadow-xl shadow-slate-900/20 dark:shadow-white/10">
                                     Gửi yêu cầu Rút tiền
                                 </button>
-                                <p className="text-xs text-center text-slate-500 mt-4">Yêu cầu sẽ được Super Admin kiểm duyệt và chuyển khoản trong vòng 24h làm việc.</p>
+                                <p className="text-xs text-center text-brand-base0 mt-4">Yêu cầu sẽ được Super Admin kiểm duyệt và chuyển khoản trong vòng 24h làm việc.</p>
                             </div>
                         </div>
                     )}
@@ -467,12 +467,12 @@ export default function PartnerDashboard() {
                                         <div className="flex flex-col gap-1.5">
                                             <div className="flex items-center gap-2">
                                                 <span className="font-mono text-[10px] font-black uppercase text-slate-400 dark:text-zinc-500 tracking-widest">#{req.id.split('-')[0]}</span>
-                                                <span className="text-xs font-bold text-slate-500">{new Date(req.created_at).toLocaleString('vi-VN')}</span>
+                                                <span className="text-xs font-bold text-brand-base0">{new Date(req.created_at).toLocaleString('vi-VN')}</span>
                                             </div>
                                             <h4 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
                                                 {Number(req.amount).toLocaleString()} <span className="text-sm font-bold text-slate-400">VND</span>
                                             </h4>
-                                            <div className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-zinc-400 bg-slate-50 dark:bg-black/50 w-max px-3 py-1.5 rounded-lg border border-slate-100 dark:border-white/5 mt-1">
+                                            <div className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-zinc-400 bg-brand-base dark:bg-black/50 w-max px-3 py-1.5 rounded-lg border border-slate-100 dark:border-white/5 mt-1">
                                                 <Building2 size={14}/> {req.payout_info?.bank_name} <span className="text-slate-300 dark:text-zinc-600">|</span> <span className="font-mono">{req.payout_info?.account_number}</span>
                                             </div>
                                         </div>
@@ -484,7 +484,7 @@ export default function PartnerDashboard() {
                                                 </span>
                                             )}
                                             {req.status === 'COMPLETED' && (
-                                                <span className="px-3 py-1.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 text-[10px] font-black uppercase tracking-widest rounded-lg border border-emerald-200 dark:border-emerald-500/20 flex items-center gap-1.5">
+                                                <span className="px-3 py-1.5 bg-emerald-100 text-emerald-700 dark:bg-brand-trust/10 dark:text-brand-primary text-[10px] font-black uppercase tracking-widest rounded-lg border border-emerald-200 dark:border-brand-trust/20 flex items-center gap-1.5">
                                                     <CheckCircle size={14}/> Đã giải ngân
                                                 </span>
                                             )}
@@ -502,7 +502,7 @@ export default function PartnerDashboard() {
                                                 </div>
                                             )}
                                             {req.admin_note && req.status === 'COMPLETED' && (
-                                                <p className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 max-w-xs text-left md:text-right mt-1">
+                                                <p className="text-[11px] font-bold text-emerald-600 dark:text-brand-primary max-w-xs text-left md:text-right mt-1">
                                                     Mã GD: {req.admin_note}
                                                 </p>
                                             )}
@@ -527,9 +527,9 @@ export default function PartnerDashboard() {
         {/* ================= MOBILE BOTTOM DOCK ================= */}
         <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-max pointer-events-auto">
           <div className="px-8 py-3.5 rounded-full flex items-center justify-center gap-8 sm:gap-10 shadow-2xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/60 backdrop-blur-2xl">
-            <button onClick={() => router.push('/')} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Home size={26} strokeWidth={2.5} /></button>
-            <button onClick={() => router.push('/partner/profile')} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><LayoutDashboard size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
-            <button className="text-[#80BF84] transition-colors group"><DollarSign size={26} strokeWidth={2.5} className="scale-110" /></button>
+            <button onClick={() => router.push('/')} className="text-brand-base0 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><Home size={26} strokeWidth={2.5} /></button>
+            <button onClick={() => router.push('/partner/profile')} className="text-brand-base0 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors group"><LayoutDashboard size={26} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" /></button>
+            <button className="text-brand-primary transition-colors group"><DollarSign size={26} strokeWidth={2.5} className="scale-110" /></button>
           </div>
         </div>
 
