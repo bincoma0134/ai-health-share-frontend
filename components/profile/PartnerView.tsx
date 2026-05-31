@@ -12,6 +12,8 @@ import DashboardButton from "./DashboardButton";
 import CommentModal from "@/components/CommentModal";
 import BookingModal from "@/components/BookingModal";
 import { useVoucherStore } from "@/store/useVoucherStore";
+import { useAuth } from "@/context/AuthContext";
+import { Crown, Store, ExternalLink } from "lucide-react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -27,12 +29,26 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
   const [activeCommentVideoId, setActiveCommentVideoId] = useState<string | null>(null);
 
   // Khởi tạo luồng kết nối dữ liệu Voucher đa tầng
+  const { user } = useAuth();
   const { publicVouchers, myVouchers, fetchPublicVouchers, claimVoucher } = useVoucherStore();
   const [selectedVoucher, setSelectedVoucher] = useState<any>(null);
 
   useEffect(() => {
     fetchPublicVouchers();
   }, [fetchPublicVouchers]);
+
+  // ĐỒNG BỘ TRẠNG THÁI VÍ (Self-healing state)
+  // Đảm bảo khi F5 hoặc chuyển trang, giao diện tự động lấy Ví về nếu đã đăng nhập
+  useEffect(() => {
+    if (user) {
+      const token = localStorage.getItem("ai-health-token");
+      if (token) {
+        useVoucherStore.getState().fetchMyVouchers(token);
+      }
+    } else {
+      useVoucherStore.getState().clearVouchers();
+    }
+  }, [user]);
 
   const partnerVouchers = publicVouchers.filter((v: any) => 
     v.status === 'APPROVED' && 
@@ -726,6 +742,86 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
           serviceName={selectedService.service_name || selectedService.name || selectedService.title}
           price={selectedService.price || 0}
         />
+      )}
+
+      {/* ================= POP-UP CHI TIẾT VOUCHER ƯU ĐÃI (ĐỒNG BỘ GIAO DIỆN) ================= */}
+      {selectedVoucher && (
+        <>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[250] animate-fade-in" onClick={() => setSelectedVoucher(null)}></div>
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-sm bg-white dark:bg-zinc-900 rounded-[2.5rem] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] z-[251] animate-slide-up overflow-hidden border border-slate-200 dark:border-white/10 p-6 pt-8 text-center">
+            
+            <button 
+              onClick={() => setSelectedVoucher(null)}
+              className="absolute top-4 right-4 p-2 bg-slate-100 dark:bg-zinc-800 rounded-full text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
+            >
+              <X size={16} />
+            </button>
+
+            {/* Icon Avatar */}
+            <div className={`w-20 h-20 mx-auto rounded-3xl flex items-center justify-center mb-4 shadow-inner ${selectedVoucher.issuer_type === 'ADMIN' ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-500' : 'bg-slate-100 dark:bg-white/5 text-[#80BF84]'}`}>
+              {selectedVoucher.issuer_type === 'ADMIN' ? <Crown className="w-10 h-10" /> : <Store className="w-10 h-10" />}
+            </div>
+
+            <h2 className="text-3xl font-black mb-2 tracking-tight">
+              {selectedVoucher.discount_type === 'PERCENTAGE' ? `Giảm ${Number(selectedVoucher.discount_value)}%` : `Giảm ${(Number(selectedVoucher.discount_value) / 1000)}K`}
+            </h2>
+            <div className="inline-block px-3 py-1.5 bg-slate-100 dark:bg-zinc-800 rounded-xl font-mono text-sm font-black tracking-widest mb-6">
+              {selectedVoucher.code}
+            </div>
+
+            {/* Khối mô tả */}
+            <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl text-left text-sm text-slate-600 dark:text-zinc-300 mb-6 space-y-3">
+              <p>
+                <strong className="text-slate-900 dark:text-white block mb-0.5">Loại ưu đãi:</strong> 
+                {selectedVoucher.issuer_type === 'ADMIN' ? 'Mã Độc Quyền Toàn Sàn' : `Cơ sở phát hành: ${profile?.full_name || "Đối tác"}`}
+              </p>
+              <p>
+                <strong className="text-slate-900 dark:text-white block mb-0.5">Điều kiện áp dụng:</strong> 
+                {selectedVoucher.issuer_type === 'ADMIN' ? 'Áp dụng cho tất cả các dịch vụ trên hệ thống.' : 'Chỉ áp dụng cho các dịch vụ của cơ sở này.'}
+              </p>
+              {selectedVoucher.discount_type === 'PERCENTAGE' && selectedVoucher.max_discount_amount && (
+                  <>
+                    <div className="h-px bg-slate-200 dark:bg-white/10 my-2"></div>
+                    <div className="flex justify-between items-center">
+                        <span className="font-medium">Giảm tối đa:</span>
+                        <strong className="text-slate-900 dark:text-white">{Number(selectedVoucher.max_discount_amount).toLocaleString()}đ</strong>
+                    </div>
+                  </>
+              )}
+              <div className="h-px bg-slate-200 dark:bg-white/10 my-2"></div>
+              <div className="flex justify-between items-center">
+                <span className="font-medium">Đơn tối thiểu:</span>
+                <strong className="text-slate-900 dark:text-white">{Number(selectedVoucher.min_order_value).toLocaleString()}đ</strong>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="font-medium">Hạn sử dụng:</span>
+                <strong className="text-slate-900 dark:text-white">{new Date(selectedVoucher.valid_until).toLocaleDateString('vi-VN')}</strong>
+              </div>
+            </div>
+
+            {/* Nút Action Điều Hướng */}
+            <button 
+              onClick={() => {
+                  setSelectedVoucher(null);
+                  if (selectedVoucher.issuer_type === 'ADMIN') {
+                      window.location.href = '/features/explore';
+                  } else {
+                      setActiveTab('services');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }
+              }}
+              className={`w-full py-4 rounded-2xl font-black flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg
+                ${selectedVoucher.issuer_type === 'ADMIN' 
+                  ? 'bg-amber-500 text-zinc-900 hover:bg-amber-400 shadow-amber-500/30' 
+                  : 'bg-[#80BF84] text-zinc-900 hover:bg-emerald-400 shadow-[#80BF84]/30'}
+              `}
+            >
+              {selectedVoucher.issuer_type === 'ADMIN' ? 'SĂN DỊCH VỤ NGAY' : 'XEM DỊCH VỤ NGAY'}
+              <ExternalLink size={18} />
+            </button>
+            
+          </div>
+        </>
       )}
     </div>
   );
