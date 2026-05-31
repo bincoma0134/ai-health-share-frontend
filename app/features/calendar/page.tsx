@@ -698,40 +698,46 @@ export default function CalendarFeature() {
                                 const duration = "60 phút";
 
                                 return (
-                                    <div key={appt.id} className={`group flex flex-col md:flex-row overflow-hidden rounded-[1.5rem] border shadow-sm transition-all hover:shadow-xl bg-white dark:bg-[#0f0f11] border-slate-200 dark:border-white/10`}>
+                                    <div key={appt.id} className={`group flex flex-col md:flex-row overflow-hidden rounded-[1.5rem] border shadow-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-[#80BF84]/10 bg-white/60 dark:bg-zinc-900/40 backdrop-blur-xl border-slate-200/50 dark:border-white/10 relative`}>
+                                        <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent dark:from-white/5 dark:to-transparent opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-500"></div>
                                         
                                         {/* CỘT THỜI GIAN (Trái) */}
-                                        <div className="w-full md:w-36 p-6 flex flex-col items-center justify-center bg-slate-50 dark:bg-white/5 border-b md:border-b-0 md:border-r border-slate-100 dark:border-white/5 relative">
-                                            {currentStatus === 'CONFIRMED' && <div className="absolute top-0 left-0 w-full h-1 bg-[#80BF84]"></div>}
-                                            <CalendarDays size={24} className="text-slate-300 dark:text-zinc-600 mb-2" />
-                                            <span className="text-2xl font-black text-slate-800 dark:text-white text-center leading-tight">{dayStr}</span>
-                                            <div className="flex items-center gap-1.5 mt-2 bg-white dark:bg-black px-3 py-1.5 rounded-full border border-slate-200 dark:border-white/10 shadow-sm">
-                                                <Clock size={14} className="text-[#80BF84]"/>
-                                                <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{timeStr}</span>
+                                        <div className="w-full md:w-36 p-6 flex flex-col items-center justify-center bg-slate-50/50 dark:bg-black/20 border-b md:border-b-0 md:border-r border-slate-100/50 dark:border-white/5 relative shrink-0">
+                                            {currentStatus === 'CONFIRMED' && <div className="absolute top-0 left-0 w-full h-1 bg-[#80BF84] shadow-[0_0_10px_#80BF84]"></div>}
+                                            <CalendarDays size={24} className="text-slate-300 dark:text-zinc-600 mb-2 group-hover:scale-110 transition-transform" />
+                                            <span className="text-3xl font-black text-slate-800 dark:text-white text-center leading-tight tracking-tighter">{dayStr}</span>
+                                            <div className="flex items-center gap-1.5 mt-3 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-slate-200/50 dark:border-white/10 shadow-sm">
+                                                <Clock size={12} className="text-[#80BF84]"/>
+                                                <span className="text-xs font-black text-slate-700 dark:text-slate-300">{timeStr}</span>
                                             </div>
                                         </div>
 
                                         {/* CỘT NỘI DUNG (Giữa) */}
-                                        <div className="flex-1 p-6">
-                                            <div className="flex justify-between items-start mb-3">
-                                                <div className="flex flex-col gap-2">
-                                                    <span className={`w-max px-3 py-1 text-[10px] font-black rounded-full uppercase tracking-wider
-                                                        ${currentStatus === 'WAITING_PARTNER' ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border border-amber-200/50' : 
-                                                          currentStatus === 'PENDING_PAYMENT' ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400 border border-rose-200/50 animate-pulse' : 
+                                        <div className="flex-1 p-6 relative z-10">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div className="flex flex-col gap-2.5">
+                                                    <span className={`w-max px-3 py-1 text-[10px] font-black rounded-full uppercase tracking-widest shadow-sm
+                                                        ${currentStatus === 'WAITING_PARTNER' ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 border border-amber-200/50' : 
+                                                          currentStatus === 'PENDING_PAYMENT' ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400 border border-rose-200/50 animate-pulse shadow-[0_0_15px_rgba(244,63,94,0.3)]' : 
                                                           currentStatus === 'CONFIRMED' ? 'bg-[#80BF84]/20 text-emerald-800 dark:text-[#80BF84] border border-[#80BF84]/30' : 
-                                                          currentStatus === 'COMPLETED' ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 border border-blue-200/50' : 'bg-slate-200 text-slate-600 border border-slate-300/50'}`}>
+                                                          currentStatus === 'COMPLETED' ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400 border border-blue-200/50' : 'bg-slate-200 text-slate-600 border border-slate-300/50 dark:bg-zinc-800 dark:border-zinc-700'}`}>
                                                         {currentStatus.replace('_', ' ')}
                                                     </span>
                                                     {hasVoucher && (
-                                                        <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-md w-max">
+                                                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-emerald-500/10 to-emerald-400/5 border border-emerald-500/20 rounded-md w-max backdrop-blur-sm">
                                                             <Ticket size={10} className="text-emerald-600 dark:text-emerald-400" />
                                                             <span className="text-[9px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest">Đã dùng Voucher</span>
                                                         </div>
                                                     )}
                                                 </div>
-                                                <div className="text-right">
-                                                    {hasVoucher && <p className="font-bold text-slate-400 line-through text-xs mb-0.5">{formatPrice(originalPrice)}</p>}
-                                                    <p className="font-black text-xl text-slate-900 dark:text-white drop-shadow-sm">{formatPrice(finalPrice)}</p>
+                                                <div className="text-right flex flex-col items-end">
+                                                    {hasVoucher && (
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <span className="font-bold text-slate-400 dark:text-zinc-500 line-through text-[11px]">{formatPrice(originalPrice)}</span>
+                                                            <span className="px-1.5 py-0.5 bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[10px] font-black rounded uppercase tracking-tighter">-{formatPrice(discountAmount)}</span>
+                                                        </div>
+                                                    )}
+                                                    <p className="font-black text-2xl text-slate-900 dark:text-white drop-shadow-sm tracking-tight">{formatPrice(finalPrice)}</p>
                                                 </div>
                                             </div>
                                             
@@ -1023,49 +1029,65 @@ export default function CalendarFeature() {
                                 )}
                             </div>
 
-                            {/* Thông tin Dịch vụ & Thanh toán Kế toán */}
-                            <div className="p-6 rounded-[2rem] bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 space-y-4">
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Chi tiết thanh toán</p>
+                            {/* Thông tin Dịch vụ & Thanh toán Kế toán (Hóa đơn Glassmorphism) */}
+                            <div className="p-6 rounded-[2rem] bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl border border-slate-200/50 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] space-y-5 relative overflow-hidden">
+                                {/* Decor Background Effect */}
+                                <div className="absolute -right-12 -top-12 w-40 h-40 bg-[#80BF84]/10 dark:bg-[#80BF84]/20 rounded-full blur-3xl pointer-events-none"></div>
+
+                                <div className="flex items-center justify-between mb-2 relative z-10">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Chi tiết thanh toán</p>
+                                    <Receipt size={16} className="text-slate-400" />
+                                </div>
                                 
-                                <div className="flex items-start gap-3 mb-4">
-                                    <div className="w-10 h-10 rounded-full bg-white dark:bg-black/40 flex items-center justify-center shadow-sm shrink-0"><Activity size={18} className="text-[#80BF84]" /></div>
-                                    <span className="font-bold text-sm text-slate-700 dark:text-zinc-300 line-clamp-2 mt-1">{selectedDetail.services?.service_name}</span>
+                                <div className="flex items-start gap-3 mb-4 p-4 rounded-2xl bg-white/60 dark:bg-black/20 border border-slate-100 dark:border-white/5 relative z-10">
+                                    <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-zinc-800/50 flex items-center justify-center shadow-inner shrink-0 border border-slate-100 dark:border-white/5">
+                                        <Activity size={20} className="text-[#80BF84]" />
+                                    </div>
+                                    <div className="flex-1 mt-0.5">
+                                        <span className="font-bold text-sm text-slate-800 dark:text-zinc-200 line-clamp-2 leading-snug">{selectedDetail.services?.service_name || "Dịch vụ Y tế"}</span>
+                                        <span className="text-[10px] font-bold text-slate-500 mt-1 block">Cung cấp bởi: {selectedDetail.partner?.full_name || "Hệ thống AI Health"}</span>
+                                    </div>
                                 </div>
 
-                                <div className="space-y-2">
+                                <div className="space-y-3 px-2 relative z-10">
                                     <div className="flex justify-between items-center text-sm font-bold text-slate-600 dark:text-zinc-400">
-                                        <span>Giá dịch vụ gốc</span>
+                                        <span>Giá niêm yết</span>
                                         <span>{formatPrice(selectedDetail.services?.price || selectedDetail.total_amount || 0)}</span>
                                     </div>
                                     
                                     {selectedDetail.services?.price > selectedDetail.total_amount && (
-                                        <div className="flex justify-between items-center text-sm font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-2 rounded-xl border border-emerald-100 dark:border-emerald-500/20">
-                                            <span className="flex items-center gap-1.5"><Ticket size={14}/> Ưu đãi Voucher</span>
+                                        <div className="flex justify-between items-center text-sm font-black text-rose-600 dark:text-rose-400 bg-rose-50/50 dark:bg-rose-500/10 px-3 py-2.5 rounded-xl border border-rose-100/50 dark:border-rose-500/20">
+                                            <span className="flex items-center gap-2"><Ticket size={16}/> Voucher giảm</span>
                                             <span>- {formatPrice((selectedDetail.services?.price || 0) - selectedDetail.total_amount)}</span>
                                         </div>
                                     )}
                                 </div>
 
-                                <div className="h-px w-full bg-slate-200 dark:bg-white/10 my-3"></div>
+                                {/* Đường cắt hóa đơn Ticket */}
+                                <div className="relative py-4 z-10">
+                                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                                        <div className="w-full border-t-2 border-dashed border-slate-200 dark:border-zinc-700/80"></div>
+                                    </div>
+                                    <div className="absolute left-[-32px] top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-50 dark:bg-[#0a0a0a] rounded-full border-r border-slate-200/50 dark:border-white/10 shadow-inner"></div>
+                                    <div className="absolute right-[-32px] top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-50 dark:bg-[#0a0a0a] rounded-full border-l border-slate-200/50 dark:border-white/10 shadow-inner"></div>
+                                </div>
                                 
-                                <div className="flex justify-between items-center">
-                                    <span className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-sm">Thành tiền</span>
-                                    <span className="font-black text-2xl text-blue-600 dark:text-blue-400 drop-shadow-sm">{formatPrice(selectedDetail.total_amount || 0)}</span>
+                                <div className="flex justify-between items-end px-2 relative z-10">
+                                    <span className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-[11px]">Tổng thanh toán</span>
+                                    <span className="font-black text-3xl text-blue-600 dark:text-blue-400 drop-shadow-md tracking-tighter">{formatPrice(selectedDetail.total_amount || 0)}</span>
                                 </div>
 
-                                <div className="h-px w-full bg-slate-200 dark:bg-white/10 mt-2 mb-4"></div>
-
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Lịch trình</p>
-                                <div className="flex justify-between items-center">
-                                    <div className="flex items-center gap-3 text-slate-700 dark:text-zinc-300">
-                                        <div className="w-10 h-10 rounded-full bg-white dark:bg-black/40 flex items-center justify-center shadow-sm"><Clock size={18} className="text-[#80BF84]" /></div>
+                                <div className="mt-6 p-4 rounded-2xl bg-blue-50/60 dark:bg-blue-900/10 border border-blue-100/50 dark:border-blue-500/20 flex items-center justify-between relative z-10">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 shadow-inner"><Clock size={16} /></div>
                                         <div>
-                                            <p className="font-bold text-sm">
+                                            <p className="font-black text-sm text-blue-900 dark:text-blue-300 tracking-tight">
                                                 {new Date(selectedDetail.start_time).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})} - {new Date(selectedDetail.end_time).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}
                                             </p>
-                                            <p className="text-[10px] font-bold text-slate-400 mt-0.5">{new Date(selectedDetail.start_time).toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}</p>
+                                            <p className="text-[10px] font-bold text-blue-600/70 dark:text-blue-400/70 mt-0.5 uppercase tracking-widest">{new Date(selectedDetail.start_time).toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit' })}</p>
                                         </div>
                                     </div>
+                                    {selectedDetail.status === 'CONFIRMED' && <CheckCircle size={22} className="text-blue-500 drop-shadow-sm" />}
                                 </div>
                             </div>
 
