@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { 
   Home, Compass, CalendarDays, Sparkles, Crown, Settings, 
   LogOut, LayoutDashboard, User as UserIcon, MapPin, MessageSquare,
-  ChevronRight, Layout
+  ChevronRight, Layout, Ticket
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -148,6 +148,7 @@ export default function Sidebar() {
     { name: "Khám phá", icon: Compass, path: "/features/explore" },
     { name: "Bản đồ", icon: MapPin, path: "/features/map" },
     { name: "Lịch hẹn", icon: CalendarDays, path: "/features/calendar" },
+    { name: "Ưu đãi", icon: Ticket, path: "/features/voucher" },
   ];
 
   // KIỂN TRÚC UI SHELL: Hiển thị ngay lập tức ở mili giây thứ 0, không chờ đợi (Loại bỏ blur-sm, delay)
