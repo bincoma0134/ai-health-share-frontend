@@ -4,12 +4,14 @@ import { useState, useEffect } from "react";
 import { 
   UserPlus, MessageCircle, Share2, MoreHorizontal, 
   Lock, Play, Heart, Bookmark, LayoutGrid, ShieldCheck, 
-  Star, Package, BadgeCheck, TrendingUp, Building2, X, DollarSign, CalendarPlus, Sparkles, Plus
+  Star, Package, BadgeCheck, TrendingUp, Building2, X, DollarSign, CalendarPlus, Sparkles, Plus, Clock, 
+  Ticket, CheckCircle2, AlertCircle, Tag
 } from "lucide-react";
 import { toast } from "sonner";
 import DashboardButton from "./DashboardButton";
 import CommentModal from "@/components/CommentModal";
 import BookingModal from "@/components/BookingModal";
+import { useVoucherStore } from "@/store/useVoucherStore";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -23,6 +25,19 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
   const [expandedVideo, setExpandedVideo] = useState<any>(null);
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
   const [activeCommentVideoId, setActiveCommentVideoId] = useState<string | null>(null);
+
+  // Khởi tạo luồng kết nối dữ liệu Voucher đa tầng
+  const { publicVouchers, myVouchers, fetchPublicVouchers, claimVoucher } = useVoucherStore();
+  const [selectedVoucher, setSelectedVoucher] = useState<any>(null);
+
+  useEffect(() => {
+    fetchPublicVouchers();
+  }, [fetchPublicVouchers]);
+
+  const partnerVouchers = publicVouchers.filter((v: any) => 
+    v.status === 'APPROVED' && 
+    (v.issuer_type === 'ADMIN' || (v.issuer_type === 'PARTNER' && v.issuer_id === profile?.id))
+  );
 
   // Đồng bộ Video Feed khi Props thay đổi
   useEffect(() => { setLocalVideos(videoTiktokFeeds); }, [videoTiktokFeeds]);
@@ -235,6 +250,7 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
             {[
               { id: "services", label: "Dịch vụ", icon: Package },
               { id: "videos", label: "Video", icon: LayoutGrid },
+              { id: "vouchers", label: `Ưu đãi (${partnerVouchers.length})`, icon: Ticket },
               { id: "liked", label: "Đã thích", icon: Heart, private: true },
               { id: "saved", label: "Đã lưu", icon: Bookmark, private: true }
             ].map((tab) => (
@@ -376,6 +392,91 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
                   </div>
                )}
              </div>
+            )}
+
+            {/* TAB: VOUCHERS (ƯU ĐÃI CƠ SỞ) */}
+            {activeTab === "vouchers" && (
+                <div className="space-y-4 animate-fade-in">
+                    {partnerVouchers.length === 0 ? (
+                        <div className="p-12 text-center border border-dashed border-slate-200 dark:border-zinc-800 rounded-[2rem]">
+                            <Ticket size={40} className="text-slate-300 mx-auto mb-3 animate-pulse" />
+                            <p className="text-sm font-medium text-slate-400 dark:text-zinc-500">Cơ sở hiện chưa phát hành mã ưu đãi nào.</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {partnerVouchers.map((v: any) => {
+                                const isClaimed = myVouchers.some((mv: any) => mv.voucher_id === v.id);
+                                const isExpired = new Date(v.valid_until) < new Date();
+                                const isOut = Number(v.used_quantity) >= Number(v.total_quantity);
+
+                                return (
+                                    <div key={v.id} className="relative flex bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all group">
+                                        <div className={`w-4 flex flex-col justify-between items-center py-2 ${v.issuer_type === 'ADMIN' ? 'bg-amber-500' : 'bg-[#80BF84]'}`}>
+                                            <div className="w-2 h-2 rounded-full bg-slate-50 dark:bg-zinc-950 -ml-4"></div>
+                                            <div className="w-2 h-2 rounded-full bg-slate-50 dark:bg-zinc-950 -ml-4"></div>
+                                            <div className="w-2 h-2 rounded-full bg-slate-50 dark:bg-zinc-950 -ml-4"></div>
+                                        </div>
+
+                                        <div className="flex-1 p-5 flex flex-col justify-between gap-3">
+                                            <div>
+                                                <div className="flex justify-between items-start gap-2 mb-1">
+                                                    <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${v.issuer_type === 'ADMIN' ? 'bg-amber-100 text-amber-800 dark:bg-amber-500/10 dark:text-amber-400' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-400'}`}>
+                                                        {v.issuer_type === 'ADMIN' ? 'Toàn sàn' : 'Độc quyền cơ sở'}
+                                                    </span>
+                                                    <span className="text-xs font-bold text-slate-400 dark:text-zinc-500 flex items-center gap-1">
+                                                        <Clock size={12} /> HSD: {new Date(v.valid_until).toLocaleDateString('vi-VN')}
+                                                    </span>
+                                                </div>
+
+                                                <h4 className="text-lg font-black text-slate-900 dark:text-white leading-tight">
+                                                    Giảm {v.discount_type === 'PERCENTAGE' ? `${Number(v.discount_value)}%` : `${Number(v.discount_value).toLocaleString()}đ`}
+                                                </h4>
+                                                <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 mt-1">
+                                                    Đơn tối thiểu: {Number(v.min_order_value).toLocaleString()}đ
+                                                </p>
+                                            </div>
+
+                                            <div className="flex items-center justify-between border-t border-dashed border-slate-100 dark:border-zinc-800 pt-3 mt-1">
+                                                <button 
+                                                    onClick={() => setSelectedVoucher(v)}
+                                                    className="text-xs font-bold text-slate-400 hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-300 transition-colors"
+                                                >
+                                                    Xem chi tiết &rarr;
+                                                </button>
+
+                                                <button
+                                                    disabled={isClaimed || isExpired || isOut}
+                                                    onClick={async () => {
+                                                        const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+                                                        if (!token) return toast.info("Vui lòng đăng nhập để lưu ưu đãi!");
+                                                        try {
+                                                            await claimVoucher(v.code, token);
+                                                        } catch (err: any) { }
+                                                    }}
+                                                    className={`px-4 py-2 rounded-xl font-black text-xs transition-all active:scale-95 ${
+                                                        isClaimed 
+                                                            ? 'bg-slate-100 text-slate-400 dark:bg-zinc-800 dark:text-zinc-500 cursor-not-allowed flex items-center gap-1'
+                                                            : isExpired || isOut
+                                                            ? 'bg-rose-50 text-rose-400 dark:bg-rose-500/10 dark:text-rose-500/30 cursor-not-allowed'
+                                                            : v.issuer_type === 'ADMIN'
+                                                            ? 'bg-amber-500 text-zinc-900 hover:bg-amber-400 shadow-sm shadow-amber-500/20'
+                                                            : 'bg-[#80BF84] text-zinc-900 hover:bg-emerald-400 shadow-sm shadow-emerald-500/20'
+                                                    }`}
+                                                >
+                                                    {isClaimed ? (
+                                                        <>
+                                                            <CheckCircle2 size={12} /> Đã lưu
+                                                        </>
+                                                    ) : isExpired ? 'Hết hạn' : isOut ? 'Hết lượt' : 'Lưu mã'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
             )}
           </div>
         </div>
