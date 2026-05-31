@@ -4,19 +4,18 @@ import { useEffect, useState } from "react";
 import { 
   Home, ShieldCheck, Sun, Moon, CheckCircle, XCircle, 
   Clock, AlertTriangle, FileText, X, LayoutDashboard, Package, Video, 
-  Trash2, Search, History, ShieldAlert, TrendingUp, PieChart as PieChartIcon, Activity, Eye
+  Trash2, Search, History, ShieldAlert, TrendingUp, PieChart as PieChartIcon, Activity, Eye, Ticket
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useUI } from "@/context/UIContext";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-
-
+import VoucherManager from "@/components/voucher/VoucherManager";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 interface QueueItem {
-    id: string; type: 'service' | 'video'; title: string; description?: string;
+    id: string; type: 'service' | 'video' | 'voucher'; title: string; description?: string;
     price?: number; media_url?: string; image_url?: string; video_url?: string;
     status: string; created_at: string; updated_at?: string; moderation_note?: string;
     author?: { full_name?: string; email?: string; avatar_url?: string };
@@ -30,8 +29,8 @@ export default function ModeratorDashboard() {
   
   const [isLoading, setIsLoading] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'queue' | 'history'>('overview');
-  const [filterType, setFilterType] = useState<'all' | 'service' | 'video' | 'delete' | 'edit'>('all');
+  const [activeTab, setActiveTab] = useState<'overview' | 'queue' | 'history' | 'vouchers'>('overview');
+  // Đã dời xuống dưới để tránh khai báo trùng lặp
   
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [history, setHistory] = useState<QueueItem[]>([]);
@@ -79,12 +78,24 @@ export default function ModeratorDashboard() {
       try {
           const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
           if (!token) return;
-          const res = await fetch(`${API_URL}/moderation/action/${selectedItem.type}/${selectedItem.id}`, {
+
+          // PHÂN LUỒNG THÔNG MINH (BỌC THÉP VOUCHER)
+          const endpoint = selectedItem.type === 'voucher' 
+                ? `${API_URL}/admin/vouchers/${selectedItem.id}/status` 
+                : `${API_URL}/moderation/action/${selectedItem.type}/${selectedItem.id}`;
+          
+          // Tùy chỉnh Payload theo endpoint
+          const payload = selectedItem.type === 'voucher'
+                ? { status: action, note: rejectNote.trim() }
+                : { action, note: rejectNote.trim() };
+
+          const res = await fetch(endpoint, {
               method: "PATCH",
               headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-              body: JSON.stringify({ action, note: rejectNote.trim() })
+              body: JSON.stringify(payload)
           });
-          if (!res.ok) throw new Error("Lỗi xử lý");
+          
+          if (!res.ok) throw new Error("Lỗi xử lý hệ thống");
           toast.success("Xử lý thành công!", { id: tid });
           fetchAllData(); // Lập tức tải lại biểu đồ & danh sách
           closeModal();
@@ -94,10 +105,13 @@ export default function ModeratorDashboard() {
 
   const closeModal = () => { setSelectedItem(null); setShowRejectInput(false); setRejectNote(""); };
 
+  // Bổ sung thêm state cho bộ lọc voucher
+  const [filterType, setFilterType] = useState<'all' | 'service' | 'video' | 'voucher' | 'delete' | 'edit'>('all');
+
   const filteredQueue = (queue || []).filter(q => {
-      // Sửa logic: Tab Dịch vụ/Video phải hiện cả trạng thái PENDING và PENDING_DELETE
       if (filterType === 'service') return q.type === 'service';
       if (filterType === 'video') return q.type === 'video';
+      if (filterType === 'voucher') return q.type === 'voucher';
       if (filterType === 'delete') return q.status === 'PENDING_DELETE';
       if (filterType === 'edit') return q.status === 'PENDING_UPDATE';
       return true;
@@ -142,6 +156,10 @@ export default function ModeratorDashboard() {
                   </button>
                   <button onClick={() => setActiveTab('history')} className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl font-bold transition-all ${activeTab === 'history' ? 'bg-violet-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-200/50 dark:hover:bg-white/5'}`}>
                       <History size={20}/> <span className="hidden md:block">Lịch sử xử lý</span>
+                  </button>
+                  <div className="my-2 border-b border-slate-200 dark:border-white/10 hidden md:block"></div>
+                  <button onClick={() => setActiveTab('vouchers')} className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl font-bold transition-all ${activeTab === 'vouchers' ? 'bg-violet-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-200/50 dark:hover:bg-white/5'}`}>
+                      <Ticket size={20}/> <span className="hidden md:block">Kho Ưu đãi Toàn sàn</span>
                   </button>
               </div>
           </div>
@@ -221,7 +239,7 @@ export default function ModeratorDashboard() {
                               <div className="flex flex-col lg:flex-row justify-between lg:items-center gap-4 mb-6">
                                   <h2 className="text-2xl font-black text-slate-900 dark:text-white">Hàng Đợi Xử Lý</h2>
                                   <div className="flex flex-wrap gap-2">
-                                      {[{id:'all', label:'Tất cả'}, {id:'service', label:'Dịch vụ'}, {id:'video', label:'Video'}, {id:'delete', label:'Yêu cầu gỡ'}, {id:'edit', label:'Bản cập nhật'}].map(f => (
+                                      {[{id:'all', label:'Tất cả'}, {id:'service', label:'Dịch vụ'}, {id:'video', label:'Video'}, {id:'voucher', label:'Voucher'}, {id:'delete', label:'Yêu cầu gỡ'}, {id:'edit', label:'Bản cập nhật'}].map(f => (
                                           <button key={f.id} onClick={() => setFilterType(f.id as any)} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${filterType === f.id ? 'bg-slate-900 text-white dark:bg-white dark:text-black' : 'bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-zinc-400 hover:border-violet-500'}`}>
                                               {f.label}
                                           </button>
@@ -239,19 +257,33 @@ export default function ModeratorDashboard() {
                                       {filteredQueue.map(item => (
                                           <div key={item.id} onClick={() => setSelectedItem(item)} className="bg-white dark:bg-zinc-900 rounded-3xl p-5 border border-slate-200 dark:border-white/10 cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all group">
                                               <div className="flex justify-between items-center mb-3">
-                                                  <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase flex items-center gap-1 ${item.type === 'service' ? 'bg-blue-100 text-blue-600' : 'bg-fuchsia-100 text-fuchsia-600'}`}>
-                                                      {item.type === 'service' ? <Package size={10}/> : <Video size={10}/>} {item.type}
+                                                  <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase flex items-center gap-1 ${item.type === 'service' ? 'bg-blue-100 text-blue-600' : item.type === 'video' ? 'bg-fuchsia-100 text-fuchsia-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                                                      {item.type === 'service' ? <Package size={10}/> : item.type === 'video' ? <Video size={10}/> : <Ticket size={10}/>} {item.type}
                                                   </span>
                                                   <span className={`text-[10px] font-black uppercase ${item.status.includes('DELETE') ? 'text-rose-500' : item.status.includes('UPDATE') ? 'text-amber-500' : 'text-violet-500'}`}>
                                                       {item.status.split('_').pop()}
                                                   </span>
                                               </div>
-                                              <div className="aspect-[16/9] rounded-xl bg-slate-100 dark:bg-black overflow-hidden mb-3 relative">
-                                                  {getMediaUrl(item) ? (
-                                                      getMediaUrl(item)?.includes('.mp4') ? <video src={getMediaUrl(item)} className="w-full h-full object-cover opacity-80" /> : <img src={getMediaUrl(item)} className="w-full h-full object-cover" />
-                                                  ) : <FileText size={32} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-slate-300"/>}
-                                                  <div className="absolute inset-0 bg-violet-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm"><Search className="text-white"/></div>
-                                              </div>
+                                              
+                                              {item.type === 'voucher' ? (
+                                                  <div className="aspect-[16/9] rounded-xl bg-gradient-to-br from-emerald-400 to-[#80BF84] overflow-hidden mb-3 relative flex items-center justify-center border border-emerald-500/20 shadow-inner">
+                                                      <div className="absolute -left-4 w-8 h-8 bg-white dark:bg-zinc-900 rounded-full"></div>
+                                                      <div className="absolute -right-4 w-8 h-8 bg-white dark:bg-zinc-900 rounded-full"></div>
+                                                      <div className="text-center text-white px-4">
+                                                          <Ticket size={32} className="mx-auto mb-2 opacity-80" />
+                                                          <p className="font-mono text-xl font-black tracking-widest drop-shadow-md">{item.title}</p>
+                                                      </div>
+                                                      <div className="absolute inset-0 bg-violet-500/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm"><Search className="text-white"/></div>
+                                                  </div>
+                                              ) : (
+                                                  <div className="aspect-[16/9] rounded-xl bg-slate-100 dark:bg-black overflow-hidden mb-3 relative">
+                                                      {getMediaUrl(item) ? (
+                                                          getMediaUrl(item)?.includes('.mp4') ? <video src={getMediaUrl(item)} className="w-full h-full object-cover opacity-80" /> : <img src={getMediaUrl(item)} className="w-full h-full object-cover" />
+                                                      ) : <FileText size={32} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-slate-300"/>}
+                                                      <div className="absolute inset-0 bg-violet-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm"><Search className="text-white"/></div>
+                                                  </div>
+                                              )}
+                                              
                                               <h3 className="font-bold text-slate-900 dark:text-white truncate">{item.title}</h3>
                                               <p className="text-xs text-slate-500 mt-1 truncate">Bởi: {item.author?.full_name}</p>
                                           </div>
@@ -328,6 +360,13 @@ export default function ModeratorDashboard() {
                                       </table>
                                   </div>
                               </div>
+                          </div>
+                      )}
+
+                      {/* --- VOUCHER MANAGER COMPONENT --- */}
+                      {activeTab === 'vouchers' && (
+                          <div className="space-y-6 animate-fade-in pb-10">
+                              <VoucherManager />
                           </div>
                       )}
 

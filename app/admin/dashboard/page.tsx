@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { 
   Users, Building2, Activity, DollarSign, Wallet, TrendingUp, LogOut, 
   Home, ShieldCheck, BarChart3, Sparkles, Compass, User as UserIcon, 
-  Sun, Moon, Bell, Crown, Settings, Landmark, FileText, CheckCircle, XCircle, X, Search, Clock, Server, Database
+  Sun, Moon, Bell, Crown, Settings, Landmark, FileText, CheckCircle, XCircle, X, Search, Clock, Server, Database, Ticket
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -14,6 +14,7 @@ const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 import { useUI } from "@/context/UIContext"; 
 import NotificationModal from "@/components/NotificationModal";
 import { useAuth } from "@/context/AuthContext";
+import VoucherManager from "@/components/voucher/VoucherManager";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -31,7 +32,7 @@ export default function AdminDashboardOverview() {
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'finance' | 'partners' | 'audit'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'finance' | 'partners' | 'audit' | 'vouchers'>('overview');
 
   const [stats, setStats] = useState<any>({ gmv: 0, platform_revenue: 0, escrow_holding: 0, pending_withdrawals: 0, total_users: 0, total_partners: 0, chart_data: [] });
   const [withdrawals, setWithdrawals] = useState<WithdrawalItem[]>([]);
@@ -197,6 +198,10 @@ export default function AdminDashboardOverview() {
                   </button>
                   <button onClick={() => setActiveTab('audit')} className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl font-bold transition-all ${activeTab === 'audit' ? 'bg-amber-500 text-slate-900 shadow-lg shadow-amber-500/20' : 'text-slate-500 hover:bg-slate-200/50 dark:hover:bg-white/5'}`}>
                       <ShieldCheck size={20}/> <span className="hidden md:block uppercase tracking-widest text-[11px]">Giám sát hệ thống</span>
+                  </button>
+                  <div className="my-2 border-b border-slate-200 dark:border-white/10 hidden md:block"></div>
+                  <button onClick={() => setActiveTab('vouchers')} className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl font-bold transition-all ${activeTab === 'vouchers' ? 'bg-amber-500 text-slate-900 shadow-lg shadow-amber-500/20' : 'text-slate-500 hover:bg-slate-200/50 dark:hover:bg-white/5'}`}>
+                      <Ticket size={20}/> <span className="hidden md:block uppercase tracking-widest text-[11px]">Kho Ưu đãi</span>
                   </button>
               </div>
           </div>
@@ -698,6 +703,38 @@ export default function AdminDashboardOverview() {
                                       </div>
                                   </div>
                               </div>
+                          </div>
+                      </div>
+                  )}
+
+                  {/* --- TAB: KHO ƯU ĐÃI TOÀN SÀN (VOUCHER MANAGER) --- */}
+                  {activeTab === 'vouchers' && (
+                      <div className="space-y-8 animate-fade-in admin-voucher-override">
+                          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
+                              <div>
+                                  <h2 className="text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+                                      <Ticket className="text-amber-500" size={32} /> Tổng Trạm Ưu Đãi
+                                  </h2>
+                                  <p className="text-slate-500 font-medium text-sm mt-1">
+                                      Quản lý, phát hành và kiểm duyệt mọi mã giảm giá đang lưu hành trên toàn bộ nền tảng.
+                                  </p>
+                              </div>
+                          </div>
+                          
+                          {/* CSS Override cục bộ để nhuộm vàng Component VoucherManager */}
+                          <style dangerouslySetInnerHTML={{__html: `
+                            .admin-voucher-override .text-\\[\\#80BF84\\] { color: #f59e0b !important; }
+                            .admin-voucher-override .bg-emerald-100 { background-color: rgba(245, 158, 11, 0.1) !important; }
+                            .admin-voucher-override .text-emerald-700 { color: #f59e0b !important; }
+                            .admin-voucher-override .dark\\:bg-emerald-500\\/20 { background-color: rgba(245, 158, 11, 0.2) !important; }
+                            .admin-voucher-override .bg-gradient-to-r.from-\\[\\#80BF84\\].to-emerald-500 { background: linear-gradient(to right, #f59e0b, #ea580c) !important; }
+                            .admin-voucher-override .shadow-\\[0_10px_20px_rgba\\(128\\,191\\,132\\,0\\.3\\)\\] { box-shadow: 0 10px 20px rgba(245, 158, 11, 0.3) !important; }
+                            .admin-voucher-override .focus\\:border-\\[\\#80BF84\\]:focus { border-color: #f59e0b !important; }
+                            .admin-voucher-override .border-t-transparent.border-\\[\\#80BF84\\] { border-color: #f59e0b; border-top-color: transparent; }
+                          `}} />
+                          
+                          <div className="bg-transparent">
+                              <VoucherManager />
                           </div>
                       </div>
                   )}

@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import { 
   Home, LayoutDashboard, DollarSign, Sun, Moon, 
   CheckCircle, Clock, CreditCard, Wallet, TrendingUp, ShieldCheck,
-  CalendarDays, CalendarClock, Check, X, History, FileText, Building2, XCircle
+  CalendarDays, CalendarClock, Check, X, History, FileText, Building2, XCircle, Ticket
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import VoucherManager from "@/components/voucher/VoucherManager";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -34,7 +35,7 @@ export default function PartnerDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   
   // --- STATE DỮ LIỆU ---
-  const [activeTab, setActiveTab] = useState<'escrow' | 'appointments' | 'wallet' | 'withdrawals'>('escrow');
+  const [activeTab, setActiveTab] = useState<'escrow' | 'appointments' | 'wallet' | 'withdrawals' | 'vouchers'>('escrow');
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [appointments, setAppointments] = useState<any[]>([]);
   const [walletInfo, setWalletInfo] = useState({ balance: 0, total_earned: 0 });
@@ -228,6 +229,9 @@ export default function PartnerDashboard() {
                     </button>
                     <button onClick={() => setActiveTab('withdrawals')} className={`px-5 py-2.5 rounded-xl font-bold text-sm flex-shrink-0 transition-all flex items-center justify-center gap-2 ${activeTab === 'withdrawals' ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
                         <History size={16} /> Lịch sử rút tiền
+                    </button>
+                    <button onClick={() => setActiveTab('vouchers')} className={`px-5 py-2.5 rounded-xl font-bold text-sm flex-shrink-0 transition-all flex items-center justify-center gap-2 ${activeTab === 'vouchers' ? 'bg-[#80BF84] text-zinc-950 shadow-md' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
+                        <Ticket size={16} /> Quản lý Ưu đãi
                     </button>
                 </div>
             </div>
@@ -509,6 +513,13 @@ export default function PartnerDashboard() {
                             )}
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* --- TAB VOUCHERS (QUẢN LÝ ƯU ĐÃI) --- */}
+            {activeTab === 'vouchers' && (
+                <div className="animate-fade-in w-full pb-20 md:pb-0">
+                    <VoucherManager />
                 </div>
             )}
         </div>
