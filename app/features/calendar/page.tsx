@@ -5,7 +5,7 @@ import {
   Home, Compass, CalendarDays, User as UserIcon, 
   Sun, Bell, Clock, MapPin, CheckCircle, 
   QrCode, AlertCircle, CreditCard, XCircle,
-  Phone, MessageCircle, FileText, Activity, Receipt
+  Phone, MessageCircle, FileText, Activity, Receipt, Ticket
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -87,14 +87,24 @@ export default function CalendarFeature() {
 
           if (status === 'COMPLETED' || status === 'SERVED') {
               totalCompleted++;
+              
+              // TÍNH TOÁN KẾ TOÁN ESCROW: Phân tách Doanh thu theo loại Voucher
+              let actualPartnerRevenue = Number(a.total_amount || 0);
+              
+              // Nếu khách dùng mã Nền tảng (ADMIN) cấp -> Hệ thống tự lấy tiền túi bù cho Partner
+              // Nên doanh thu của Partner tính theo Giá gốc dịch vụ.
+              if (a.vouchers && a.vouchers.issuer_type === 'ADMIN') {
+                  actualPartnerRevenue = Number(a.services?.price || a.total_amount || 0);
+              }
+
               // Phân tích Doanh thu 7 ngày
               if (revByDay[dateStr] !== undefined) {
-                  revByDay[dateStr] += Number(a.total_amount || 0);
-                  weeklyRev += Number(a.total_amount || 0);
+                  revByDay[dateStr] += actualPartnerRevenue;
+                  weeklyRev += actualPartnerRevenue;
               }
               // Phân tích Cơ cấu dịch vụ (Service Mix)
               const serviceName = a.services?.service_name || "Dịch vụ khác";
-              serviceMix[serviceName] = (serviceMix[serviceName] || 0) + Number(a.total_amount || 0);
+              serviceMix[serviceName] = (serviceMix[serviceName] || 0) + actualPartnerRevenue;
           }
       });
 
@@ -357,7 +367,7 @@ export default function CalendarFeature() {
         });
         const result = await res.json();
         if (res.ok) {
-            toast.success(result.message, { id: tid });
+            toast.success(result.message + " (Voucher ưu đãi đã được trả lại vào Ví)", { id: tid });
             setAppointments(prev => prev.map(a => a.id === appointmentId ? { ...a, status: 'CANCELLED', rejection_reason: 'Người dùng chủ động hủy bỏ yêu cầu' } : a));
             setActiveTab('history');
         } else throw new Error(result.detail);
@@ -678,8 +688,13 @@ export default function CalendarFeature() {
                                 const deadlineStr = appt.payment_deadline ? new Date(appt.payment_deadline).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }) : "";
 
                                 const currentStatus = appt.status.toUpperCase();
-                                // Placeholder thông tin tương lai chúng ta sẽ fill từ DB
-                                const servicePrice = appt.services?.price || 500000; 
+                                
+                                // TOÁN HỌC VOUCHER
+                                const originalPrice = appt.services?.price || appt.total_amount || 0; 
+                                const finalPrice = appt.total_amount || 0;
+                                const discountAmount = originalPrice - finalPrice;
+                                const hasVoucher = discountAmount > 0;
+                                
                                 const duration = "60 phút";
 
                                 return (
@@ -699,16 +714,25 @@ export default function CalendarFeature() {
                                         {/* CỘT NỘI DUNG (Giữa) */}
                                         <div className="flex-1 p-6">
                                             <div className="flex justify-between items-start mb-3">
-                                                <span className={`px-3 py-1 text-[10px] font-black rounded-full uppercase tracking-wider
-                                                    ${currentStatus === 'WAITING_PARTNER' ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border border-amber-200/50' : 
-                                                      currentStatus === 'PENDING_PAYMENT' ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400 border border-rose-200/50 animate-pulse' : 
-                                                      currentStatus === 'CONFIRMED' ? 'bg-[#80BF84]/20 text-emerald-800 dark:text-[#80BF84] border border-[#80BF84]/30' : 
-                                                      currentStatus === 'COMPLETED' ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 border border-blue-200/50' : 'bg-slate-200 text-slate-600 border border-slate-300/50'}`}>
-                                                    {currentStatus.replace('_', ' ')}
-                                                </span>
-                                                <span className="font-black text-lg text-slate-900 dark:text-white">
-                                                    {formatPrice(servicePrice)}
-                                                </span>
+                                                <div className="flex flex-col gap-2">
+                                                    <span className={`w-max px-3 py-1 text-[10px] font-black rounded-full uppercase tracking-wider
+                                                        ${currentStatus === 'WAITING_PARTNER' ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border border-amber-200/50' : 
+                                                          currentStatus === 'PENDING_PAYMENT' ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400 border border-rose-200/50 animate-pulse' : 
+                                                          currentStatus === 'CONFIRMED' ? 'bg-[#80BF84]/20 text-emerald-800 dark:text-[#80BF84] border border-[#80BF84]/30' : 
+                                                          currentStatus === 'COMPLETED' ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 border border-blue-200/50' : 'bg-slate-200 text-slate-600 border border-slate-300/50'}`}>
+                                                        {currentStatus.replace('_', ' ')}
+                                                    </span>
+                                                    {hasVoucher && (
+                                                        <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-md w-max">
+                                                            <Ticket size={10} className="text-emerald-600 dark:text-emerald-400" />
+                                                            <span className="text-[9px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest">Đã dùng Voucher</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="text-right">
+                                                    {hasVoucher && <p className="font-bold text-slate-400 line-through text-xs mb-0.5">{formatPrice(originalPrice)}</p>}
+                                                    <p className="font-black text-xl text-slate-900 dark:text-white drop-shadow-sm">{formatPrice(finalPrice)}</p>
+                                                </div>
                                             </div>
                                             
                                             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3 line-clamp-1">{appt.services?.service_name || "Dịch vụ Chăm sóc Sức khỏe"}</h3>
@@ -999,18 +1023,39 @@ export default function CalendarFeature() {
                                 )}
                             </div>
 
-                            {/* Thông tin Dịch vụ & Thời gian */}
+                            {/* Thông tin Dịch vụ & Thanh toán Kế toán */}
                             <div className="p-6 rounded-[2rem] bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 space-y-4">
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Chi tiết dịch vụ</p>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Chi tiết thanh toán</p>
                                 
-                                <div className="flex justify-between items-center">
-                                    <div className="flex items-center gap-3 text-slate-700 dark:text-zinc-300">
-                                        <div className="w-10 h-10 rounded-full bg-white dark:bg-black/40 flex items-center justify-center shadow-sm"><Activity size={18} className="text-[#80BF84]" /></div>
-                                        <span className="font-bold text-sm line-clamp-2">{selectedDetail.services?.service_name}</span>
-                                    </div>
-                                    <span className="font-black text-lg text-[#80BF84] dark:text-[#80BF84] drop-shadow-sm">{formatPrice(selectedDetail.total_amount || 0)}</span>
+                                <div className="flex items-start gap-3 mb-4">
+                                    <div className="w-10 h-10 rounded-full bg-white dark:bg-black/40 flex items-center justify-center shadow-sm shrink-0"><Activity size={18} className="text-[#80BF84]" /></div>
+                                    <span className="font-bold text-sm text-slate-700 dark:text-zinc-300 line-clamp-2 mt-1">{selectedDetail.services?.service_name}</span>
                                 </div>
 
+                                <div className="space-y-2">
+                                    <div className="flex justify-between items-center text-sm font-bold text-slate-600 dark:text-zinc-400">
+                                        <span>Giá dịch vụ gốc</span>
+                                        <span>{formatPrice(selectedDetail.services?.price || selectedDetail.total_amount || 0)}</span>
+                                    </div>
+                                    
+                                    {selectedDetail.services?.price > selectedDetail.total_amount && (
+                                        <div className="flex justify-between items-center text-sm font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-2 rounded-xl border border-emerald-100 dark:border-emerald-500/20">
+                                            <span className="flex items-center gap-1.5"><Ticket size={14}/> Ưu đãi Voucher</span>
+                                            <span>- {formatPrice((selectedDetail.services?.price || 0) - selectedDetail.total_amount)}</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="h-px w-full bg-slate-200 dark:bg-white/10 my-3"></div>
+                                
+                                <div className="flex justify-between items-center">
+                                    <span className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-sm">Thành tiền</span>
+                                    <span className="font-black text-2xl text-blue-600 dark:text-blue-400 drop-shadow-sm">{formatPrice(selectedDetail.total_amount || 0)}</span>
+                                </div>
+
+                                <div className="h-px w-full bg-slate-200 dark:bg-white/10 mt-2 mb-4"></div>
+
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Lịch trình</p>
                                 <div className="flex justify-between items-center">
                                     <div className="flex items-center gap-3 text-slate-700 dark:text-zinc-300">
                                         <div className="w-10 h-10 rounded-full bg-white dark:bg-black/40 flex items-center justify-center shadow-sm"><Clock size={18} className="text-[#80BF84]" /></div>
