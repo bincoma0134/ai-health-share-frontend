@@ -12,7 +12,7 @@ export interface BookingModalProps {
   isOpen: boolean;
   onClose: () => void;
   partnerId: string;
-  serviceId?: string;
+  serviceId?: string; // Có thể là video_id hoặc service_id
   serviceName: string;
   price: number;
 }
@@ -21,15 +21,17 @@ export default function BookingModal({ isOpen, onClose, partnerId, serviceId, se
   const { user } = useAuth();
   const { myVouchers } = useVoucherStore();
   
-  const [date, setDate] = useState("");
-  const [time, setTime] = useState("");
-  const [note, setNote] = useState("");
+  // BẢO TOÀN 100% STATE GỐC CỦA PAGE.TSX
+  const [bookingName, setBookingName] = useState("");
+  const [bookingPhone, setBookingPhone] = useState("");
+  const [bookingNote, setBookingNote] = useState("");
+  const [affiliateCode, setAffiliateCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Voucher State
+  // Voucher State (Phần thêm mới)
   const [selectedVoucherCode, setSelectedVoucherCode] = useState<string | null>(null);
 
-  // Lọc các voucher khả dụng cho Đơn hàng này
+  // Lọc voucher khả dụng
   const validVouchers = myVouchers.filter((v: any) => {
     const isUnused = v.wallet_status === 'UNUSED';
     const isValidIssuer = v.issuer_type === 'ADMIN' || v.issuer_id === partnerId;
@@ -37,7 +39,7 @@ export default function BookingModal({ isOpen, onClose, partnerId, serviceId, se
     return isUnused && isValidIssuer && isEnoughValue;
   });
 
-  // Tính toán toán học: Hóa đơn tạm tính
+  // Tạm tính hóa đơn
   let discountAmount = 0;
   if (selectedVoucherCode) {
     const appliedVoucher = validVouchers.find((v: any) => v.code === selectedVoucherCode);
@@ -54,22 +56,28 @@ export default function BookingModal({ isOpen, onClose, partnerId, serviceId, se
   }
   const finalPrice = Math.max(0, price - discountAmount);
 
-  // Reset state khi mở lại Modal
   useEffect(() => {
     if (isOpen) {
-      setDate("");
-      setTime("");
-      setNote("");
+      setBookingName("");
+      setBookingPhone("");
+      setBookingNote("");
+      setAffiliateCode("");
       setSelectedVoucherCode(null);
     }
   }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // BẢO TOÀN 100% LOGIC GỌI API GỐC CỦA PAGE.TSX
+  const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
       toast.error("Vui lòng đăng nhập để đặt lịch!");
+      return;
+    }
+
+    if (!bookingName.trim() || !bookingPhone.trim()) {
+      toast.error("Vui lòng nhập đầy đủ Họ tên và Số điện thoại!");
       return;
     }
 
@@ -79,80 +87,90 @@ export default function BookingModal({ isOpen, onClose, partnerId, serviceId, se
     }
 
     setIsSubmitting(true);
+    const toastId = toast.loading("Đang gửi yêu cầu đến cơ sở...");
+
     try {
-      const token = localStorage.getItem("ai-health-token");
-      const res = await fetch(`${API_URL}/appointments/`, {
+      const token = localStorage.getItem("ai-health-token") || "";
+      const code = affiliateCode.trim();
+
+      if (code !== "") {
+        const validateRes = await fetch(`${API_URL}/affiliates/validate?code=${code}`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!validateRes.ok) throw new Error("Mã giới thiệu không hợp lệ hoặc không tồn tại!");
+      }
+
+      // Khôi phục API /appointments/request
+      const bookingRes = await fetch(`${API_URL}/appointments/request`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          partner_id: partnerId,
-          service_id: serviceId || null,
-          appointment_date: `${date}T${time}:00`,
-          notes: note,
-          // voucher_code: selectedVoucherCode // Tạm thời để Frontend xử lý UI, Backend sẽ ráp vào sau ở API
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ 
+          partner_id: partnerId, 
+          video_id: serviceId, // Truyền serviceId vào trường video_id như logic cũ
+          affiliate_code: code || null, 
+          total_amount: price || 0,
+          customer_name: bookingName.trim(),
+          customer_phone: bookingPhone.trim(),
+          note: bookingNote.trim(),
+          // voucher_code: selectedVoucherCode // Frontend hiển thị UI, backend ráp sau
         })
       });
-
-      const data = await res.json();
-      if (res.ok) {
-        toast.success("Đặt lịch thành công! Đối tác sẽ sớm xác nhận.");
-        onClose();
-      } else {
-        toast.error(data.detail || "Không thể đặt lịch. Vui lòng thử lại!");
-      }
-    } catch (error) {
-      toast.error("Lỗi kết nối máy chủ!");
-    } finally {
-      setIsSubmitting(false);
-    }
+      
+      const bookingData = await bookingRes.json();
+      
+      if (!bookingRes.ok) throw new Error(bookingData.detail || "Lỗi gửi yêu cầu");
+      
+      toast.success(bookingData.message || "Yêu cầu đã được gửi! Vui lòng theo dõi tại tab 'Lịch hẹn'.", { id: toastId, duration: 5000 });
+      onClose();
+      
+    } catch (error: any) { 
+      toast.error(error.message, { id: toastId }); 
+    } finally { 
+      setIsSubmitting(false); 
+    } 
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Nền mờ */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}></div>
+    <div className="fixed inset-0 z-[150] flex justify-center items-center p-4">
+      <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md animate-fade-in" onClick={onClose}></div>
       
-      {/* Hộp thoại */}
-      <div className="relative bg-white dark:bg-zinc-900 w-full max-w-md rounded-[2.5rem] p-6 md:p-8 shadow-2xl animate-slide-up border border-slate-200 dark:border-white/10 max-h-[90vh] overflow-y-auto no-scrollbar">
-        <button 
-          onClick={onClose}
-          className="absolute top-5 right-5 p-2 bg-slate-100 dark:bg-zinc-800 rounded-full text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
-        >
-          <X size={18} />
-        </button>
-
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 bg-blue-100 dark:bg-blue-500/20 rounded-2xl flex items-center justify-center text-blue-500 shrink-0">
-            <CalendarPlus size={24} />
-          </div>
+      <div className="relative w-full max-w-lg bg-white/95 dark:bg-zinc-900/95 backdrop-blur-3xl rounded-[2.5rem] p-6 md:p-8 z-10 shadow-2xl border border-slate-200 dark:border-white/10 animate-slide-up max-h-[90vh] overflow-y-auto no-scrollbar">
+        <div className="flex justify-between items-start mb-6">
           <div>
-            <h2 className="text-xl font-black text-slate-900 dark:text-white leading-tight">Đặt Lịch Hẹn</h2>
-            <p className="text-sm text-slate-500 font-medium truncate">{serviceName}</p>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#80BF84]/10 border border-[#80BF84]/20 rounded-full text-[10px] font-bold text-[#80BF84] mb-3 uppercase tracking-wider">
+              <Sparkles size={12} /> Đặt lịch dịch vụ
+            </div>
+            <h3 className="text-xl font-black text-slate-900 dark:text-white leading-tight pr-4">{serviceName}</h3>
+            <p className="text-[#80BF84] font-black text-lg mt-1">{price.toLocaleString()} VND</p>
           </div>
+          <button onClick={onClose} className="p-2 rounded-full bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-zinc-400 transition-colors shrink-0"><X size={18}/></button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 dark:text-zinc-300 ml-1">Ngày hẹn</label>
-              <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} className="w-full bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-blue-500 transition-colors" />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 dark:text-zinc-300 ml-1">Giờ hẹn</label>
-              <input type="time" required value={time} onChange={(e) => setTime(e.target.value)} className="w-full bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-blue-500 transition-colors" />
-            </div>
+        <form onSubmit={handleBooking} className="flex flex-col gap-4">
+          {/* KHÔI PHỤC LẠI FORM GỐC */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 dark:text-zinc-400 ml-1">Họ và tên</label>
+                  <input type="text" placeholder="Nhập tên của bạn..." className="w-full px-5 py-3.5 bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700/50 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:border-[#80BF84] transition-all" required value={bookingName} onChange={e => setBookingName(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 dark:text-zinc-400 ml-1">Số điện thoại</label>
+                  <input type="tel" placeholder="09xx..." className="w-full px-5 py-3.5 bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700/50 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:border-[#80BF84] transition-all" required value={bookingPhone} onChange={e => setBookingPhone(e.target.value)} />
+              </div>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700 dark:text-zinc-300 ml-1">Ghi chú (Tùy chọn)</label>
-            <textarea rows={2} placeholder="Yêu cầu đặc biệt..." value={note} onChange={(e) => setNote(e.target.value)} className="w-full bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-blue-500 transition-colors resize-none" />
+              <label className="text-xs font-bold text-slate-500 dark:text-zinc-400 ml-1">Lời nhắn nhủ (Tùy chọn)</label>
+              <textarea placeholder="Bạn có yêu cầu đặc biệt gì cho dịch vụ này không?" rows={2} className="w-full px-5 py-3.5 bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700/50 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:border-[#80BF84] transition-all resize-none" value={bookingNote} onChange={e => setBookingNote(e.target.value)} />
           </div>
 
-          {/* KHỐI VOUCHER (MỚI) */}
-          <div className="mt-4 pt-4 border-t border-slate-100 dark:border-zinc-800">
+          <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-500 dark:text-zinc-400 ml-1">Mã giới thiệu (Tùy chọn)</label>
+              <input type="text" placeholder="Nhập mã ưu đãi..." className="w-full px-5 py-3.5 bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700/50 rounded-2xl text-slate-900 dark:text-white font-medium uppercase focus:outline-none focus:border-[#80BF84] transition-all" value={affiliateCode} onChange={e => setAffiliateCode(e.target.value)} />
+          </div>
+
+          {/* KHỐI VOUCHER */}
+          <div className="mt-2 pt-4 border-t border-slate-200 dark:border-zinc-800">
             <label className="text-xs font-black text-slate-700 dark:text-zinc-300 ml-1 mb-2 flex items-center gap-1.5 uppercase tracking-widest">
               <Ticket size={12} className="text-[#80BF84]"/> Ưu đãi của bạn
             </label>
@@ -196,19 +214,21 @@ export default function BookingModal({ isOpen, onClose, partnerId, serviceId, se
             </div>
           </div>
 
-          <div className="p-4 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-xl flex items-start gap-3 mt-4">
-            <ShieldCheck size={20} className="text-blue-500 shrink-0 mt-0.5" />
-            <p className="text-[13px] leading-relaxed text-blue-800 dark:text-blue-300 font-medium">
-              Bạn <strong>chưa cần thanh toán lúc này</strong>. Tổng tiền sẽ được hệ thống bảo chứng an toàn <strong>sau khi cơ sở xác nhận có lịch trống</strong>.
-            </p>
+          <div className="mt-4">
+              <div className="p-4 mb-5 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-xl flex items-start gap-3">
+                  <ShieldCheck size={20} className="text-blue-500 shrink-0 mt-0.5" />
+                  <p className="text-[13px] leading-relaxed text-blue-800 dark:text-blue-300 font-medium">
+                      Bạn <strong>chưa cần thanh toán lúc này</strong>. Tổng tiền <strong className="text-blue-600 dark:text-blue-400">{finalPrice.toLocaleString()} VND</strong> sẽ được hệ thống bảo chứng an toàn <strong>sau khi cơ sở xác nhận có lịch trống</strong> dành cho bạn.
+                  </p>
+              </div>
+              
+              <button type="submit" disabled={isSubmitting} className="relative w-full py-4 bg-gradient-to-tr from-slate-800 to-slate-900 dark:from-white dark:to-slate-200 text-white dark:text-zinc-950 font-black text-lg rounded-2xl active:scale-95 transition-all shadow-xl overflow-hidden group">
+                <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full skew-x-12 transition-transform duration-500"></div>
+                <span className="relative flex items-center justify-center gap-2">
+                  {isSubmitting ? <Clock className="animate-spin" size={20} /> : "GỬI YÊU CẦU ĐẶT LỊCH"}
+                </span>
+              </button>
           </div>
-          
-          <button type="submit" disabled={isSubmitting} className="relative w-full py-4 mt-2 bg-gradient-to-tr from-slate-800 to-slate-900 dark:from-white dark:to-slate-200 text-white dark:text-zinc-950 font-black text-lg rounded-2xl active:scale-95 transition-all shadow-xl overflow-hidden group">
-            <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full skew-x-12 transition-transform duration-500"></div>
-            <span className="relative flex items-center justify-center gap-2">
-              {isSubmitting ? <Clock className="animate-spin" size={20} /> : "XÁC NHẬN ĐẶT LỊCH"}
-            </span>
-          </button>
         </form>
       </div>
     </div>
