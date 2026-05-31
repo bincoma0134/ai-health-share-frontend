@@ -28,10 +28,11 @@ export default function BookingModal({ isOpen, onClose, partnerId, serviceId, se
   const [affiliateCode, setAffiliateCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Voucher State (Phần thêm mới)
+  // Voucher State
   const [selectedVoucherCode, setSelectedVoucherCode] = useState<string | null>(null);
+  const [isAutoApplied, setIsAutoApplied] = useState(false); // Cờ chặn loop
 
-  // Lọc voucher khả dụng
+  // 1. Lọc voucher khả dụng trong Ví
   const validVouchers = myVouchers.filter((v: any) => {
     const isUnused = v.wallet_status === 'UNUSED';
     const isValidIssuer = v.issuer_type === 'ADMIN' || v.issuer_id === partnerId;
@@ -39,30 +40,54 @@ export default function BookingModal({ isOpen, onClose, partnerId, serviceId, se
     return isUnused && isValidIssuer && isEnoughValue;
   });
 
-  // Tạm tính hóa đơn
+  // 2. Thuật toán tính mức giảm thực tế của 1 mã (Bọc thép Max Discount)
+  const calculateDiscount = (v: any) => {
+    if (v.discount_type === 'PERCENTAGE') {
+      let amount = (price * v.discount_value) / 100;
+      if (v.max_discount_amount) amount = Math.min(amount, v.max_discount_amount);
+      return amount;
+    }
+    return v.discount_value;
+  };
+
+  // 3. TỰ ĐỘNG CHỌN MÃ GIẢM SÂU NHẤT KHI MỞ POP-UP
+  useEffect(() => {
+    if (isOpen && validVouchers.length > 0 && !isAutoApplied) {
+      let bestVoucher = validVouchers[0];
+      let maxDiscount = calculateDiscount(bestVoucher);
+
+      validVouchers.forEach((v: any) => {
+        const currentDiscount = calculateDiscount(v);
+        if (currentDiscount > maxDiscount) {
+          maxDiscount = currentDiscount;
+          bestVoucher = v;
+        }
+      });
+
+      setSelectedVoucherCode(bestVoucher.code);
+      setIsAutoApplied(true);
+    }
+  }, [isOpen, validVouchers, isAutoApplied, price]);
+
+  // 4. Kế toán tạm tính Hóa đơn
   let discountAmount = 0;
   if (selectedVoucherCode) {
     const appliedVoucher = validVouchers.find((v: any) => v.code === selectedVoucherCode);
     if (appliedVoucher) {
-      if (appliedVoucher.discount_type === 'PERCENTAGE') {
-        discountAmount = (price * appliedVoucher.discount_value) / 100;
-        if (appliedVoucher.max_discount_amount) {
-          discountAmount = Math.min(discountAmount, appliedVoucher.max_discount_amount);
-        }
-      } else {
-        discountAmount = appliedVoucher.discount_value;
-      }
+      discountAmount = calculateDiscount(appliedVoucher);
     }
   }
   const finalPrice = Math.max(0, price - discountAmount);
 
+  // 5. Dọn dẹp Form và Reset Cờ Auto-Apply khi Đóng Pop-up
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) {
       setBookingName("");
       setBookingPhone("");
       setBookingNote("");
       setAffiliateCode("");
       setSelectedVoucherCode(null);
+      setIsAutoApplied(false);
     }
   }, [isOpen]);
 
@@ -112,7 +137,7 @@ export default function BookingModal({ isOpen, onClose, partnerId, serviceId, se
           customer_name: bookingName.trim(),
           customer_phone: bookingPhone.trim(),
           note: bookingNote.trim(),
-          // voucher_code: selectedVoucherCode // Frontend hiển thị UI, backend ráp sau
+          voucher_code: selectedVoucherCode || null
         })
       });
       
