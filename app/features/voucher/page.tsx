@@ -4,20 +4,25 @@ import { useEffect, useState } from "react";
 import { useVoucherStore } from "@/store/useVoucherStore";
 import { useAuth } from "@/context/AuthContext";
 import { useUI } from "@/context/UIContext";
-import { Ticket, CheckCircle2, Lock, AlertCircle, ShoppingBag, Crown, Store, Clock, Zap } from "lucide-react";
+import { Ticket, CheckCircle2, Lock, AlertCircle, ShoppingBag, Crown, Store, Clock, Zap, X, ExternalLink } from "lucide-react";
+import { useRouter } from "next/navigation"; // Thêm router để điều hướng
 
 export default function VoucherPage() {
+  const router = useRouter();
   const { user } = useAuth();
   const { setIsAuthModalOpen } = useUI() as any;
   const { publicVouchers, myVouchers, isLoading, fetchPublicVouchers, claimVoucher } = useVoucherStore();
   const [activeTab, setActiveTab] = useState<"PUBLIC" | "WALLET">("PUBLIC");
+  
+  // State quản lý Pop-up Modal
+  const [selectedVoucher, setSelectedVoucher] = useState<any>(null);
 
   useEffect(() => {
     fetchPublicVouchers();
   }, [fetchPublicVouchers]);
 
-  // Luồng đồng bộ trạng thái Ví (Self-healing state)
-  // Lắng nghe sự xuất hiện của User (sau khi AuthContext lấy Profile xong)
+  // VÁ LỖI TURN TRƯỚC: Luồng đồng bộ trạng thái Ví (Self-healing state)
+  // Đảm bảo khi F5, giao diện tự động đi lấy Ví về nếu đã đăng nhập
   useEffect(() => {
     if (user) {
       const token = localStorage.getItem("ai-health-token");
@@ -25,12 +30,12 @@ export default function VoucherPage() {
         useVoucherStore.getState().fetchMyVouchers(token);
       }
     } else {
-      // Nếu không có user (đăng xuất), xóa sạch ví trên giao diện
       useVoucherStore.getState().clearVouchers();
     }
-  }, [user]); // Bất cứ khi nào object 'user' thay đổi, useEffect này sẽ chạy lại
+  }, [user]);
 
-  const handleClaim = async (code: string) => {
+  const handleClaim = async (e: React.MouseEvent, code: string) => {
+    e.stopPropagation(); // Chặn sự kiện click nảy sang thẻ Card bên dưới
     if (!user) {
       setIsAuthModalOpen(true);
       return;
@@ -39,9 +44,19 @@ export default function VoucherPage() {
     await claimVoucher(code, token);
   };
 
+  // Hàm xử lý điều hướng khi bấm nút "Áp dụng"
+  const handleUseVoucher = (voucher: any) => {
+    setSelectedVoucher(null); // Đóng pop-up
+    if (voucher.issuer_type === 'ADMIN') {
+      router.push('/features/explore'); // Mã toàn sàn -> Đi ra chợ tổng
+    } else {
+      // Mã đối tác -> Vào thẳng tab Dịch vụ của Đối tác đó
+      router.push(`/partner/public/${voucher.issuer_id}?tab=services`);
+    }
+  };
+
   const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('vi-VN');
   
-  // Hàm tính toán hiệu ứng FOMO
   const getFomoDetails = (validUntil: string, used: number, total: number) => {
     const percent = Math.min(100, Math.round((used / total) * 100));
     const isRunningOut = percent >= 80;
@@ -84,21 +99,21 @@ export default function VoucherPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             
-            {/* ========================================== */}
-            {/* TAB PUBLIC (KHO MÃ) - GAMIFICATION & FOMO */}
-            {/* ========================================== */}
+            {/* TAB PUBLIC (KHO MÃ) */}
             {activeTab === "PUBLIC" && publicVouchers.map((v: any) => {
               const isClaimed = myVouchers.some(myV => myV.voucher_id === v.id || myV.id === v.id);
               const isAdmin = v.issuer_type === 'ADMIN';
               const fomo = getFomoDetails(v.valid_until, v.used_quantity, v.total_quantity);
               
               return (
-                <div key={v.id} className={`p-5 rounded-[2rem] flex flex-col gap-4 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300 border backdrop-blur-xl
+                <div 
+                  key={v.id} 
+                  onClick={() => setSelectedVoucher(v)} // Bấm vào Card để mở Modal
+                  className={`p-5 rounded-[2rem] flex flex-col gap-4 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300 border backdrop-blur-xl cursor-pointer
                   ${isAdmin 
                     ? 'bg-gradient-to-br from-amber-500/10 to-amber-200/5 border-amber-500/30 shadow-[0_10px_30px_rgba(245,158,11,0.1)]' 
                     : 'bg-white/60 dark:bg-white/[0.02] border-white dark:border-white/10 shadow-[0_8px_20px_rgba(0,0,0,0.04)]'}
                 `}>
-                  {/* Ribbon Độc quyền */}
                   {isAdmin && (
                     <div className="absolute -right-12 top-6 bg-amber-500 text-zinc-900 text-[9px] font-black tracking-widest uppercase py-1 px-12 rotate-45 shadow-lg">
                       Độc quyền
@@ -106,31 +121,24 @@ export default function VoucherPage() {
                   )}
 
                   <div className="flex gap-4 items-center">
-                    {/* Icon Hình Trụ */}
                     <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 shadow-inner ${isAdmin ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-500' : 'bg-slate-100 dark:bg-white/5 text-[#80BF84]'}`}>
                       {isAdmin ? <Crown className="w-8 h-8" /> : <Store className="w-8 h-8" />}
                     </div>
                     
-                    {/* Thông tin cốt lõi */}
                     <div className="flex-1 pr-4">
                       <h3 className="font-black text-xl tracking-tight leading-none mb-1.5">
                         {v.discount_type === 'PERCENTAGE' ? `Giảm ${v.discount_value}%` : `Giảm ${(v.discount_value / 1000)}K`}
                       </h3>
                       <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">Đơn tối thiểu {v.min_order_value.toLocaleString()}đ</p>
-                      {v.max_discount_amount && (
-                        <p className="text-[10px] text-slate-400 mt-0.5">Tối đa {v.max_discount_amount.toLocaleString()}đ</p>
-                      )}
                     </div>
                   </div>
 
-                  {/* Đường cắt Ticket rãnh cưa */}
                   <div className="w-full flex items-center gap-2">
                     <div className="w-2 h-4 rounded-r-full bg-slate-50 dark:bg-[#09090b] -ml-5 border-y border-r border-inherit"></div>
                     <div className="flex-1 border-t-2 border-dashed border-slate-200 dark:border-zinc-800 opacity-60"></div>
                     <div className="w-2 h-4 rounded-l-full bg-slate-50 dark:bg-[#09090b] -mr-5 border-y border-l border-inherit"></div>
                   </div>
 
-                  {/* Thanh Tiến Trình & Nút Bấm */}
                   <div className="flex items-end justify-between gap-4">
                     <div className="flex-1 w-full space-y-2">
                       <div className="flex justify-between items-center text-[10px] font-bold">
@@ -149,9 +157,9 @@ export default function VoucherPage() {
                     </div>
 
                     <button 
-                      onClick={() => handleClaim(v.code)}
+                      onClick={(e) => handleClaim(e, v.code)}
                       disabled={isClaimed}
-                      className={`shrink-0 px-6 py-2.5 rounded-xl text-sm font-black transition-all duration-300 active:scale-95 ${
+                      className={`shrink-0 px-6 py-2.5 rounded-xl text-sm font-black transition-all duration-300 active:scale-95 z-10 ${
                         isClaimed 
                         ? 'bg-slate-200 dark:bg-zinc-800 text-slate-400 cursor-not-allowed' 
                         : isAdmin 
@@ -166,9 +174,7 @@ export default function VoucherPage() {
               );
             })}
 
-            {/* ========================================== */}
-            {/* TAB WALLET (VÍ CỦA TÔI) - PHÂN LOẠI RÕ RÀNG */}
-            {/* ========================================== */}
+            {/* TAB WALLET (VÍ CỦA TÔI) */}
             {activeTab === "WALLET" && myVouchers.length === 0 && (
               <div className="col-span-1 md:col-span-2 flex flex-col items-center justify-center py-20 opacity-60">
                 <div className="w-20 h-20 bg-slate-200 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-4">
@@ -185,7 +191,10 @@ export default function VoucherPage() {
               const isUnused = v.wallet_status === 'UNUSED';
               
               return (
-                <div key={v.user_voucher_id} className={`p-5 rounded-[2rem] flex gap-4 items-center transition-all border
+                <div 
+                  key={v.user_voucher_id} 
+                  onClick={() => setSelectedVoucher(v)} // Bấm vào Ví cũng mở Modal
+                  className={`p-5 rounded-[2rem] flex gap-4 items-center transition-all border cursor-pointer hover:scale-[1.02]
                   ${isUnused ? 'bg-white/60 dark:bg-white/[0.02] border-l-4 border-l-[#80BF84] border-white/50 dark:border-white/10 shadow-sm' 
                   : isLocked ? 'bg-amber-50 dark:bg-amber-900/10 border-l-4 border-l-amber-500 border-amber-500/20 opacity-90' 
                   : 'bg-slate-50 dark:bg-zinc-900 border-l-4 border-l-slate-400 border-transparent grayscale opacity-50'}
@@ -214,11 +223,75 @@ export default function VoucherPage() {
           </div>
         )}
       </div>
+
+      {/* ========================================== */}
+      {/* POP-UP CHI TIẾT VOUCHER & ĐIỀU HƯỚNG */}
+      {/* ========================================== */}
+      {selectedVoucher && (
+        <>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] animate-fade-in" onClick={() => setSelectedVoucher(null)}></div>
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-sm bg-white dark:bg-zinc-900 rounded-[2.5rem] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] z-[101] animate-slide-up overflow-hidden border border-slate-200 dark:border-white/10 p-6 pt-8 text-center">
+            
+            <button 
+              onClick={() => setSelectedVoucher(null)}
+              className="absolute top-4 right-4 p-2 bg-slate-100 dark:bg-zinc-800 rounded-full text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
+            >
+              <X size={16} />
+            </button>
+
+            {/* Icon Avatar */}
+            <div className={`w-20 h-20 mx-auto rounded-3xl flex items-center justify-center mb-4 shadow-inner ${selectedVoucher.issuer_type === 'ADMIN' ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-500' : 'bg-slate-100 dark:bg-white/5 text-[#80BF84]'}`}>
+              {selectedVoucher.issuer_type === 'ADMIN' ? <Crown className="w-10 h-10" /> : <Store className="w-10 h-10" />}
+            </div>
+
+            <h2 className="text-3xl font-black mb-2 tracking-tight">
+              {selectedVoucher.discount_type === 'PERCENTAGE' ? `Giảm ${selectedVoucher.discount_value}%` : `Giảm ${(selectedVoucher.discount_value / 1000)}K`}
+            </h2>
+            <div className="inline-block px-3 py-1.5 bg-slate-100 dark:bg-zinc-800 rounded-xl font-mono text-sm font-black tracking-widest mb-6">
+              {selectedVoucher.code}
+            </div>
+
+            {/* Khối mô tả */}
+            <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl text-left text-sm text-slate-600 dark:text-zinc-300 mb-6 space-y-3">
+              <p>
+                <strong className="text-slate-900 dark:text-white block mb-0.5">Loại ưu đãi:</strong> 
+                {selectedVoucher.issuer_type === 'ADMIN' ? 'Mã Độc Quyền Toàn Sàn' : 'Mã Đặc Quyền Cơ Sở'}
+              </p>
+              <p>
+                <strong className="text-slate-900 dark:text-white block mb-0.5">Điều kiện áp dụng:</strong> 
+                {selectedVoucher.issuer_type === 'ADMIN' ? 'Áp dụng cho tất cả các dịch vụ trên hệ thống.' : 'Chỉ áp dụng cho các dịch vụ của đối tác phát hành.'}
+              </p>
+              <div className="h-px bg-slate-200 dark:bg-white/10 my-2"></div>
+              <div className="flex justify-between items-center">
+                <span className="font-medium">Đơn tối thiểu:</span>
+                <strong className="text-slate-900 dark:text-white">{selectedVoucher.min_order_value.toLocaleString()}đ</strong>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="font-medium">Hạn sử dụng:</span>
+                <strong className="text-slate-900 dark:text-white">{formatDate(selectedVoucher.valid_until)}</strong>
+              </div>
+            </div>
+
+            {/* Nút Action Điều Hướng */}
+            <button 
+              onClick={() => handleUseVoucher(selectedVoucher)}
+              className={`w-full py-4 rounded-2xl font-black flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg
+                ${selectedVoucher.issuer_type === 'ADMIN' 
+                  ? 'bg-amber-500 text-zinc-900 hover:bg-amber-400 shadow-amber-500/30' 
+                  : 'bg-[#80BF84] text-zinc-900 hover:bg-emerald-400 shadow-[#80BF84]/30'}
+              `}
+            >
+              {selectedVoucher.issuer_type === 'ADMIN' ? 'SĂN DỊCH VỤ NGAY' : 'XEM DỊCH VỤ ĐỐI TÁC'}
+              <ExternalLink size={18} />
+            </button>
+            
+          </div>
+        </>
+      )}
     </div>
   );
 }
 
-// Mini Component Icon
 function SparklesIcon() {
   return (
     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#80BF84] to-emerald-500 flex items-center justify-center shadow-lg shadow-[#80BF84]/30">
