@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { useUI } from "@/context/UIContext";
 import dynamic from "next/dynamic";
 import { useAuth } from "@/context/AuthContext";
+import { useVoucherStore } from "@/store/useVoucherStore";
 
 // Khởi tạo ApexCharts an toàn trong Next.js
 const ReactApexChart = dynamic(() => import("react-apexcharts"), { ssr: false });
@@ -36,6 +37,39 @@ export default function CalendarFeature() {
   
   // State quản lý UI Modal xác nhận hủy lịch
   const [cancelConfirmId, setCancelConfirmId] = useState<string | null>(null);
+
+  // --- VOUCHER STORE & HÀM TOÁN HỌC AUTO-APPLY ---
+  const { myVouchers, fetchMyVouchers } = useVoucherStore();
+
+  useEffect(() => {
+      const token = localStorage.getItem("ai-health-token");
+      if (token && user) fetchMyVouchers(token);
+  }, [user]);
+
+  const getCalculatedPrices = (appt: any) => {
+      let originalPrice = appt.services?.price || appt.total_amount || 0; 
+      let finalPrice = appt.total_amount || 0;
+      let discountAmount = originalPrice - finalPrice;
+      
+      if (appt.status === 'PENDING_PAYMENT' || appt.status === 'WAITING_PARTNER') {
+          const validVouchers = myVouchers.filter((v: any) => v.wallet_status === 'UNUSED' && (v.issuer_type === 'ADMIN' || v.issuer_id === appt.partner_id) && originalPrice >= v.min_order_value);
+          if (validVouchers.length > 0) {
+              let maxDiscount = 0;
+              validVouchers.forEach((v: any) => {
+                  let cur = v.discount_type === 'PERCENTAGE' ? (originalPrice * v.discount_value) / 100 : v.discount_value;
+                  if (v.discount_type === 'PERCENTAGE' && v.max_discount_amount) cur = Math.min(cur, v.max_discount_amount);
+                  if (cur > maxDiscount) maxDiscount = cur;
+              });
+              if (maxDiscount > 0) {
+                  discountAmount = maxDiscount;
+                  finalPrice = Math.max(0, originalPrice - discountAmount);
+              }
+          }
+      }
+      return { originalPrice, finalPrice, discountAmount, hasVoucher: discountAmount > 0 };
+  };
+
+  // --- TRẠNG THÁI & HÀM XỬ LÝ CHO PARTNER HUB ---
 
   // State quản lý UI Hóa đơn Kế toán (Preview) trước khi sang PayOS
   const [paymentPreview, setPaymentPreview] = useState<any>(null);
@@ -718,11 +752,8 @@ export default function CalendarFeature() {
 
                                 const currentStatus = appt.status.toUpperCase();
                                 
-                                // TOÁN HỌC VOUCHER
-                                const originalPrice = appt.services?.price || appt.total_amount || 0; 
-                                const finalPrice = appt.total_amount || 0;
-                                const discountAmount = originalPrice - finalPrice;
-                                const hasVoucher = discountAmount > 0;
+                                // TOÁN HỌC VOUCHER BỌC THÉP (Tự động áp mã tính toán trên UI)
+                                const { originalPrice, finalPrice, discountAmount, hasVoucher } = getCalculatedPrices(appt);
                                 
                                 const duration = "60 phút";
 
@@ -759,14 +790,18 @@ export default function CalendarFeature() {
                                                         </div>
                                                     )}
                                                 </div>
-                                                <div className="text-right flex flex-col items-end">
-                                                    {hasVoucher && (
-                                                        <div className="flex items-center gap-2 mb-1">
-                                                            <span className="font-bold text-slate-400 dark:text-zinc-500 line-through text-[11px]">{formatPrice(originalPrice)}</span>
-                                                            <span className="px-1.5 py-0.5 bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[10px] font-black rounded uppercase tracking-tighter">-{formatPrice(discountAmount)}</span>
+                                                <div className="text-right flex flex-col items-end justify-center h-full">
+                                                    {hasVoucher ? (
+                                                        <div className="flex items-center gap-3 mt-1">
+                                                            <div className="flex flex-col items-end">
+                                                                <span className="px-2 py-0.5 bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[10px] font-black rounded uppercase tracking-tighter mb-0.5 w-max shadow-sm border border-rose-500/20">-{formatPrice(discountAmount)}</span>
+                                                                <span className="font-bold text-slate-400 dark:text-zinc-500 line-through text-sm opacity-60">{formatPrice(originalPrice)}</span>
+                                                            </div>
+                                                            <p className="font-black text-3xl text-blue-600 dark:text-blue-400 drop-shadow-md tracking-tighter">{formatPrice(finalPrice)}</p>
                                                         </div>
+                                                    ) : (
+                                                        <p className="font-black text-2xl text-slate-900 dark:text-white drop-shadow-sm tracking-tight">{formatPrice(finalPrice)}</p>
                                                     )}
-                                                    <p className="font-black text-2xl text-slate-900 dark:text-white drop-shadow-sm tracking-tight">{formatPrice(finalPrice)}</p>
                                                 </div>
                                             </div>
                                             
@@ -1144,33 +1179,43 @@ export default function CalendarFeature() {
                                     </div>
                                 </div>
 
-                                <div className="space-y-3 px-2 relative z-10">
-                                    <div className="flex justify-between items-center text-sm font-bold text-slate-600 dark:text-zinc-400">
-                                        <span>Giá niêm yết</span>
-                                        <span>{formatPrice(selectedDetail.services?.price || selectedDetail.total_amount || 0)}</span>
-                                    </div>
-                                    
-                                    {selectedDetail.services?.price > selectedDetail.total_amount && (
-                                        <div className="flex justify-between items-center text-sm font-black text-rose-600 dark:text-rose-400 bg-rose-50/50 dark:bg-rose-500/10 px-3 py-2.5 rounded-xl border border-rose-100/50 dark:border-rose-500/20">
-                                            <span className="flex items-center gap-2"><Ticket size={16}/> Voucher giảm</span>
-                                            <span>- {formatPrice((selectedDetail.services?.price || 0) - selectedDetail.total_amount)}</span>
-                                        </div>
-                                    )}
-                                </div>
+                                {(() => {
+                                    const { originalPrice: dOrig, finalPrice: dFinal, discountAmount: dDisc, hasVoucher: dHasVoucher } = getCalculatedPrices(selectedDetail);
+                                    return (
+                                        <>
+                                            <div className="space-y-3 px-2 relative z-10">
+                                                <div className="flex justify-between items-center text-sm font-bold text-slate-600 dark:text-zinc-400">
+                                                    <span>Giá niêm yết</span>
+                                                    <span>{formatPrice(dOrig)}</span>
+                                                </div>
+                                                
+                                                {dHasVoucher && (
+                                                    <div className="flex justify-between items-center text-sm font-black text-rose-600 dark:text-rose-400 bg-rose-50/50 dark:bg-rose-500/10 px-3 py-2.5 rounded-xl border border-rose-100/50 dark:border-rose-500/20 shadow-sm">
+                                                        <span className="flex items-center gap-2"><Ticket size={16}/> Voucher giảm</span>
+                                                        <span>- {formatPrice(dDisc)}</span>
+                                                    </div>
+                                                )}
+                                            </div>
 
-                                {/* Đường cắt hóa đơn Ticket */}
-                                <div className="relative py-4 z-10">
-                                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                                        <div className="w-full border-t-2 border-dashed border-slate-200 dark:border-zinc-700/80"></div>
-                                    </div>
-                                    <div className="absolute left-[-32px] top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-50 dark:bg-[#0a0a0a] rounded-full border-r border-slate-200/50 dark:border-white/10 shadow-inner"></div>
-                                    <div className="absolute right-[-32px] top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-50 dark:bg-[#0a0a0a] rounded-full border-l border-slate-200/50 dark:border-white/10 shadow-inner"></div>
-                                </div>
-                                
-                                <div className="flex justify-between items-end px-2 relative z-10">
-                                    <span className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-[11px]">Tổng thanh toán</span>
-                                    <span className="font-black text-3xl text-blue-600 dark:text-blue-400 drop-shadow-md tracking-tighter">{formatPrice(selectedDetail.total_amount || 0)}</span>
-                                </div>
+                                            {/* Đường cắt hóa đơn Ticket */}
+                                            <div className="relative py-4 z-10">
+                                                <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                                                    <div className="w-full border-t-2 border-dashed border-slate-200 dark:border-zinc-700/80"></div>
+                                                </div>
+                                                <div className="absolute left-[-32px] top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-50 dark:bg-[#0a0a0a] rounded-full border-r border-slate-200/50 dark:border-white/10 shadow-inner"></div>
+                                                <div className="absolute right-[-32px] top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-50 dark:bg-[#0a0a0a] rounded-full border-l border-slate-200/50 dark:border-white/10 shadow-inner"></div>
+                                            </div>
+                                            
+                                            <div className="flex justify-between items-end px-2 relative z-10">
+                                                <span className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-[11px]">Tổng thanh toán</span>
+                                                <div className="flex items-center gap-3">
+                                                    {dHasVoucher && <span className="font-bold text-slate-400 dark:text-zinc-500 line-through text-lg opacity-60">{formatPrice(dOrig)}</span>}
+                                                    <span className="font-black text-4xl text-blue-600 dark:text-blue-400 drop-shadow-md tracking-tighter">{formatPrice(dFinal)}</span>
+                                                </div>
+                                            </div>
+                                        </>
+                                    );
+                                })()}
 
                                 <div className="mt-6 p-4 rounded-2xl bg-blue-50/60 dark:bg-blue-900/10 border border-blue-100/50 dark:border-blue-500/20 flex items-center justify-between relative z-10">
                                     <div className="flex items-center gap-3">
