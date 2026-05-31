@@ -5,7 +5,7 @@ import {
   Home, Compass, CalendarDays, User as UserIcon, 
   Sun, Bell, Clock, MapPin, CheckCircle, 
   QrCode, AlertCircle, CreditCard, XCircle,
-  Phone, MessageCircle, FileText, Activity, Receipt, Ticket
+  Phone, MessageCircle, FileText, Activity, Receipt, Ticket, X
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -36,6 +36,11 @@ export default function CalendarFeature() {
   
   // State quản lý UI Modal xác nhận hủy lịch
   const [cancelConfirmId, setCancelConfirmId] = useState<string | null>(null);
+
+  // State quản lý UI Hóa đơn Kế toán (Preview) trước khi sang PayOS
+  const [paymentPreview, setPaymentPreview] = useState<any>(null);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [isCreatingPayment, setIsCreatingPayment] = useState(false);
 
   // --- TRẠNG THÁI & HÀM XỬ LÝ CHO PARTNER HUB ---
   const [partnerViewMode, setPartnerViewMode] = useState<'timeline' | 'analytics'>('timeline');
@@ -332,12 +337,35 @@ export default function CalendarFeature() {
       return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
   };
 
-  // BƯỚC 3 CỦA LUỒNG: USER THANH TOÁN (GỌI API TẠO LINK PAYOS)
-  const handlePayment = async (appointmentId: string) => {
+  // BƯỚC 3.1: GỌI API LẤY PREVIEW HÓA ĐƠN & AUTO-APPLY VOUCHER
+  const handlePaymentClick = async (appointmentId: string) => {
+    const tid = toast.loading("Đang chuẩn bị hóa đơn...");
+    try {
+        const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+        const res = await fetch(`${API_URL}/appointments/${appointmentId}/preview`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        const result = await res.json();
+        if (res.ok && result.data) {
+            setPaymentPreview({ ...result.data, appointmentId });
+            setIsPreviewModalOpen(true);
+            toast.dismiss(tid);
+        } else {
+            throw new Error(result.detail || "Không thể lấy hóa đơn.");
+        }
+    } catch (e: any) { 
+        toast.error(e.message || "Lỗi khi lấy hóa đơn", { id: tid }); 
+    }
+  };
+
+  // BƯỚC 3.2: XÁC NHẬN CHỐT ĐƠN & CHUYỂN PAYOS
+  const confirmPayment = async () => {
+    if (!paymentPreview?.appointmentId) return;
+    setIsCreatingPayment(true);
     const tid = toast.loading("Đang tạo liên kết thanh toán an toàn...");
     try {
         const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
-        const res = await fetch(`${API_URL}/appointments/${appointmentId}/pay`, {
+        const res = await fetch(`${API_URL}/appointments/${paymentPreview.appointmentId}/pay`, {
             method: "POST", 
             headers: { "Authorization": `Bearer ${token}` }
         });
@@ -351,8 +379,9 @@ export default function CalendarFeature() {
         }
     } catch (e: any) { 
         toast.error(e.message || "Lỗi thanh toán", { id: tid }); 
+        setIsCreatingPayment(false);
     }
-};
+  };
 
   // BƯỚC 4 CỦA LUỒNG: PARTNER XÁC NHẬN HOÀN THÀNH (CHECK-IN)
   // BỔ SUNG: HÀM HỦY LỊCH (USER CHỦ ĐỘNG HỦY)
@@ -805,7 +834,7 @@ export default function CalendarFeature() {
                                                         <p className="text-[10px] text-rose-600 dark:text-rose-400 font-bold uppercase mb-1">Hạn thanh toán</p>
                                                         <p className="text-sm font-black text-rose-700 dark:text-rose-300">{deadlineStr}</p>
                                                     </div>
-                                                    <button onClick={() => handlePayment(appt.id)} className="w-full flex items-center justify-center gap-2 py-3 bg-slate-900 dark:bg-white text-white dark:text-black font-bold rounded-xl hover:scale-105 transition-transform shadow-lg shadow-slate-500/20">
+                                                    <button onClick={() => handlePaymentClick(appt.id)} className="w-full flex items-center justify-center gap-2 py-3 bg-slate-900 dark:bg-white text-white dark:text-black font-bold rounded-xl hover:scale-105 transition-transform shadow-lg shadow-slate-500/20">
                                                         <Receipt size={16} /> Thanh toán ngay
                                                     </button>
                                                     <button 
@@ -916,6 +945,72 @@ export default function CalendarFeature() {
         {/* CŨ: <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-max pointer-events-auto">... */}
 
         
+      {/* ================= MODAL XÁC NHẬN HÓA ĐƠN TRƯỚC THANH TOÁN (PREVIEW) ================= */}
+      {isPreviewModalOpen && paymentPreview && (
+        <div className="fixed inset-0 z-[200] flex justify-center items-center p-4 animate-fade-in pointer-events-auto">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => !isCreatingPayment && setIsPreviewModalOpen(false)}></div>
+          
+          <div className="relative w-full max-w-sm bg-white/40 dark:bg-zinc-900/60 backdrop-blur-3xl rounded-[2.5rem] border border-slate-200/50 dark:border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.3)] p-6 overflow-hidden animate-slide-up">
+              {/* Decor Background Effect */}
+              <div className="absolute -right-12 -top-12 w-40 h-40 bg-blue-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+              <div className="flex justify-between items-center mb-6 relative z-10">
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Receipt size={20} className="text-blue-500"/> Xác nhận Hóa đơn</h3>
+                  <button onClick={() => !isCreatingPayment && setIsPreviewModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100/50 dark:bg-white/10 text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white transition-colors">
+                      <X size={16} />
+                  </button>
+              </div>
+
+              <div className="space-y-4 relative z-10">
+                  <div className="flex justify-between items-center text-sm font-bold text-slate-700 dark:text-zinc-300">
+                      <span>Giá dịch vụ gốc</span>
+                      <span>{formatPrice(paymentPreview.original_amount)}</span>
+                  </div>
+
+                  {paymentPreview.discount_amount > 0 ? (
+                      <div className="flex flex-col gap-2">
+                          <div className="flex justify-between items-center text-sm font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-500/10 px-3 py-2.5 rounded-xl border border-emerald-100/50 dark:border-emerald-500/20 shadow-sm">
+                              <span className="flex items-center gap-2"><Ticket size={16}/> Ưu đãi Voucher</span>
+                              <span>- {formatPrice(paymentPreview.discount_amount)}</span>
+                          </div>
+                          {paymentPreview.applied_voucher_code && (
+                              <p className="text-right text-[10px] font-bold text-emerald-600/70 dark:text-emerald-400/70 uppercase tracking-widest bg-white/50 dark:bg-black/20 w-max ml-auto px-2 py-1 rounded-md">
+                                  Mã tự động áp dụng: {paymentPreview.applied_voucher_code}
+                              </p>
+                          )}
+                      </div>
+                  ) : (
+                      <p className="text-right text-[10px] italic text-slate-500 dark:text-zinc-500 bg-white/50 dark:bg-black/20 w-max ml-auto px-2 py-1 rounded-md">Không có ưu đãi nào được áp dụng</p>
+                  )}
+              </div>
+
+              {/* Đường cắt rãnh cưa */}
+              <div className="relative py-6 z-10">
+                  <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                      <div className="w-full border-t-2 border-dashed border-slate-300/50 dark:border-zinc-600/50"></div>
+                  </div>
+                  <div className="absolute left-[-40px] top-1/2 -translate-y-1/2 w-6 h-6 bg-black/60 backdrop-blur-sm rounded-full shadow-inner"></div>
+                  <div className="absolute right-[-40px] top-1/2 -translate-y-1/2 w-6 h-6 bg-black/60 backdrop-blur-sm rounded-full shadow-inner"></div>
+              </div>
+
+              <div className="flex justify-between items-end relative z-10 mb-8">
+                  <span className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-xs">Tổng thanh toán</span>
+                  <span className="font-black text-4xl text-blue-600 dark:text-blue-400 drop-shadow-md tracking-tighter">{formatPrice(paymentPreview.final_amount)}</span>
+              </div>
+
+              <button 
+                  onClick={confirmPayment} 
+                  disabled={isCreatingPayment}
+                  className="relative w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-black rounded-2xl active:scale-95 transition-all shadow-lg shadow-blue-500/30 overflow-hidden group z-10 flex items-center justify-center gap-2 uppercase tracking-widest text-xs"
+              >
+                  <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full skew-x-12 transition-transform duration-500"></div>
+                  {isCreatingPayment ? <Activity className="animate-spin" size={18}/> : <CreditCard size={18} />}
+                  {isCreatingPayment ? "ĐANG CHUYỂN HƯỚNG..." : "XÁC NHẬN THANH TOÁN"}
+              </button>
+          </div>
+        </div>
+      )}
+
       {/* ================= THIẾT KẾ FLOATING SIDE DRAWER (ĐA NĂNG) ================= */}
         <div className={`fixed inset-0 z-[120] transition-all duration-500 ${isDrawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
             {/* Backdrop mờ mềm mại */}
