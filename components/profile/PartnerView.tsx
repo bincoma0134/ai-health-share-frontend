@@ -405,12 +405,17 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {partnerVouchers.map((v: any) => {
-                                const isClaimed = myVouchers.some((mv: any) => mv.voucher_id === v.id);
+                                // Khắc phục đối chiếu ID linh hoạt cho cả 2 trường hợp (Lấy từ bảng vouchers hoặc user_vouchers)
+                                const isClaimed = myVouchers.some((mv: any) => mv.voucher_id === v.id || mv.id === v.id);
                                 const isExpired = new Date(v.valid_until) < new Date();
                                 const isOut = Number(v.used_quantity) >= Number(v.total_quantity);
 
                                 return (
-                                    <div key={v.id} className="relative flex bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all group">
+                                    <div 
+                                      key={v.id} 
+                                      onClick={() => setSelectedVoucher(v)}
+                                      className="relative flex bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all group cursor-pointer"
+                                    >
                                         <div className={`w-4 flex flex-col justify-between items-center py-2 ${v.issuer_type === 'ADMIN' ? 'bg-amber-500' : 'bg-[#80BF84]'}`}>
                                             <div className="w-2 h-2 rounded-full bg-slate-50 dark:bg-zinc-950 -ml-4"></div>
                                             <div className="w-2 h-2 rounded-full bg-slate-50 dark:bg-zinc-950 -ml-4"></div>
@@ -437,23 +442,22 @@ export default function PartnerView({ profile, videoTiktokFeeds = [], communityP
                                             </div>
 
                                             <div className="flex items-center justify-between border-t border-dashed border-slate-100 dark:border-zinc-800 pt-3 mt-1">
-                                                <button 
-                                                    onClick={() => setSelectedVoucher(v)}
-                                                    className="text-xs font-bold text-slate-400 hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-300 transition-colors"
-                                                >
-                                                    Xem chi tiết &rarr;
-                                                </button>
+                                                <span className="text-xs font-bold text-slate-400 group-hover:text-slate-600 dark:text-zinc-500 dark:group-hover:text-zinc-300 transition-colors">
+                                                    Nhấp để xem chi tiết &rarr;
+                                                </span>
 
                                                 <button
                                                     disabled={isClaimed || isExpired || isOut}
-                                                    onClick={async () => {
+                                                    onClick={async (e) => {
+                                                        e.stopPropagation(); // Tránh kích hoạt thẻ cha mở Modal
                                                         const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
                                                         if (!token) return toast.info("Vui lòng đăng nhập để lưu ưu đãi!");
                                                         try {
                                                             await claimVoucher(v.code, token);
+                                                            // Toast success đã được emit từ bên trong hàm claimVoucher của store
                                                         } catch (err: any) { }
                                                     }}
-                                                    className={`px-4 py-2 rounded-xl font-black text-xs transition-all active:scale-95 ${
+                                                    className={`px-4 py-2 rounded-xl font-black text-xs transition-all active:scale-95 z-10 ${
                                                         isClaimed 
                                                             ? 'bg-slate-100 text-slate-400 dark:bg-zinc-800 dark:text-zinc-500 cursor-not-allowed flex items-center gap-1'
                                                             : isExpired || isOut
