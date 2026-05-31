@@ -95,7 +95,10 @@ export default function ModeratorDashboard() {
               body: JSON.stringify(payload)
           });
           
-          if (!res.ok) throw new Error("Lỗi xử lý hệ thống");
+          if (!res.ok) {
+              const err = await res.json().catch(() => ({}));
+              throw new Error(err.detail || "Lỗi xử lý hệ thống");
+          }
           toast.success("Xử lý thành công!", { id: tid });
           fetchAllData(); // Lập tức tải lại biểu đồ & danh sách
           closeModal();
