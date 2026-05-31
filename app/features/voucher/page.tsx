@@ -126,6 +126,17 @@ export default function VoucherPage() {
                     </div>
                     
                     <div className="flex-1 pr-4">
+                      <div className="mb-2">
+                        {isAdmin ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-500 text-[10px] font-black rounded uppercase tracking-wider border border-amber-500/20">
+                            <Crown size={10}/> Mã Toàn Sàn
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#80BF84]/10 text-emerald-700 dark:text-[#80BF84] text-[10px] font-black rounded uppercase tracking-wider border border-[#80BF84]/30">
+                            <Store size={10}/> {v.partner_name || "Mã Cơ Sở"}
+                          </span>
+                        )}
+                      </div>
                       <h3 className="font-black text-xl tracking-tight leading-none mb-1.5">
                         {v.discount_type === 'PERCENTAGE' ? `Giảm ${v.discount_value}%` : `Giảm ${(v.discount_value / 1000)}K`}
                       </h3>
@@ -255,7 +266,7 @@ export default function VoucherPage() {
             <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl text-left text-sm text-slate-600 dark:text-zinc-300 mb-6 space-y-3">
               <p>
                 <strong className="text-slate-900 dark:text-white block mb-0.5">Loại ưu đãi:</strong> 
-                {selectedVoucher.issuer_type === 'ADMIN' ? 'Mã Độc Quyền Toàn Sàn' : 'Mã Đặc Quyền Cơ Sở'}
+                {selectedVoucher.issuer_type === 'ADMIN' ? 'Mã Độc Quyền Toàn Sàn' : `Cơ sở phát hành: ${selectedVoucher.partner_name || "Đang tải..."}`}
               </p>
               <p>
                 <strong className="text-slate-900 dark:text-white block mb-0.5">Điều kiện áp dụng:</strong> 
