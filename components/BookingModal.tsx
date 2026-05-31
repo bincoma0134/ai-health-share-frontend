@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, CalendarPlus, ShieldCheck, Ticket, Clock, CheckCircle2 } from "lucide-react";
+import { X, CalendarPlus, ShieldCheck, Ticket, Clock, CheckCircle2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useVoucherStore } from "@/store/useVoucherStore";
