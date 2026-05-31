@@ -4,8 +4,9 @@ import { type FormEvent, useEffect, useState, useRef } from "react";
 import { 
   CalendarPlus, X, User as UserIcon, ShieldCheck, Sparkles, Home, Compass, 
   Heart, MessageCircle, Bookmark, Share2, Plus,
-  Sun, Moon, Bell, LogOut, CheckCircle, Video
+  Sun, Moon, Bell, LogOut, CheckCircle, Video, Gift, Ticket
 } from "lucide-react";
+import { useVoucherStore } from "@/store/useVoucherStore";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import CommentModal from "@/components/CommentModal";  
@@ -55,6 +56,54 @@ export default function UserFeed() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeVideo, setActiveVideo] = useState<StudioVideo | null>(null);
   
+  // Dời khai báo này lên trước để tránh lỗi Block-scoped variable
+  const [activeVideoIndex, setActiveVideoIndex] = useState<number | null>(null);
+
+  // --- GAMIFICATION VOUCHER DROP STATE ---
+  const { publicVouchers, myVouchers, claimVoucher } = useVoucherStore();
+  const [droppedVoucher, setDroppedVoucher] = useState<any>(null);
+  const [isClaimingDrop, setIsClaimingDrop] = useState(false);
+
+  // Lắng nghe sự kiện vuốt Video để kích hoạt "Rớt mã ưu đãi"
+  useEffect(() => {
+    // Thêm check null cho activeVideoIndex để chiều lòng TypeScript
+    if (videos.length === 0 || !user || activeVideoIndex === null) return;
+    const currentVideo = videos[activeVideoIndex];
+    if (!currentVideo) return;
+
+    // 1. Kiểm tra Cooldown (Chống spam: 2 phút mới được rớt 1 lần)
+    const lastDropStr = localStorage.getItem("last_voucher_drop");
+    const now = Date.now();
+    if (lastDropStr && now - parseInt(lastDropStr) < 2 * 60 * 1000) return;
+
+    // 2. Tỷ lệ rơi mã (Drop rate: 25% cơ hội xuất hiện mỗi lần vuốt)
+    if (Math.random() > 0.25) return;
+
+    // 3. Lọc chéo: Mã Admin hoặc Mã của Chủ video + Chưa có trong ví
+    const availableVouchers = publicVouchers.filter((v: any) => {
+      const isUnclaimed = !myVouchers.some((myV: any) => myV.code === v.code);
+      const isValidIssuer = v.issuer_type === 'ADMIN' || v.issuer_id === currentVideo.author_id;
+      return isUnclaimed && isValidIssuer;
+    });
+
+    if (availableVouchers.length > 0) {
+      // Bốc thăm ngẫu nhiên 1 mã đủ điều kiện
+      const randomV = availableVouchers[Math.floor(Math.random() * availableVouchers.length)];
+      setDroppedVoucher(randomV);
+      localStorage.setItem("last_voucher_drop", now.toString());
+    }
+  }, [activeVideoIndex, videos, user, publicVouchers, myVouchers]);
+
+  // Nút hành động Lưu mã từ Pop-up rớt
+  const handleClaimDrop = async () => {
+    if (!droppedVoucher || !user) return;
+    setIsClaimingDrop(true);
+    const token = localStorage.getItem("ai-health-token") || "";
+    await claimVoucher(droppedVoucher.code, token);
+    setIsClaimingDrop(false);
+    setDroppedVoucher(null); // Đóng pop-up sau khi nhận thành công
+  };
+
   // --- COMMENT STATE ---
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
   const [activeCommentVideoId, setActiveCommentVideoId] = useState<string | null>(null);
@@ -101,7 +150,6 @@ export default function UserFeed() {
     }
   };
 
-  const [activeVideoIndex, setActiveVideoIndex] = useState<number | null>(null);
 const observerRef = useRef<IntersectionObserver | null>(null);
 
 // Cài đặt con mắt theo dõi thao tác cuộn (Intersection Observer)
@@ -491,6 +539,49 @@ useEffect(() => {
           serviceName={activeVideo.title}
           price={activeVideo.price || 0}
         />
+      )}
+
+      {/* ================= GAMIFICATION: POP-UP VOUCHER RƠI BẤT NGỜ ================= */}
+      {droppedVoucher && (
+        <div className="fixed inset-0 z-[200] flex justify-center items-center p-4 pointer-events-auto">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setDroppedVoucher(null)}></div>
+
+          <div className="relative w-full max-w-sm bg-white/10 dark:bg-zinc-900/60 backdrop-blur-3xl rounded-[2.5rem] border border-white/20 dark:border-white/10 shadow-[0_0_50px_rgba(245,158,11,0.2)] p-8 text-center animate-slide-up overflow-hidden">
+            {/* Hiệu ứng ánh sáng hào quang */}
+            <div className="absolute -top-20 -left-20 w-40 h-40 bg-amber-500/30 rounded-full blur-3xl animate-pulse pointer-events-none"></div>
+            <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-[#80BF84]/20 rounded-full blur-3xl animate-pulse pointer-events-none delay-500"></div>
+
+            <button onClick={() => setDroppedVoucher(null)} className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors z-10">
+              <X size={16} />
+            </button>
+
+            <div className="w-24 h-24 mx-auto bg-gradient-to-br from-amber-300 to-amber-500 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(245,158,11,0.5)] mb-6 animate-float relative z-10">
+              <Gift size={48} className="text-white drop-shadow-md" />
+            </div>
+
+            <h3 className="text-2xl font-black text-white mb-2 relative z-10 tracking-tight drop-shadow-md">Bạn tìm thấy Ưu Đãi!</h3>
+            <p className="text-white/80 text-sm mb-6 relative z-10 font-medium">Một mã giảm giá bí mật vừa xuất hiện trong lúc bạn xem video.</p>
+
+            <div className="bg-white/20 border border-white/30 rounded-2xl p-4 mb-6 relative z-10 backdrop-blur-md shadow-inner">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <Ticket size={18} className="text-amber-400" />
+                <span className="font-black text-xl text-amber-400 drop-shadow-sm">
+                  {droppedVoucher.discount_type === 'PERCENTAGE' ? `GIẢM ${droppedVoucher.discount_value}%` : `GIẢM ${(droppedVoucher.discount_value / 1000)}K`}
+                </span>
+              </div>
+              <span className="text-[10px] font-black tracking-widest text-white/70 uppercase">Mã: {droppedVoucher.code}</span>
+            </div>
+
+            <button 
+              onClick={handleClaimDrop}
+              disabled={isClaimingDrop}
+              className="relative w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-zinc-950 font-black rounded-2xl active:scale-95 transition-all shadow-[0_10px_20px_rgba(245,158,11,0.4)] overflow-hidden group z-10 uppercase tracking-widest text-sm"
+            >
+              <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full skew-x-12 transition-transform duration-500"></div>
+              {isClaimingDrop ? "ĐANG LƯU VÀO VÍ..." : "BỎ TÚI NGAY"}
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Modal Đăng Nhập / Đăng Ký */}
