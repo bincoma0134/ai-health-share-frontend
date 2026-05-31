@@ -16,6 +16,20 @@ export default function VoucherPage() {
     fetchPublicVouchers();
   }, [fetchPublicVouchers]);
 
+  // Luồng đồng bộ trạng thái Ví (Self-healing state)
+  // Lắng nghe sự xuất hiện của User (sau khi AuthContext lấy Profile xong)
+  useEffect(() => {
+    if (user) {
+      const token = localStorage.getItem("ai-health-token");
+      if (token) {
+        useVoucherStore.getState().fetchMyVouchers(token);
+      }
+    } else {
+      // Nếu không có user (đăng xuất), xóa sạch ví trên giao diện
+      useVoucherStore.getState().clearVouchers();
+    }
+  }, [user]); // Bất cứ khi nào object 'user' thay đổi, useEffect này sẽ chạy lại
+
   const handleClaim = async (code: string) => {
     if (!user) {
       setIsAuthModalOpen(true);
