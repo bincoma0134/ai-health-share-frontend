@@ -67,7 +67,7 @@ export default function VoucherPage() {
   };
 
   return (
-    <div className="min-h-full bg-brand-base dark:bg-[#09090b] text-slate-900 dark:text-white p-4 md:p-8 animate-fade-in pb-24 md:pb-8">
+    <div className="h-[100dvh] md:h-full overflow-y-auto no-scrollbar bg-brand-base dark:bg-[#09090b] text-slate-900 dark:text-white p-4 md:p-8 animate-fade-in pb-24 md:pb-8">
       <div className="max-w-4xl mx-auto">
         
         {/* HEADER & TABS */}
