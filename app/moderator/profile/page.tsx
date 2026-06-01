@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import NotificationModal from "@/components/NotificationModal";
 import ImageUploader from "@/components/ImageUploader";
+import VideoUploader from "@/components/VideoUploader";
 import { useUI } from "@/context/UIContext";
 import { useAuth } from "@/context/AuthContext";
 
@@ -38,7 +39,14 @@ export default function ModeratorProfilePage() {
   const [profileData, setProfileData] = useState<any>(null);
   const [stats, setStats] = useState({ pendingTotal: 0, approvedByMe: 0, totalProcessed: 0 });
 
-  const [editForm, setEditForm] = useState({ username: "", full_name: "", bio: "", address: "" });
+  const [editForm, setEditForm] = useState({ 
+    username: "", 
+    full_name: "", 
+    bio: "", 
+    address: "",
+    certificate_url: "",
+    intro_video_url: ""
+  });
   const [socials, setSocials] = useState<SocialLink[]>([]);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
@@ -78,7 +86,9 @@ export default function ModeratorProfilePage() {
               username: p.username || "",
               full_name: p.full_name || "",
               bio: p.bio || "",
-              address: p.address || ""
+              address: p.address || "",
+              certificate_url: p.certificate_url || "",
+              intro_video_url: p.intro_video_url || ""
           });
 
           try {
@@ -125,17 +135,38 @@ export default function ModeratorProfilePage() {
     finally { setIsUpdating(false); }
   };
 
-  const updateProfileField = async (payload: any) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'cover') => {
+      const file = e.target.files?.[0];
+      if (!file || !user) return;
+      if (!file.type.startsWith("image/")) return toast.error("Chỉ chấp nhận định dạng hình ảnh!");
+
+      setIsUploadingImage(true);
+      const tid = toast.loading(`Đang tải ảnh ${type === 'avatar' ? 'đại diện' : 'bìa'}...`);
       try {
           const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
+          const formData = new FormData();
+          formData.append("file", file);
+          
+          const uploadRes = await fetch(`${API_URL}/media/upload`, {
+              method: "POST",
+              headers: { "Authorization": `Bearer ${token}` },
+              body: formData
+          });
+          const uploadResult = await uploadRes.json();
+          if (!uploadRes.ok || uploadResult.status !== "success") throw new Error("Lỗi tải ảnh lên Cloudflare R2");
+          const publicUrl = uploadResult.url;
+          
+          const payload = type === 'avatar' ? { avatar_url: publicUrl } : { cover_url: publicUrl };
           const res = await fetch(`${API_URL}/user/profile`, { 
               method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, 
               body: JSON.stringify(payload) 
           });
+          
           if (!res.ok) throw new Error("Lỗi lưu ảnh");
           setProfileData({ ...profileData, ...payload });
-          toast.success("Cập nhật ảnh thành công!");
-      } catch (e: any) { toast.error(e.message); }
+          toast.success("Cập nhật ảnh thành công!", { id: tid });
+      } catch (e: any) { toast.error(e.message, { id: tid }); } 
+      finally { setIsUploadingImage(false); }
   };
 
   const addSocial = () => setSocials([...socials, { platform: 'facebook', url: '' }]);
@@ -155,8 +186,8 @@ export default function ModeratorProfilePage() {
   return (
     <div className="flex-1 relative h-[100dvh] flex flex-col bg-brand-base dark:bg-zinc-950 transition-colors duration-500 overflow-hidden font-be-vietnam">
       
-      {/* Cửa sổ Modal ẩn để upload ảnh */}
-      {isUploadingImage && <div className="fixed inset-0 z-[999] bg-black/20 backdrop-blur-sm flex items-center justify-center"><div className="w-8 h-8 border-4 border-violet-500 border-t-transparent rounded-full animate-spin"></div></div>}
+      <input type="file" accept="image/*" className="hidden" ref={avatarInputRef} onChange={e => handleImageUpload(e, 'avatar')} />
+      <input type="file" accept="image/*" className="hidden" ref={coverInputRef} onChange={e => handleImageUpload(e, 'cover')} />
 
       {/* TOP BAR */}
       <div className="absolute top-0 w-full z-40 p-6 flex justify-end items-center bg-gradient-to-b from-brand-base dark:from-zinc-950 to-transparent pointer-events-none">
@@ -188,16 +219,12 @@ export default function ModeratorProfilePage() {
             {/* HEADER INFO CHUẨN MASTER LAYOUT */}
             <div className="flex flex-col md:flex-row items-center md:items-start gap-8 md:gap-12 mb-10">
                 {/* Avatar lồi lên */}
-                <div className="relative group shrink-0 -mt-16 md:-mt-20">
+                <div className="relative group cursor-pointer shrink-0 -mt-16 md:-mt-20" onClick={() => avatarInputRef.current?.click()}>
                   <div className="absolute -inset-1.5 bg-gradient-to-tr from-violet-500 to-fuchsia-400 rounded-full blur-md opacity-40"></div>
                   <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white dark:border-zinc-950 shadow-2xl bg-white p-1.5">
                     <img src={profileData?.avatar_url || `https://ui-avatars.com/api/?name=${profileData?.full_name}&background=8b5cf6&color=fff`} className="w-full h-full object-cover group-hover:scale-105 transition-transform rounded-full" alt="avatar" />
                   </div>
-                  {/* Nhúng ImageUploader ẩn */}
-                  <div className="absolute inset-0 z-10 cursor-pointer">
-                    <ImageUploader className="opacity-0 w-full h-full" onUploadSuccess={(url) => updateProfileField({ avatar_url: url })} />
-                  </div>
-                  <div className="absolute inset-1.5 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none"><Edit3 className="text-white"/></div>
+                  <div className="absolute inset-1.5 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><Edit3 className="text-white"/></div>
                   <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white text-[10px] font-black rounded-full shadow-lg border border-white/20 whitespace-nowrap uppercase flex items-center gap-1 z-20 tracking-widest">
                     <Shield size={10} fill="currentColor"/> MODERATOR
                   </div>
@@ -328,21 +355,59 @@ export default function ModeratorProfilePage() {
                                             <button onClick={addSocial} className="text-violet-500 hover:text-violet-600 font-black text-xs flex items-center gap-1 bg-violet-50 dark:bg-violet-500/10 px-3 py-1.5 rounded-lg"><Plus size={14}/> Thêm Link</button>
                                         </div>
                                         <div className="space-y-4">
-                                            {socials.map((social, idx) => (
-                                                <div key={idx} className="flex flex-col sm:flex-row items-center gap-3 bg-brand-base dark:bg-white/5 p-3 rounded-2xl border border-slate-200 dark:border-white/5">
-                                                    <select value={social.platform} onChange={(e) => updateSocial(idx, 'platform', e.target.value as SocialPlatform)} className="w-full sm:w-1/3 bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 dark:text-zinc-300">
-                                                        <option value="facebook">Facebook</option><option value="tiktok">TikTok</option><option value="instagram">Instagram</option><option value="youtube">YouTube</option><option value="website">Website</option>
-                                                    </select>
-                                                    <div className="w-full sm:flex-1 flex items-center gap-2">
-                                                        <input type="url" placeholder="https://..." value={social.url} onChange={(e) => updateSocial(idx, 'url', e.target.value)} className="w-full bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-violet-500" />
-                                                        <button onClick={() => removeSocial(idx)} className="p-3 text-rose-400 hover:bg-rose-50 rounded-xl"><Trash2 size={18}/></button>
+                                                    {socials.map((social, idx) => (
+                                                        <div key={idx} className="flex flex-col sm:flex-row items-center gap-3 bg-brand-base dark:bg-white/5 p-3 rounded-2xl border border-slate-200 dark:border-white/5">
+                                                            <select value={social.platform} onChange={(e) => updateSocial(idx, 'platform', e.target.value as SocialPlatform)} className="w-full sm:w-1/3 bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 dark:text-zinc-300">
+                                                                <option value="facebook">Facebook</option><option value="tiktok">TikTok</option><option value="instagram">Instagram</option><option value="youtube">YouTube</option><option value="website">Website</option>
+                                                            </select>
+                                                            <div className="w-full sm:flex-1 flex items-center gap-2">
+                                                                <input type="url" placeholder="https://..." value={social.url} onChange={(e) => updateSocial(idx, 'url', e.target.value)} className="w-full bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-violet-500" />
+                                                                <button onClick={() => removeSocial(idx)} className="p-3 text-rose-400 hover:bg-rose-50 rounded-xl"><Trash2 size={18}/></button>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* KHỐI HỒ SƠ NĂNG LỰC MINH CHỨNG MỚI ĐƯỢC NHÚNG */}
+                                            <div className="pt-6 border-t border-slate-200 dark:border-white/10 space-y-6">
+                                                <label className="text-[11px] font-black text-slate-800 dark:text-white uppercase tracking-widest flex items-center gap-2">
+                                                    <ShieldCheck size={16} className="text-violet-500" /> Hồ sơ năng lực minh chứng (Bảo chứng chuyên môn)
+                                                </label>
+                                                
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                    {/* Tải lên ảnh Chứng chỉ bằng cấp */}
+                                                    <div className="space-y-2">
+                                                        <span className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-wider ml-1">1. Chứng chỉ hành nghề / Bằng cấp y khoa</span>
+                                                        <ImageUploader 
+                                                            label="Kéo thả hoặc bấm để upload Ảnh Chứng chỉ" 
+                                                            onUploadSuccess={(url) => setEditForm(prev => ({ ...prev, certificate_url: url }))} 
+                                                        />
+                                                        {editForm.certificate_url && (
+                                                            <p className="text-[10px] text-emerald-500 font-bold ml-1 flex items-center gap-1">
+                                                                <CheckCircle size={12} /> Đã kết nối ảnh minh chứng thành công.
+                                                            </p>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Tải lên video giới thiệu quy trình làm việc */}
+                                                    <div className="space-y-2">
+                                                        <span className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-wider ml-1">2. Video giới thiệu năng lực kiểm duyệt</span>
+                                                        <VideoUploader 
+                                                            label="Kéo thả hoặc bấm để upload Video quy trình" 
+                                                            onUploadSuccess={(url) => setEditForm(prev => ({ ...prev, intro_video_url: url }))} 
+                                                        />
+                                                        {editForm.intro_video_url && (
+                                                            <p className="text-[10px] text-emerald-500 font-bold ml-1 flex items-center gap-1">
+                                                                <CheckCircle size={12} /> Đã kết nối video giới thiệu thành công.
+                                                            </p>
+                                                        )}
                                                     </div>
                                                 </div>
-                                            ))}
-                                        </div>
-                                    </div>
+                                            </div>
+                                        
 
-                                    <button onClick={handleUpdateProfile} disabled={isUpdating} className="w-full py-5 bg-violet-600 hover:bg-violet-700 text-white font-black rounded-2xl shadow-xl active:scale-95 transition-all text-xs tracking-widest uppercase">LƯU THÔNG TIN HỒ SƠ</button>
+                                        <button onClick={handleUpdateProfile} disabled={isUpdating} className="w-full py-5 bg-violet-600 hover:bg-violet-700 text-white font-black rounded-2xl shadow-xl active:scale-95 transition-all text-xs tracking-widest uppercase">LƯU THÔNG TIN HỒ SƠ</button>
                                 </div>
                             </div>
                         )}
