@@ -9,6 +9,7 @@ import {
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import NotificationModal from "@/components/NotificationModal";
+import ImageUploader from "@/components/ImageUploader";
 import { useUI } from "@/context/UIContext";
 import { useAuth } from "@/context/AuthContext";
 
@@ -124,38 +125,17 @@ export default function ModeratorProfilePage() {
     finally { setIsUpdating(false); }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'cover') => {
-      const file = e.target.files?.[0];
-      if (!file || !user) return;
-      if (!file.type.startsWith("image/")) return toast.error("Chỉ chấp nhận định dạng hình ảnh!");
-
-      setIsUploadingImage(true);
-      const tid = toast.loading(`Đang tải ảnh ${type === 'avatar' ? 'đại diện' : 'bìa'}...`);
+  const updateProfileField = async (payload: any) => {
       try {
           const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
-          const formData = new FormData();
-          formData.append("file", file);
-          
-          const uploadRes = await fetch(`${API_URL}/media/upload`, {
-              method: "POST",
-              headers: { "Authorization": `Bearer ${token}` },
-              body: formData
-          });
-          const uploadResult = await uploadRes.json();
-          if (!uploadRes.ok || uploadResult.status !== "success") throw new Error("Lỗi tải ảnh lên Cloudflare R2");
-          const publicUrl = uploadResult.url;
-          
-          const payload = type === 'avatar' ? { avatar_url: publicUrl } : { cover_url: publicUrl };
           const res = await fetch(`${API_URL}/user/profile`, { 
               method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, 
               body: JSON.stringify(payload) 
           });
-          
           if (!res.ok) throw new Error("Lỗi lưu ảnh");
           setProfileData({ ...profileData, ...payload });
-          toast.success("Cập nhật ảnh thành công!", { id: tid });
-      } catch (e: any) { toast.error(e.message, { id: tid }); } 
-      finally { setIsUploadingImage(false); }
+          toast.success("Cập nhật ảnh thành công!");
+      } catch (e: any) { toast.error(e.message); }
   };
 
   const addSocial = () => setSocials([...socials, { platform: 'facebook', url: '' }]);
@@ -175,8 +155,8 @@ export default function ModeratorProfilePage() {
   return (
     <div className="flex-1 relative h-[100dvh] flex flex-col bg-brand-base dark:bg-zinc-950 transition-colors duration-500 overflow-hidden font-be-vietnam">
       
-      <input type="file" accept="image/*" className="hidden" ref={avatarInputRef} onChange={e => handleImageUpload(e, 'avatar')} />
-      <input type="file" accept="image/*" className="hidden" ref={coverInputRef} onChange={e => handleImageUpload(e, 'cover')} />
+      {/* Cửa sổ Modal ẩn để upload ảnh */}
+      {isUploadingImage && <div className="fixed inset-0 z-[999] bg-black/20 backdrop-blur-sm flex items-center justify-center"><div className="w-8 h-8 border-4 border-violet-500 border-t-transparent rounded-full animate-spin"></div></div>}
 
       {/* TOP BAR */}
       <div className="absolute top-0 w-full z-40 p-6 flex justify-end items-center bg-gradient-to-b from-brand-base dark:from-zinc-950 to-transparent pointer-events-none">
@@ -208,12 +188,16 @@ export default function ModeratorProfilePage() {
             {/* HEADER INFO CHUẨN MASTER LAYOUT */}
             <div className="flex flex-col md:flex-row items-center md:items-start gap-8 md:gap-12 mb-10">
                 {/* Avatar lồi lên */}
-                <div className="relative group cursor-pointer shrink-0 -mt-16 md:-mt-20" onClick={() => avatarInputRef.current?.click()}>
+                <div className="relative group shrink-0 -mt-16 md:-mt-20">
                   <div className="absolute -inset-1.5 bg-gradient-to-tr from-violet-500 to-fuchsia-400 rounded-full blur-md opacity-40"></div>
                   <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white dark:border-zinc-950 shadow-2xl bg-white p-1.5">
                     <img src={profileData?.avatar_url || `https://ui-avatars.com/api/?name=${profileData?.full_name}&background=8b5cf6&color=fff`} className="w-full h-full object-cover group-hover:scale-105 transition-transform rounded-full" alt="avatar" />
                   </div>
-                  <div className="absolute inset-1.5 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><Edit3 className="text-white"/></div>
+                  {/* Nhúng ImageUploader ẩn */}
+                  <div className="absolute inset-0 z-10 cursor-pointer">
+                    <ImageUploader className="opacity-0 w-full h-full" onUploadSuccess={(url) => updateProfileField({ avatar_url: url })} />
+                  </div>
+                  <div className="absolute inset-1.5 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none"><Edit3 className="text-white"/></div>
                   <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white text-[10px] font-black rounded-full shadow-lg border border-white/20 whitespace-nowrap uppercase flex items-center gap-1 z-20 tracking-widest">
                     <Shield size={10} fill="currentColor"/> MODERATOR
                   </div>
