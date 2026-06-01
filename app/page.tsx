@@ -135,6 +135,17 @@ export default function UserFeed() {
   const [hasNotification, setHasNotification] = useState(true);
   const [isMounted, setIsMounted] = useState(false); 
 
+  // --- THUẬT TOÁN TRỘN MẢNG (FISHER-YATES SHUFFLE) ---
+  // Tối ưu hóa O(n) đảm bảo không gây giật lag (bottleneck) khi render
+  const shuffleVideos = (array: StudioVideo[]) => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
   // --- FETCH VIDEOS TỪ API STUDIO MỚI ---
   const fetchVideos = async (userId?: string) => {
     try {
@@ -142,7 +153,11 @@ export default function UserFeed() {
       const response = await fetch(url);
       if (!response.ok) throw new Error("Backend error");
       const result = await response.json();
-      if (result.status === "success") setVideos(result.data);
+      if (result.status === "success") {
+        // Áp dụng thuật toán trộn ngẫu nhiên trước khi đưa vào State
+        const randomizedVideos = shuffleVideos(result.data);
+        setVideos(randomizedVideos);
+      }
     } catch (error) {
       toast.error("Máy chủ đang đồng bộ dữ liệu...");
     } finally {
