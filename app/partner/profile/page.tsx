@@ -14,6 +14,8 @@ import { useUI } from "@/context/UIContext";
 import dynamic from "next/dynamic";
 import { useAuth } from "@/context/AuthContext";
 import CommentModal from "@/components/CommentModal";
+import ImageUploader from "@/components/ImageUploader";
+import VideoUploader from "@/components/VideoUploader";
 
 const MiniMapPicker = dynamic(() => import("@/components/MiniMapPicker"), { ssr: false });
 
@@ -51,13 +53,11 @@ export default function PartnerProfilePage() {
   const [editingVideo, setEditingVideo] = useState<any>(null);
 
   const [newService, setNewService] = useState({ service_name: "", description: "", price: "", tags: "" });
-  const [mediaFile, setMediaFile] = useState<File | null>(null);
-  const [mediaType, setMediaType] = useState<'image' | 'video' | null>('image'); 
+  const [mediaUrl, setMediaUrl] = useState<string>("");
+  const [mediaType, setMediaType] = useState<'image' | 'video'>('image'); 
   const [isUploading, setIsUploading] = useState(false);
 
-  const [studioData, setStudioData] = useState({ title: "", content: "", price: "" });
-  const [studioFile, setStudioFile] = useState<File | null>(null);
-  const [studioPreview, setStudioPreview] = useState<string | null>(null);
+  const [studioData, setStudioData] = useState({ title: "", content: "", price: "", video_url: "" });
   const [isStudioUploading, setIsStudioUploading] = useState(false);
 
   // --- EXPANDED VIEW & INTERACTION STATE ---
@@ -251,26 +251,20 @@ export default function PartnerProfilePage() {
     const tid = toast.loading("Đang gửi dịch vụ đi kiểm duyệt...");
     try {
         const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
-        let mediaUrl = null;
-        if (mediaFile) {
-            const formData = new FormData();
-            formData.append("file", mediaFile);
-            formData.append("folder", mediaType === 'video' ? 'services/videos' : 'services/images');
-            const uploadRes = await fetch(`${API_URL}/media/upload`, {
-                method: "POST",
-                headers: { "Authorization": `Bearer ${token}` },
-                body: formData
-            });
-            const uploadResult = await uploadRes.json();
-            if (!uploadRes.ok || uploadResult.status !== "success") throw new Error("Lỗi tải tệp minh họa lên Cloudflare R2");
-            mediaUrl = uploadResult.url;
-        }
-        const payload = { ...newService, price: parseFloat(newService.price), tags: newService.tags.split(',').map(t => t.trim()).filter(Boolean), [mediaType === 'video' ? 'video_url' : 'image_url']: mediaUrl };
+        const payload = { 
+            ...newService, 
+            price: parseFloat(newService.price), 
+            tags: newService.tags.split(',').map(t => t.trim()).filter(Boolean), 
+            [mediaType === 'video' ? 'video_url' : 'image_url']: mediaUrl || null 
+        };
         const res = await fetch(`${API_URL}/services`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, body: JSON.stringify(payload) });
         const result = await res.json();
         if (!res.ok || result.status !== "success") throw new Error(result.detail || "Lỗi tạo dịch vụ");
         toast.success("Đã gửi dịch vụ đi chờ kiểm duyệt!", { id: tid });
-        setIsAddModalOpen(false); setNewService({ service_name: "", description: "", price: "", tags: "" }); setMediaFile(null); setMediaType('image');
+        setIsAddModalOpen(false); 
+        setNewService({ service_name: "", description: "", price: "", tags: "" }); 
+        setMediaUrl(""); 
+        setMediaType('image');
         fetchData();
     } catch (e: any) { toast.error(e.message, { id: tid }); }
     finally { setIsUploading(false); }
@@ -305,29 +299,23 @@ export default function PartnerProfilePage() {
 
   const handleAddVideo = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!studioFile || !studioData.title) return toast.error("Cần có Video và Tiêu đề!");
+    if (!studioData.video_url || !studioData.title) return toast.error("Cần có Video và Tiêu đề!");
     setIsStudioUploading(true);
     const tid = toast.loading("Đang gửi video đi kiểm duyệt...");
     try {
         const token = typeof window !== "undefined" ? localStorage.getItem("ai-health-token") : null;
-        const formData = new FormData();
-        formData.append("file", studioFile);
-        formData.append("folder", "tiktok_feeds/videos");
-        const uploadRes = await fetch(`${API_URL}/media/upload`, {
-            method: "POST",
-            headers: { "Authorization": `Bearer ${token}` },
-            body: formData
-        });
-        const uploadResult = await uploadRes.json();
-        if (!uploadRes.ok || uploadResult.status !== "success") throw new Error("Lỗi tải video lên Cloudflare R2");
-        const videoUrl = uploadResult.url;
-        
-        const payload = { title: studioData.title, content: studioData.content, price: studioData.price ? parseFloat(studioData.price) : null, video_url: videoUrl };
+        const payload = { 
+            title: studioData.title, 
+            content: studioData.content, 
+            price: studioData.price ? parseFloat(studioData.price) : null, 
+            video_url: studioData.video_url 
+        };
         const res = await fetch(`${API_URL}/tiktok/feeds`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, body: JSON.stringify(payload) });
         if (!res.ok) throw new Error("Lỗi đăng bài");
         toast.success("Video đã được gửi đi chờ duyệt!", { id: tid });
-        setStudioData({ title: "", content: "", price: "" }); setStudioFile(null); setStudioPreview(null);
-        setIsAddVideoModalOpen(false); fetchData(); 
+        setStudioData({ title: "", content: "", price: "", video_url: "" }); 
+        setIsAddVideoModalOpen(false); 
+        fetchData(); 
     } catch (e: any) { toast.error(e.message, { id: tid }); }
     finally { setIsStudioUploading(false); }
   };
@@ -728,20 +716,25 @@ export default function PartnerProfilePage() {
                 </div>
                 <form onSubmit={handleAddService} className="p-6 space-y-5 overflow-y-auto no-scrollbar">
                     <div className="grid grid-cols-2 gap-3 mb-2">
-                        <button type="button" onClick={() => {setMediaType('image'); setMediaFile(null);}} className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all ${mediaType === 'image' ? 'border-brand-trust bg-blue-50 dark:bg-brand-trust/10 text-brand-trust' : 'border-slate-200 dark:border-white/10 text-slate-400'}`}>
+                        <button type="button" onClick={() => {setMediaType('image'); setMediaUrl("");}} className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all ${mediaType === 'image' ? 'border-brand-trust bg-blue-50 dark:bg-brand-trust/10 text-brand-trust' : 'border-slate-200 dark:border-white/10 text-slate-400'}`}>
                             <ImageIcon size={24}/> <span className="text-[10px] font-black uppercase">Ảnh minh họa</span>
                         </button>
-                        <button type="button" onClick={() => {setMediaType('video'); setMediaFile(null);}} className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all ${mediaType === 'video' ? 'border-brand-trust bg-blue-50 dark:bg-brand-trust/10 text-brand-trust' : 'border-slate-200 dark:border-white/10 text-slate-400'}`}>
+                        <button type="button" onClick={() => {setMediaType('video'); setMediaUrl("");}} className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all ${mediaType === 'video' ? 'border-brand-trust bg-blue-50 dark:bg-brand-trust/10 text-brand-trust' : 'border-slate-200 dark:border-white/10 text-slate-400'}`}>
                             <Video size={24}/> <span className="text-[10px] font-black uppercase">Video giới thiệu</span>
                         </button>
                     </div>
-                    <div className="relative h-40 w-full rounded-2xl border-2 border-dashed border-slate-300 dark:border-white/10 bg-brand-base dark:bg-black/40 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-100 transition-colors overflow-hidden" onClick={() => document.getElementById('media-up')?.click()}>
-                        {mediaFile ? (
-                            mediaType === 'image' ? <img src={URL.createObjectURL(mediaFile)} className="w-full h-full object-cover"/> : <video src={URL.createObjectURL(mediaFile)} className="w-full h-full object-cover" muted />
+                    <div className="mb-4">
+                        {mediaType === 'image' ? (
+                            <ImageUploader 
+                                onUploadSuccess={(url) => setMediaUrl(url)} 
+                                label="Tải lên Ảnh Dịch Vụ (Tự động nén WebP)"
+                            />
                         ) : (
-                            <><UploadCloud className="text-slate-400 mb-2"/><p className="text-xs font-bold text-brand-base0">Tải lên {mediaType === 'image' ? 'Ảnh' : 'Video'} dịch vụ</p></>
+                            <VideoUploader 
+                                onUploadSuccess={(url) => setMediaUrl(url)} 
+                                label="Tải lên Video Dịch Vụ (Ép chuẩn & chặn > 3 phút)"
+                            />
                         )}
-                        <input id="media-up" type="file" accept={mediaType === 'image' ? "image/*" : "video/*"} className="hidden" onChange={(e) => e.target.files?.[0] && setMediaFile(e.target.files[0])} />
                     </div>
                     <div>
                         <label className="text-[10px] font-black text-brand-base0 uppercase tracking-widest mb-1 block">Tên dịch vụ</label>
@@ -820,20 +813,11 @@ export default function PartnerProfilePage() {
                 <div className="p-6 md:p-8 overflow-y-auto no-scrollbar">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                         <div className="lg:col-span-5 flex justify-center items-center">
-                            <div className="w-[240px] aspect-[9/16] rounded-[2.5rem] border-[6px] border-slate-900 bg-black shadow-2xl relative overflow-hidden flex flex-col group">
-                                {studioPreview ? (
-                                    <>
-                                        <video src={studioPreview} className="w-full h-full object-cover" autoPlay loop muted playsInline />
-                                        <button onClick={() => {setStudioFile(null); setStudioPreview(null)}} className="absolute top-4 left-4 w-8 h-8 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center text-white"><X size={16}/></button>
-                                    </>
-                                ) : (
-                                    <div onClick={() => studioInputRef.current?.click()} className="absolute inset-4 rounded-[1.5rem] border-2 border-dashed border-slate-700 bg-slate-900/50 flex flex-col items-center justify-center cursor-pointer p-6 text-center hover:bg-slate-800 transition-colors">
-                                        <Video size={40} className="text-brand-trust mb-4" />
-                                        <p className="text-white font-bold text-sm">Tải Video Ngắn<br/><span className="text-xs text-slate-400 font-normal mt-1 block">Tỉ lệ 9:16</span></p>
-                                    </div>
-                                )}
-                                <input type="file" accept="video/*" ref={studioInputRef} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if(f) { setStudioFile(f); setStudioPreview(URL.createObjectURL(f)); } }} />
-                            </div>
+                            <VideoUploader 
+                                onUploadSuccess={(url) => setStudioData({...studioData, video_url: url})} 
+                                label="Tải Video Ngắn (Tỉ lệ 9:16)"
+                                className="w-[240px]"
+                            />
                         </div>
                         <div className="lg:col-span-7 flex flex-col justify-center space-y-4">
                             <div>
@@ -851,7 +835,7 @@ export default function PartnerProfilePage() {
                                     <input type="number" className="w-full bg-slate-100/50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl pl-11 pr-5 py-3.5 text-sm font-black text-brand-trust focus:outline-none focus:border-brand-trust" placeholder="0" value={studioData.price} onChange={e => setStudioData({...studioData, price: e.target.value})} />
                                 </div>
                             </div>
-                            <button onClick={handleAddVideo} disabled={isStudioUploading || !studioFile} className="w-full py-4 mt-2 bg-brand-trust hover:bg-blue-700 text-white font-black rounded-xl shadow-lg active:scale-95 transition-all text-xs tracking-widest uppercase flex justify-center items-center gap-2 disabled:opacity-50">
+                            <button onClick={handleAddVideo} disabled={isStudioUploading || !studioData.video_url} className="w-full py-4 mt-2 bg-brand-trust hover:bg-blue-700 text-white font-black rounded-xl shadow-lg active:scale-95 transition-all text-xs tracking-widest uppercase flex justify-center items-center gap-2 disabled:opacity-50">
                                 {isStudioUploading && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"/>} GỬI ĐI CHỜ KIỂM DUYỆT
                             </button>
                         </div>
