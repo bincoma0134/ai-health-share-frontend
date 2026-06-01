@@ -12,6 +12,8 @@ import { useRouter } from "next/navigation";
 import NotificationModal from "@/components/NotificationModal";
 import { useUI } from "@/context/UIContext";
 import { useAuth } from "@/context/AuthContext";
+import ImageUploader from "@/components/ImageUploader";
+import VideoUploader from "@/components/VideoUploader";
 
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -40,7 +42,13 @@ export default function SuperAdminProfile() {
   ]);
 
   // --- FORM HỒ SƠ ---
-  const [editForm, setEditForm] = useState({ username: "", full_name: "", bio: "" });
+  const [editForm, setEditForm] = useState({ 
+    username: "", 
+    full_name: "", 
+    bio: "",
+    system_signature_url: "",
+    security_clearance_video_url: ""
+  });
   const [isUpdating, setIsUpdating] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
@@ -85,7 +93,13 @@ export default function SuperAdminProfile() {
           }
           setUser(p);
           setProfileData(p);
-          setEditForm({ username: p.username || "", full_name: p.full_name || "", bio: p.bio || "" });
+          setEditForm({ 
+            username: p.username || "", 
+            full_name: p.full_name || "", 
+            bio: p.bio || "",
+            system_signature_url: p.system_signature_url || "",
+            security_clearance_video_url: p.security_clearance_video_url || ""
+          });
       }
 
       // Nạp Dữ liệu Stats & Content
@@ -474,6 +488,35 @@ export default function SuperAdminProfile() {
                                               <div><p className="text-sm font-bold text-slate-900 dark:text-white">Cảnh báo đăng nhập lạ</p><p className="text-[10px] text-brand-base0 font-medium mt-0.5">Gửi email khi IP thay đổi đột ngột.</p></div>
                                           </div>
                                           <div className="w-12 h-6 bg-amber-500 rounded-full relative cursor-pointer"><div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div></div>
+                                      </div>
+                                  </div>
+
+                                  {/* KHỐI CHỨNG THỰC TỐI CAO DÀNH CHO SUPER ADMIN */}
+                                  <h3 className="font-black text-slate-900 dark:text-white text-lg tracking-tight mb-4 pt-6 border-t border-slate-200 dark:border-white/10 flex items-center gap-2"><Crown size={20} className="text-amber-500"/> Xác minh danh tính tối cao (Credentials)</h3>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                                      <div className="space-y-2">
+                                          <span className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-wider ml-1">1. Chữ ký số / Con dấu điện tử hệ thống</span>
+                                          <ImageUploader 
+                                              label="Kéo thả hoặc bấm để upload Chữ ký số" 
+                                              onUploadSuccess={(url) => setEditForm(prev => ({ ...prev, system_signature_url: url }))} 
+                                          />
+                                          {editForm.system_signature_url && (
+                                              <p className="text-[10px] text-emerald-500 font-bold ml-1 flex items-center gap-1">
+                                                  <CheckCircle size={12} /> Đã đồng bộ chữ ký bảo mật tối cao.
+                                              </p>
+                                          )}
+                                      </div>
+                                      <div className="space-y-2">
+                                          <span className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-wider ml-1">2. Video chứng thực khóa vận hành định kỳ</span>
+                                          <VideoUploader 
+                                              label="Kéo thả hoặc bấm để upload Video xác minh" 
+                                              onUploadSuccess={(url) => setEditForm(prev => ({ ...prev, security_clearance_video_url: url }))} 
+                                          />
+                                          {editForm.security_clearance_video_url && (
+                                              <p className="text-[10px] text-emerald-500 font-bold ml-1 flex items-center gap-1">
+                                                  <CheckCircle size={12} /> Đã liên kết mã video an toàn.
+                                              </p>
+                                          )}
                                       </div>
                                   </div>
 
