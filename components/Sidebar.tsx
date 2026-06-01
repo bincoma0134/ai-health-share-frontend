@@ -164,7 +164,7 @@ export default function Sidebar() {
             <div className="w-9 h-9 bg-brand-primary rounded-xl flex items-center justify-center shadow-lg shadow-brand-primary/30 group-hover:scale-110 transition-transform">
                 <Layout size={20} className="text-zinc-950" strokeWidth={3} />
             </div>
-            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">AI<span className="text-brand-primary">HEALTH</span></h1>
+            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">VN<span className="text-brand-primary">SHARE</span></h1>
         </div>
       </div>
       
